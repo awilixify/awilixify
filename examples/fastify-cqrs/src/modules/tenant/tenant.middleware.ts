@@ -3,7 +3,7 @@ import {
 	type MiddlewareContract,
 	Result,
 } from "awilix-modular";
-import { TenantNotFoundError } from "@/errors.js";
+import { TenantNotFoundError } from "@/common/error-to-http-error.mapper.js";
 
 type ReturnType = Result<
 	{ tenantId: string; tenantName: string },

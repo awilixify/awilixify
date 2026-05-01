@@ -17,10 +17,12 @@
 		"awilix": "^10.0.2",
 		"awilix-modular": "link:../..",
 		"fastify": "^5.2.0",
-		"typescript-result": "^3.5.2"
+		"kysely": "^0.28.16",
+		"pg": "^8.20.0"
 	},
 	"devDependencies": {
 		"@types/node": "^22.10.2",
+		"@types/pg": "^8.15.6",
 		"concurrently": "^9.2.1",
 		"tsx": "^4.19.2",
 		"typescript": "^5.7.2"

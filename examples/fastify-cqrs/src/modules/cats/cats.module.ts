@@ -1,6 +1,7 @@
 import { createStaticModule, type ModuleDef } from "awilix-modular";
 
 import { OwnersModule } from "@/modules/owners/owners.module.js";
+import { DbModule } from "@/modules/db/db.module.js";
 import { CatsController } from "./cats.controller.js";
 import { CatsService } from "./cats.service.js";
 import { CatsAuthMiddleware } from "./cats-auth.middleware.js";
@@ -18,7 +19,7 @@ export type CatsModuleDef = ModuleDef<{
 		getCatsService: GetCatsService;
 	};
 	exportKeys: "catsService";
-	imports: [typeof OwnersModule];
+	imports: [typeof OwnersModule, ReturnType<typeof DbModule<["cats"]>>];
 	queryHandlers: [GetCatsQueryHandler];
 	queryPreHandlers: {
 		auth: CatsAuthMiddleware;
@@ -31,7 +32,7 @@ export type Deps = CatsModuleDef["deps"];
 export const CatsModule = createStaticModule<CatsModuleDef>({
 	name: "CatsModule",
 
-	imports: [OwnersModule],
+	imports: [OwnersModule, DbModule<["cats"]>()],
 
 	queryPreHandlers: {
 		auth: CatsAuthMiddleware,

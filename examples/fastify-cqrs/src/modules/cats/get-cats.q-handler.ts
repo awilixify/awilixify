@@ -1,5 +1,5 @@
 import { type Handler, type QueryContract, Result } from "awilix-modular";
-import { CatsNotFoundError } from "@/errors.js";
+import { CatsNotFoundError } from "@/common/error-to-http-error.mapper.js";
 import type { CatsModuleDef, Deps } from "./cats.module.js";
 import type {
 	GetCatsQuery as Payload,
@@ -55,7 +55,6 @@ export class GetCatsQueryHandler
 		// 	catsService: cats,
 		// };
 
-		// Simulate no cats found scenario
 		if (!cats || userId === "no-cats-user") {
 			console.log(`[GetCatsQueryHandler] No cats found for user ${userId}`);
 			// Return error - this is the ONLY error the handler defines

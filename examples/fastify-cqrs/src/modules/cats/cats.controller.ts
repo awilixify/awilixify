@@ -1,6 +1,8 @@
-import { type Controller, httpException } from "awilix-modular";
-import type { Deps } from "./cats.module.js";
+import { type Controller } from "awilix-modular";
 
+import { errorCodeToHttpException } from "@/common/error-to-http-error.mapper.js";
+
+import type { Deps } from "./cats.module.js";
 import { GetCatsSchema } from "./get-cats.dto.js";
 
 export class CatsController implements Controller {
@@ -43,11 +45,9 @@ export class CatsController implements Controller {
 					});
 				}
 
-				// Error case - map domain errors to HTTP errors
-				const error = result.error;
+				const error = errorCodeToHttpException[result.error.code]();
 
-				// Unknown error
-				throw httpException.internalServerError(error.message);
+				return res.status(error.statusCode).send(error.getResponse());
 			},
 		});
 	}

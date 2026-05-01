@@ -1171,7 +1171,7 @@ class UserService {
 
 ### Error-as-Value Pattern (Recommended for Application Logic)
 
-While HTTP exceptions work for simple cases, awilix-modular **encourages the error-as-value pattern in application logic** for better separation of concerns and type safety using libraries like [`typescript-result`](https://github.com/vultix/ts-results).
+While HTTP exceptions work for simple cases, awilix-modular **encourages the error-as-value pattern in application logic** for better separation of concerns and type safety.
 
 #### Why Not Throw HTTP Errors in Application Logic?
 
@@ -1199,7 +1199,7 @@ class UserService {
     data: CreateUserDto,
   ): Promise<Result<User, ValidationError>> {
     if (!data.email) {
-      return Err(new ValidationError({ email: ["Email is required"] }));
+      return Result.error(new ValidationError("Email is required"));
     }
     // This service works everywhere - HTTP, cron, queue, CLI
   }
@@ -1215,7 +1215,7 @@ class UserService {
 The error-as-value pattern makes errors explicit and type-safe:
 
 ```typescript
-import { Result, Ok, Err } from "typescript-result";
+import { Result } from "awilix-modular";
 import type { UserModuleDeps } from "./user.module";
 
 class UserService {
@@ -1225,10 +1225,10 @@ class UserService {
     const user = await this.deps.database.findUser(id);
 
     if (!user) {
-      return Err(new UserNotFoundError(id));
+      return Result.error(new UserNotFoundError(id));
     }
 
-    return Ok(user);
+    return Result.ok(user);
   }
 }
 ```

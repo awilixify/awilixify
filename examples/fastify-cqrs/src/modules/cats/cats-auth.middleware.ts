@@ -3,7 +3,7 @@ import {
 	type MiddlewareContract,
 	Result,
 } from "awilix-modular";
-import { UnauthorizedError } from "@/errors.js";
+import { UnauthorizedError } from "@/common/error-to-http-error.mapper.js";
 
 type ReturnType = Result<
 	{ userId: string; roles: string[] },

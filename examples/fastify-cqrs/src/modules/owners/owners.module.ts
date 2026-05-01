@@ -6,11 +6,17 @@ import {
 	type StaticModule,
 } from "awilix-modular";
 import { CatsModule, type CatsModuleDef } from "../cats/cats.module.js";
+import { DbModule } from "@/modules/db/db.module.js";
 
 import { OwnersService } from "./owners.service.js";
 import { Owners1Service } from "./owners1.service.js";
 import { GetOwnersQueryHandler } from "./get-owners.q-handler.js";
 import { OwnersController } from "./owners.controller.js";
+
+const dbScope = {
+	readTables: ["cats"],
+	writeTables: ["cats"],
+} as const;
 
 export type OwnersModuleDef = ModuleDef<{
 	providers: {
@@ -18,7 +24,10 @@ export type OwnersModuleDef = ModuleDef<{
 		owners1Service: Owners1Service;
 	};
 	exportKeys: "ownersService" | "owners1Service";
-	imports: [ModuleRef<CatsModuleDef>];
+	imports: [
+		ModuleRef<CatsModuleDef>,
+		ReturnType<typeof DbModule<typeof dbScope>>,
+	];
 	queryHandlers: [GetOwnersQueryHandler];
 }>;
 
@@ -28,7 +37,7 @@ export const OwnersModule: StaticModule<OwnersModuleDef> =
 	createStaticModule<OwnersModuleDef>({
 		name: "OwnersModule",
 
-		imports: [forwardRef(() => CatsModule)],
+		imports: [forwardRef(() => CatsModule), DbModule(dbScope)],
 
 		queryHandlers: [GetOwnersQueryHandler],
 		controllers: [OwnersController],

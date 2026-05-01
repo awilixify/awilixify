@@ -3,7 +3,7 @@ import {
 	type MiddlewareContract,
 	Result,
 } from "awilix-modular";
-import { LoggerError } from "@/errors.js";
+import { LoggerError } from "@/common/error-to-http-error.mapper.js";
 import type { CatsAuthMiddleware } from "./cats-auth.middleware.js";
 
 type ReturnType = Result<{ loggerId: string }, LoggerError>;
