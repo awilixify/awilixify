@@ -12,6 +12,11 @@ import { DogsService } from "./dogs.service.js";
 import { GetCatsQueryHandler } from "./get-cats.q-handler.js";
 import { GetCatsService } from "./get-cats.service.js";
 
+const dbScope = {
+	readTables: ["cats"],
+	writeTables: ["cats"],
+} as const;
+
 export type CatsModuleDef = ModuleDef<{
 	providers: {
 		catsService: CatsService;
@@ -19,7 +24,7 @@ export type CatsModuleDef = ModuleDef<{
 		getCatsService: GetCatsService;
 	};
 	exportKeys: "catsService";
-	imports: [typeof OwnersModule, ReturnType<typeof DbModule<["cats"]>>];
+	imports: [typeof OwnersModule, ReturnType<typeof DbModule<typeof dbScope>>];
 	queryHandlers: [GetCatsQueryHandler];
 	queryPreHandlers: {
 		auth: CatsAuthMiddleware;
@@ -32,7 +37,7 @@ export type Deps = CatsModuleDef["deps"];
 export const CatsModule = createStaticModule<CatsModuleDef>({
 	name: "CatsModule",
 
-	imports: [OwnersModule, DbModule<["cats"]>()],
+	imports: [OwnersModule, DbModule(dbScope)],
 
 	queryPreHandlers: {
 		auth: CatsAuthMiddleware,

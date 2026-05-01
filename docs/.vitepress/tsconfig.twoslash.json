@@ -1,0 +1,13 @@
+{
+	"compilerOptions": {
+		"target": "ES2022",
+		"module": "NodeNext",
+		"moduleResolution": "NodeNext",
+		"strict": true,
+		"baseUrl": "../..",
+		"paths": {
+			"awilix-modular": ["./index.ts"]
+		}
+	},
+	"include": ["../../index.ts", "../../lib/**/*.ts", "../**/*.md"]
+}

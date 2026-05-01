@@ -10,6 +10,8 @@
 		"build:watch": "tsc --watch",
 		"build:release": "del-cli dist && npm run lint && npm run build",
 		"check-types": "tsc --pretty --noEmit",
+		"docs:dev": "vitepress dev docs",
+		"docs:build": "vitepress build docs",
 		"lint:fix": "biome check --write lib test index.ts",
 		"lint": "biome check lib test",
 		"test": "vitest run",
@@ -23,11 +25,13 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.3.15",
+		"@shikijs/vitepress-twoslash": "^4.0.2",
 		"@types/node": "^22.15.21",
 		"@vitest/coverage-v8": "^4.0.18",
 		"del-cli": "^7.0.0",
 		"tstyche": "^5.0.2",
 		"typescript": "^5.9.3",
+		"vitepress": "^1.6.4",
 		"vitest": "^4.0.18"
 	},
 	"type": "module",
