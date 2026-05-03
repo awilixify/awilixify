@@ -12,6 +12,7 @@
 		"check-types": "tsc --pretty --noEmit",
 		"docs:dev": "vitepress dev docs",
 		"docs:build": "vitepress build docs",
+		"docs:preview": "vitepress preview docs",
 		"lint:fix": "biome check --write lib test index.ts",
 		"lint": "biome check lib test",
 		"test": "vitest run",

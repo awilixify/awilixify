@@ -1,6 +1,6 @@
 import { type Controller } from "awilix-modular";
 
-import { errorCodeToHttpException } from "@/common/error-to-http-error.mapper.js";
+import { mapApplicationErrorToHttpError } from "@/common/error-to-http-error.mapper.js";
 
 import type { Deps } from "./cats.module.js";
 import { GetCatsSchema } from "./get-cats.dto.js";
@@ -45,7 +45,7 @@ export class CatsController implements Controller {
 					});
 				}
 
-				const error = errorCodeToHttpException[result.error.code]();
+				const error = mapApplicationErrorToHttpError(result.error);
 
 				return res.status(error.statusCode).send(error.getResponse());
 			},

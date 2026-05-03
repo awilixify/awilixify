@@ -1,6 +1,11 @@
 import { defineConfig } from "vitepress";
 import { transformerTwoslash } from "@shikijs/vitepress-twoslash";
 
+const repoName = process.env.GITHUB_REPOSITORY?.split("/")[1];
+const base =
+	process.env.DOCS_BASE ??
+	(process.env.GITHUB_ACTIONS === "true" && repoName ? `/${repoName}/` : "/");
+
 const docsSidebar = [
 	{
 		text: "Core",
@@ -66,6 +71,7 @@ export default defineConfig({
 	title: "awilix-modular",
 	description:
 		"HTTP-framework-agnostic modular DI and CQRS framework for Awilix",
+	base,
 	lang: "en-US",
 	cleanUrls: true,
 	lastUpdated: true,

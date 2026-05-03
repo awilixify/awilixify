@@ -59,5 +59,13 @@ export const errorCodeToHttpException = {
 	[Errors.CATS_NOT_FOUND.CODE]: () =>
 		httpException.notFound(Errors.CATS_NOT_FOUND.CODE),
 	[Errors.LOGGER_NOT_FOUND.CODE]: () =>
-		httpException.notFound(Errors.TENANT_NOT_FOUND.CODE),
+		httpException.notFound(Errors.LOGGER_NOT_FOUND.CODE),
 } as const satisfies Record<ErrorCode, () => HttpException<string>>;
+
+export function mapApplicationErrorToHttpError<TError extends BaseError>(
+	error: TError,
+): ReturnType<(typeof errorCodeToHttpException)[TError["code"]]> {
+	return errorCodeToHttpException[error.code]() as ReturnType<
+		(typeof errorCodeToHttpException)[TError["code"]]
+	>;
+}

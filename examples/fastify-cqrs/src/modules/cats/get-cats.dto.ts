@@ -1,7 +1,10 @@
 import { type Static, Type } from "@sinclair/typebox";
 import { HttpStatus } from "awilix-modular";
 import { mapErrorsToSchemas } from "@/common/base.dto.js";
-import { CatsNotFoundError } from "@/common/error-to-http-error.mapper.js";
+import {
+	CatsNotFoundError,
+	LoggerError,
+} from "@/common/error-to-http-error.mapper.js";
 
 export const GetCatsQuerySchema = Type.Object({
 	// breed: Type.Optional(Type.String()),
@@ -55,7 +58,7 @@ export const GetCatsSchema = {
 	querystring: GetCatsQuerySchema,
 	response: {
 		[HttpStatus.OK]: GetCatsResponseSchema,
-		...mapErrorsToSchemas([CatsNotFoundError]),
+		...mapErrorsToSchemas([CatsNotFoundError, LoggerError]),
 	},
 };
 
