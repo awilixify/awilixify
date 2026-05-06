@@ -3,10 +3,11 @@ import type { RouteRegistration } from "../http/openapi-builder.js";
 import { ControllerProcessor } from "./controller-processor.js";
 import * as ERRORS from "./errors.js";
 import { HandlerProcessor, HandlerType } from "./handler-processor.js";
-import type { AnyModule as M } from "./module.types.js";
+import { InterceptorProcessor } from "./interceptor-processor.js";
 import type { AnyProvider } from "./provider.types.js";
 import { ProviderDependencySorter } from "./provider-dependency-sorter.js";
 import { getOrCreateRequestScope } from "./request-scope-context.js";
+import type { InternalModuleLike as M } from "./runtime-module.types.js";
 import * as GUARGS from "./type-guards.js";
 
 export interface DiContextOptions {
@@ -31,6 +32,7 @@ export class DIContext {
 	private readonly sorter = new ProviderDependencySorter();
 	private readonly controllerProcessor: ControllerProcessor;
 	private readonly handlerProcessor: HandlerProcessor;
+	private readonly interceptorProcessor: InterceptorProcessor;
 	private readonly options: DiContextOptions;
 	private globalModulesWithScope: (ModuleScopeTree & { module: M })[] = [];
 
@@ -54,6 +56,9 @@ export class DIContext {
 			this.options.beforeRouteRegistered,
 		);
 		this.handlerProcessor = new HandlerProcessor(
+			this.options.providerOptions || {},
+		);
+		this.interceptorProcessor = new InterceptorProcessor(
 			this.options.providerOptions || {},
 		);
 	}
@@ -90,7 +95,7 @@ export class DIContext {
 
 			return {
 				name: m.name,
-				// biome-ignore lint/style/noNonNullAssertion: circular module was already registered at line 158
+				// biome-ignore lint/style/noNonNullAssertion: circular module was already registered
 				scope: this.moduleScopeMap.get(m)!,
 				importedScopes: new Map(),
 			};
@@ -133,6 +138,12 @@ export class DIContext {
 			...m,
 			imports: importedModulesWithScope.map((el) => el.module),
 		};
+
+		this.interceptorProcessor.processInterceptors(
+			m,
+			scope,
+			importedModulesWithScope,
+		);
 
 		Object.entries(this.sorter.sortByDependencies(moduleForSorting)).forEach(
 			([key, provider]) => {
@@ -238,7 +249,12 @@ export class DIContext {
 		const resolverOptions = this.extractResolverOptions(module, provider);
 
 		if (GUARGS.isCostructorProvider(provider)) {
-			const resolver = Awilix.asClass(provider, resolverOptions);
+			const resolver =
+				this.interceptorProcessor.createInterceptedProviderResolver({
+					module,
+					useClass: provider,
+					options: resolverOptions,
+				});
 
 			return wrapForExport
 				? Awilix.asFunction(
@@ -261,9 +277,16 @@ export class DIContext {
 		}
 
 		const baseResolver = Awilix.asClass(provider.useClass, resolverOptions);
-		const resolver = provider.allowCircular
+		const classResolver = provider.allowCircular
 			? this.createProxyResolver(baseResolver, resolverOptions, wrapForExport)
 			: baseResolver;
+		const resolver =
+			this.interceptorProcessor.createInterceptedProviderResolver({
+				module,
+				useClass: provider.useClass,
+				options: resolverOptions,
+				resolver: classResolver,
+			});
 
 		return wrapForExport
 			? Awilix.asFunction(() => {

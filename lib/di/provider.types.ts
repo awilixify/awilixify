@@ -5,6 +5,7 @@ import type {
 	AnyMiddlewareContract,
 	Middleware,
 } from "lib/mediator/middleware.types.js";
+import type { Interceptor } from "./interceptor.types.js";
 
 export type DefProviderMap = Record<string, object | string | boolean | number>;
 
@@ -12,6 +13,7 @@ export type DefProviderMap = Record<string, object | string | boolean | number>;
  * PreHandler map - accepts any type, will be converted to constructor type internally
  */
 export type DefPreHandlerMap = Record<string, object>;
+export type DefInterceptorMap = Record<string, object>;
 // ============================================================================
 // Provider Types
 // ============================================================================
@@ -103,6 +105,20 @@ export type ClassMiddleware<M extends Constructor<any> = Constructor<any>> = {
  * Union type for any middleware (constructor or class-based).
  */
 export type AnyMiddleware = ClassMiddleware | Constructor<Middleware>;
+
+// ============================================================================
+// Interceptor Types
+// ============================================================================
+
+export interface ConstructorInterceptor {
+	new (...args: any[]): Interceptor;
+}
+
+export type ClassInterceptor<I extends Constructor<any> = Constructor<any>> = {
+	useClass: I;
+} & BuildResolverOptions<any>;
+
+export type AnyInterceptor = ClassInterceptor | ConstructorInterceptor;
 
 // ============================================================================
 // Provider Mapping Helper

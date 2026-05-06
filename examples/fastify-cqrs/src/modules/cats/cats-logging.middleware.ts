@@ -28,9 +28,9 @@ export class CatsLoggingMiddleware implements Middleware<Contract> {
 		const token = executionContext.token;
 		const t = context.userId;
 
-		console.log("--------------LOGGING--------------------");
-		console.log(`User: ${context.userId}, Roles: ${context.roles.join(", ")}`);
-
+		// console.log("--------------LOGGING--------------------");
+		// console.log(`User: ${context.userId}, Roles: ${context.roles.join(", ")}`);
+		//
 		// if (!token || token === "invalid") {
 		// 	return Result.error(new LoggerError());
 		// }

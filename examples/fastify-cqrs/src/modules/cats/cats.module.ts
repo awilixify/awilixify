@@ -11,6 +11,8 @@ import { CatsScopedController } from "./cats-scoped.controller.js";
 import { DogsService } from "./dogs.service.js";
 import { GetCatsQueryHandler } from "./get-cats.q-handler.js";
 import { GetCatsService } from "./get-cats.service.js";
+import { InterceptedCatsService } from "./intercepted-cats.service.js";
+import { CatsCacheInterceptor } from "./cats-cache.interceptor.js";
 
 const dbScope = {
 	readTables: ["cats"],
@@ -22,6 +24,7 @@ export type CatsModuleDef = ModuleDef<{
 		catsService: CatsService;
 		dogsService: DogsService;
 		getCatsService: GetCatsService;
+		interceptedCatsService: InterceptedCatsService;
 	};
 	exportKeys: "catsService";
 	imports: [typeof OwnersModule, ReturnType<typeof DbModule<typeof dbScope>>];
@@ -29,6 +32,9 @@ export type CatsModuleDef = ModuleDef<{
 	queryPreHandlers: {
 		auth: CatsAuthMiddleware;
 		logging: CatsLoggingMiddleware;
+	};
+	interceptors: {
+		cache: CatsCacheInterceptor;
 	};
 }>;
 
@@ -44,6 +50,9 @@ export const CatsModule = createStaticModule<CatsModuleDef>({
 		logging: { useClass: CatsLoggingMiddleware },
 		// logging: CatsLoggingMiddleware,
 	},
+	interceptors: {
+		cache: CatsCacheInterceptor,
+	},
 
 	providerOptions: {
 		// lifetime: "SCOPED",
@@ -51,6 +60,9 @@ export const CatsModule = createStaticModule<CatsModuleDef>({
 	},
 
 	providers: {
+		interceptedCatsService: {
+			useClass: InterceptedCatsService,
+		},
 		getCatsService: {
 			useClass: GetCatsService,
 		},

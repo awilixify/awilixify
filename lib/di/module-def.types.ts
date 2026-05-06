@@ -8,6 +8,7 @@ import type {
 } from "./module.types.js";
 import type {
 	ClassHandler,
+	DefInterceptorMap,
 	DefPreHandlerMap,
 	DefProviderMap,
 } from "./provider.types.js";
@@ -41,6 +42,10 @@ export type ModuleDef<
 		exportCommandPreHandlerKeys?: D["commandPreHandlers"] extends DefPreHandlerMap
 			? keyof D["commandPreHandlers"]
 			: never;
+		interceptors?: DefInterceptorMap;
+		exportInterceptorKeys?: D["interceptors"] extends DefInterceptorMap
+			? keyof D["interceptors"]
+			: never;
 		imports?: readonly ModuleImport[];
 		forRootConfig?: UnknownRecord;
 		queryHandlers?: readonly any[];
@@ -55,6 +60,8 @@ export type ModuleDef<
 	exports: ExtractExports<D>;
 	queryPreHandlerExports: ExtractPreHandlerExports<"query", D>;
 	commandPreHandlerExports: ExtractPreHandlerExports<"command", D>;
+	interceptors: ExtractInterceptors<D>;
+	interceptorExports: ExtractInterceptorExports<D>;
 	imports: ExtractImports<D>;
 	deps: ExtractDeps<D>;
 	queryHandlers: ExtractHandlers<"query", D>;
@@ -130,6 +137,20 @@ type ExtractForRootConfig<D extends Partial<WithForRootConfig>> =
 	D["forRootConfig"] extends WithForRootConfig["forRootConfig"]
 		? { forRootConfig: D["forRootConfig"] }
 		: EmptyObject;
+
+type ExtractInterceptors<D extends { interceptors?: DefInterceptorMap }> =
+	D["interceptors"] extends DefInterceptorMap ? D["interceptors"] : EmptyObject;
+
+type ExtractInterceptorExports<
+	D extends {
+		interceptors?: DefInterceptorMap;
+		exportInterceptorKeys?: keyof NonNullable<D["interceptors"]>;
+	},
+> = D["interceptors"] extends DefInterceptorMap
+	? D["exportInterceptorKeys"] extends keyof D["interceptors"]
+		? Pick<D["interceptors"], D["exportInterceptorKeys"]>
+		: EmptyObject
+	: EmptyObject;
 
 // ============================================================================
 // ExtractDeps

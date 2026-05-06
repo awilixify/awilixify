@@ -3,6 +3,7 @@ import type { ForwardRef } from "./module-ref.types.js";
 import type {
 	ClassController,
 	ClassHandler,
+	ClassInterceptor,
 	ClassMiddleware,
 	ClassProvider,
 	FactoryProvider,
@@ -33,6 +34,16 @@ export function isClassMiddleware(
 		typeof middleware === "object" &&
 		middleware !== null &&
 		"useClass" in middleware
+	);
+}
+
+export function isClassInterceptor(
+	interceptor: unknown,
+): interceptor is ClassInterceptor {
+	return (
+		typeof interceptor === "object" &&
+		interceptor !== null &&
+		"useClass" in interceptor
 	);
 }
 

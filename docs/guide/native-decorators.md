@@ -54,3 +54,5 @@ export class UserController {
 Available decorators: `@controller`, `@GET`, `@POST`, `@PUT`, `@PATCH`, `@DELETE`, `@HEAD`, `@OPTIONS`, `@before`, `@after`, `@schema`.
 
 `@schema` defines JSON Schema validation and OpenAPI docs for a route. It works with the `beforeRouteRegistered` hook for automatic validation and spec generation.
+
+For provider method interception (for example caching/logging around service methods), see [Interceptors](/docs/interceptors).

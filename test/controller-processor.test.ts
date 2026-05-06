@@ -5,7 +5,7 @@ import * as ERRORS from "../lib/di/errors.js";
 import type { AnyModule } from "../lib/di/module.types.js";
 import { createDynamicModule } from "../lib/di/module-factories.js";
 import type { Controller } from "../lib/di/provider.types.js";
-import { controller, GET, POST, schema } from "../lib/http/decorators.js";
+import { controller, GET, POST, schema } from "../lib/decorators/http-decorators.js";
 
 describe("ControllerProcessor", () => {
 	const createMockExpress = () => {

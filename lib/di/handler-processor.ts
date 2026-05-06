@@ -7,12 +7,12 @@ import type {
 	MiddlewareResolverMap,
 } from "../mediator/middleware.types.js";
 import * as ERRORS from "./errors.js";
-import type { AnyModule as M } from "./module.types.js";
 import type { AnyMiddleware } from "./provider.types.js";
 import {
 	getOrCreateRequestScope,
 	resolveFromRequestScope,
 } from "./request-scope-context.js";
+import type { InternalModuleLike as M } from "./runtime-module.types.js";
 import { isClassHandler, isClassMiddleware } from "./type-guards.js";
 
 export const HandlerType = {

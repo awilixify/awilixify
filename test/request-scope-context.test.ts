@@ -2,7 +2,7 @@ import { Lifetime } from "awilix";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DIContext } from "../lib/di/di-context.js";
 import type { AnyModule } from "../lib/di/module.types.js";
-import { GET } from "../lib/http/decorators.js";
+import { GET } from "../lib/decorators/http-decorators.js";
 
 describe("Request scope context (AsyncLocalStorage)", () => {
 	const createMockExpress = () => {

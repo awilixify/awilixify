@@ -10,26 +10,26 @@ import {
 	POST,
 	PUT,
 	schema,
-} from "../lib/http/decorators.js";
+} from "../lib/decorators/http-decorators.js";
 import { HttpVerbs } from "../lib/http/http-verbs.js";
 import {
+	HTTP_DECORATOR_STATE,
 	hasValidationSchema,
-	type IState,
-	STATE,
-} from "../lib/http/state-util.js";
+	type IHttpDecoratorState,
+} from "../lib/decorators/http-state.js";
 
 /**
  * Helper function to get decorator state from a class
  * Mirrors the approach used in controller-processor.ts
  */
-function getDecoratorState(target: any): IState | null {
+function getDecoratorState(target: any): IHttpDecoratorState | null {
 	const symbol = Object.getOwnPropertySymbols(target).find(
 		(s) => s.toString() === "Symbol(Symbol.metadata)",
 	);
 
 	if (!symbol) return null;
 
-	return target[symbol][STATE] || null;
+	return target[symbol][HTTP_DECORATOR_STATE] || null;
 }
 
 describe("Decorators", () => {

@@ -24,7 +24,7 @@ export class CatsAuthMiddleware implements Middleware<Contract> {
 		// Read from executionContext (immutable, from HTTP layer)
 		const token = executionContext.token;
 
-		console.log("-------------------AUTH--------------------------");
+		// console.log("-------------------AUTH--------------------------");
 
 		// Simulate token verification
 		if (!token || token === "invalid") {

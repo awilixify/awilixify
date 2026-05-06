@@ -13,6 +13,7 @@ const docsSidebar = [
 			{ text: "Quick Start", link: "/docs/quick-start" },
 			{ text: "Providers", link: "/docs/providers" },
 			{ text: "Native Decorators", link: "/docs/native-decorators" },
+			{ text: "Interceptors", link: "/docs/interceptors" },
 			{
 				text: "HTTP Exception Handling",
 				link: "/docs/http-exception-handling",

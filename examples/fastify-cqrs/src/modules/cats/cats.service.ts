@@ -1,5 +1,6 @@
 import type { Deps } from "./cats.module.js";
 import type { CatsServiceResponse } from "./get-cats.dto.js";
+import { Cachable } from "./cachable.decorator.js";
 
 export class CatsService {
 	private readonly instanceId = Math.random().toString(36).substring(7);
@@ -14,6 +15,7 @@ export class CatsService {
 		return this.instanceId + " ???";
 	}
 
+	@Cachable("cats:list", { ttlMs: 10_000 })
 	getCats(): CatsServiceResponse {
 		return {
 			catsServiceId: this.getInstanceId(),

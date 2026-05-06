@@ -1,5 +1,5 @@
 import * as ERRORS from "./errors.js";
-import type { AnyModule as M } from "./module.types.js";
+import type { InternalModuleLike as M } from "./runtime-module.types.js";
 import { isFactoryProvider, isForwardRef } from "./type-guards.js";
 
 type ProviderDepsGraph = {

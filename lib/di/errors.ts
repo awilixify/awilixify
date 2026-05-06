@@ -105,3 +105,18 @@ export class MiddlewareNameConflictError extends Error {
 		this.name = "MiddlewareNameConflictError";
 	}
 }
+
+export class InterceptorNameConflictError extends Error {
+	constructor(
+		moduleName: string,
+		interceptorKey: string,
+		existingModuleName: string,
+	) {
+		super(
+			`Module "${moduleName}" has an interceptor named "${interceptorKey}" ` +
+				`that conflicts with an interceptor already registered from module "${existingModuleName}". ` +
+				`Interceptor names must be unique within a module scope.`,
+		);
+		this.name = "InterceptorNameConflictError";
+	}
+}

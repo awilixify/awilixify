@@ -1,5 +1,5 @@
+import type { RouteSchema } from "../decorators/http-state.js";
 import type { HttpVerb } from "./http-verbs.js";
-import type { RouteSchema } from "./state-util.js";
 
 export interface RouteOptions<TRequest = any, TReply = any> {
 	method: string | string[];

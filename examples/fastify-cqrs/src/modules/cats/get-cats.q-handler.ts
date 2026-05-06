@@ -30,12 +30,17 @@ export class GetCatsQueryHandler
 	constructor(
 		private readonly catsService: Deps["catsService"],
 		private readonly dogsService: Deps["dogsService"],
+		private readonly interceptedCatsService: Deps["interceptedCatsService"],
 	) {}
 
 	async executor(
 		_payload: Payload,
 		context: this["context"],
 	): Promise<Response> {
+		return Result.ok({
+			test: this.catsService.getCats(),
+			catsService: await this.interceptedCatsService.getCatsInterceped(),
+		});
 		console.log(context, "CONTExt");
 		const { userId, roles } = this.normalizeContext(context);
 
@@ -45,7 +50,9 @@ export class GetCatsQueryHandler
 			`[GetCatsQueryHandler] User ${userId} with roles ${roles.join(", ")}`,
 		);
 
-		const cats = this.catsService.getCats();
+		const cats = await this.catsService.getCats();
+
+		// console.log(cats, "cats");
 
 		// return {
 		// 	handlerId: this.instanceId,

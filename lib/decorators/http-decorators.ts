@@ -1,4 +1,4 @@
-import { type HttpVerb, HttpVerbs } from "./http-verbs.js";
+import { type HttpVerb, HttpVerbs } from "../http/http-verbs.js";
 import {
 	addAfterMiddleware,
 	addBeforeMiddleware,
@@ -7,14 +7,13 @@ import {
 	type MiddlewareParameter,
 	type RouteSchema,
 	setSchema,
-	updateState,
-} from "./state-util.js";
+	updateHttpDecoratorState,
+} from "./http-state.js";
 
 type ControllerOptions = string | string[] | { path: string | string[] };
 
 function normalizePaths(options: ControllerOptions): string[] {
 	if (typeof options === "string") return [options];
-
 	if (Array.isArray(options)) return options;
 
 	return Array.isArray(options.path) ? options.path : [options.path];
@@ -23,7 +22,7 @@ function normalizePaths(options: ControllerOptions): string[] {
 function createRouteDecorator(httpVerb: HttpVerb) {
 	return (path: string = "/") =>
 		(target: any, context: ClassMethodDecoratorContext) => {
-			updateState(context.metadata, (state) => {
+			updateHttpDecoratorState(context.metadata, (state) => {
 				const withVerbs = addHttpVerbs(state, context.name, [httpVerb]);
 
 				return addPaths(withVerbs, context.name, [path]);
@@ -43,7 +42,7 @@ export function controller(options?: ControllerOptions) {
 	return (target: any, context: ClassDecoratorContext) => {
 		if (!options) return target;
 
-		updateState(context.metadata, (state) =>
+		updateHttpDecoratorState(context.metadata, (state) =>
 			addPaths(state, null, normalizePaths(options)),
 		);
 
@@ -61,7 +60,7 @@ export function before(middleware: MiddlewareParameter) {
 				? (context as ClassMethodDecoratorContext).name
 				: null;
 
-		updateState(context.metadata, (state) =>
+		updateHttpDecoratorState(context.metadata, (state) =>
 			addBeforeMiddleware(state, methodName, middleware),
 		);
 
@@ -79,7 +78,7 @@ export function after(middleware: MiddlewareParameter) {
 				? (context as ClassMethodDecoratorContext).name
 				: null;
 
-		updateState(context.metadata, (state) =>
+		updateHttpDecoratorState(context.metadata, (state) =>
 			addAfterMiddleware(state, methodName, middleware),
 		);
 
@@ -89,7 +88,7 @@ export function after(middleware: MiddlewareParameter) {
 
 export function schema(schemaDefinition: RouteSchema) {
 	return (target: any, context: ClassMethodDecoratorContext) => {
-		updateState(context.metadata, (state) =>
+		updateHttpDecoratorState(context.metadata, (state) =>
 			setSchema(state, context.name, schemaDefinition),
 		);
 

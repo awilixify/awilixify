@@ -1,26 +1,26 @@
 import * as Awilix from "awilix";
 import {
+	HTTP_DECORATOR_STATE,
+	type IHttpDecoratorState,
+	type IRouteState,
+	type MethodName,
+	type RouteSchema,
+} from "../decorators/http-state.js";
+import {
 	type ExpressFramework,
 	type ExpressMethod,
 	type FastifyFramework,
 	HttpFramework,
 } from "../http/framework.types.js";
 import type { HttpVerb } from "../http/http-verbs.js";
-import {
-	type IRouteState,
-	type IState,
-	type MethodName,
-	type RouteSchema,
-	STATE,
-} from "../http/state-util.js";
 import type { DiContextOptions } from "./di-context.js";
 import * as ERRORS from "./errors.js";
-import type { AnyModule as M } from "./module.types.js";
 import type { ConstructorController, Controller } from "./provider.types.js";
 import {
 	resolveFromRequestScope,
 	runInRequestScopeContext,
 } from "./request-scope-context.js";
+import type { InternalModuleLike as M } from "./runtime-module.types.js";
 import { isClassController } from "./type-guards.js";
 
 type RouteRegistrationParams = {
@@ -183,18 +183,22 @@ export class ControllerProcessor {
 		});
 	}
 
-	private getDecoratedState(target: ConstructorController): IState | undefined {
+	private getDecoratedState(
+		target: ConstructorController,
+	): IHttpDecoratorState | undefined {
 		const symbol = Object.getOwnPropertySymbols(target).find(
 			(s) => s.toString() === "Symbol(Symbol.metadata)",
 		);
 
 		if (!symbol) return;
 
-		return (target as any)[symbol][STATE];
+		return (target as any)[symbol][HTTP_DECORATOR_STATE];
 	}
 
-	private rollUpDecoratedState(state: IState): IState["methods"] {
-		const result: IState["methods"] = new Map();
+	private rollUpDecoratedState(
+		state: IHttpDecoratorState,
+	): IHttpDecoratorState["methods"] {
+		const result: IHttpDecoratorState["methods"] = new Map();
 
 		state.methods.forEach((method, key) => {
 			result.set(key, {
