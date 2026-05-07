@@ -7,7 +7,10 @@ import { HandlerProcessor, HandlerType } from "./handler-processor.js";
 import { InterceptorProcessor } from "./interceptor-processor.js";
 import type { AnyProvider } from "./provider.types.js";
 import { ProviderDependencySorter } from "./provider-dependency-sorter.js";
-import { getOrCreateRequestScope } from "./request-scope-context.js";
+import {
+	hasRequestScopeContext,
+	resolveFromRequestScope,
+} from "./request-scope-context.js";
 import type { InternalModuleLike as M } from "./runtime-module.types.js";
 import * as GUARGS from "./type-guards.js";
 
@@ -30,6 +33,7 @@ export interface ModuleScopeTree<
 export class DIContext {
 	private readonly forwardRefModules = new WeakSet<M>();
 	private readonly moduleScopeMap = new WeakMap<M, Awilix.AwilixContainer>();
+	private readonly moduleTreeMap = new WeakMap<M, ModuleScopeTree>();
 	private readonly sorter = new ProviderDependencySorter();
 	private readonly controllerProcessor: ControllerProcessor;
 	private readonly handlerProcessor: HandlerProcessor;
@@ -87,6 +91,12 @@ export class DIContext {
 		moduleChain: M[],
 		includeGlobalModules = true,
 	): ModuleScopeTree {
+		const existingTree = this.moduleTreeMap.get(m);
+
+		if (existingTree) {
+			return existingTree;
+		}
+
 		this.ensureImportedModulesUniqueness(m, includeGlobalModules);
 		this.ensureNoProviderNameConflicts(m, includeGlobalModules);
 		this.markModuleIfImportsUseForwardRef(m);
@@ -122,18 +132,36 @@ export class DIContext {
 
 		importedModulesWithScope.forEach(
 			({ module: importedModule, scope: importedScope }) => {
-				Object.entries(importedModule.exports || {}).forEach(
-					([key, provider]) => {
-						scope.register({
-							[key]: this.resolveProvider({
-								provider,
-								resolutionScope: importedScope,
-								module: importedModule,
-								wrapForExport: true,
-							}),
-						});
-					},
-				);
+				Object.keys(importedModule.exports || {}).forEach((key) => {
+					if (!importedModule.providers?.[key]) {
+						throw new ERRORS.InvalidProviderDefinitionError(
+							importedModule.name,
+							key,
+						);
+					}
+
+					scope.register({
+						[key]: Awilix.asFunction(
+							() => {
+								// biome-ignore lint/style/noNonNullAssertion: provider must be registered
+								const registration = importedScope.registrations[key]!;
+
+								return registration.lifetime === Awilix.Lifetime.SINGLETON
+									? importedScope.resolve(key)
+									: // Use request scope only when one is active; otherwise
+										// fallback to owner scope to avoid creating synthetic
+										// request scopes on every non-request resolve.
+										hasRequestScopeContext()
+										? resolveFromRequestScope(importedScope, key)
+										: importedScope.resolve(key);
+							},
+							{
+								lifetime: Awilix.Lifetime.TRANSIENT,
+								isLeakSafe: true,
+							},
+						),
+					});
+				});
 			},
 		);
 
@@ -180,11 +208,14 @@ export class DIContext {
 			controllers,
 		);
 
-		return {
+		const moduleTree = {
 			scope,
 			importedScopes: this.buildImportedScopesMap(importedModulesWithScope),
 			name: m.name,
 		};
+		this.moduleTreeMap.set(m, moduleTree);
+
+		return moduleTree;
 	}
 
 	private initializeGlobalModules(): void {
@@ -227,12 +258,10 @@ export class DIContext {
 		provider,
 		resolutionScope,
 		module,
-		wrapForExport,
 	}: {
 		provider: AnyProvider;
 		resolutionScope: Awilix.AwilixContainer;
 		module: M;
-		wrapForExport?: boolean;
 	}): Awilix.Resolver<any> {
 		if (GUARGS.isPrimitive(provider)) {
 			return Awilix.asValue(provider);
@@ -258,19 +287,11 @@ export class DIContext {
 		const resolverOptions = this.extractResolverOptions(module, provider);
 
 		if (GUARGS.isCostructorProvider(provider)) {
-			const resolver =
-				this.interceptorProcessor.createInterceptedProviderResolver({
-					module,
-					useClass: provider,
-					options: resolverOptions,
-				});
-
-			return wrapForExport
-				? Awilix.asFunction(
-						() => resolver.resolve(resolutionScope),
-						resolverOptions,
-					)
-				: resolver;
+			return this.interceptorProcessor.createInterceptedProviderResolver({
+				module,
+				useClass: provider,
+				options: resolverOptions,
+			});
 		}
 
 		if (GUARGS.isFactoryProvider(provider)) {
@@ -287,25 +308,15 @@ export class DIContext {
 
 		const baseResolver = Awilix.asClass(provider.useClass, resolverOptions);
 		const classResolver = provider.allowCircular
-			? this.createProxyResolver(baseResolver, resolverOptions, wrapForExport)
+			? this.createProxyResolver(baseResolver, resolverOptions)
 			: baseResolver;
-		const resolver =
-			this.interceptorProcessor.createInterceptedProviderResolver({
-				module,
-				useClass: provider.useClass,
-				options: resolverOptions,
-				resolver: classResolver,
-			});
 
-		return wrapForExport
-			? Awilix.asFunction(() => {
-					return resolver.resolve(
-						resolverOptions.lifetime === Awilix.Lifetime.SINGLETON
-							? resolutionScope
-							: getOrCreateRequestScope(resolutionScope),
-					);
-				}, resolverOptions)
-			: resolver;
+		return this.interceptorProcessor.createInterceptedProviderResolver({
+			module,
+			useClass: provider.useClass,
+			options: resolverOptions,
+			resolver: classResolver,
+		});
 	}
 
 	private extractResolverOptions(
@@ -346,7 +357,6 @@ export class DIContext {
 	private createProxyResolver(
 		resolver: Awilix.Resolver<any>,
 		options: Awilix.BuildResolverOptions<any>,
-		wrapForExport?: boolean,
 	) {
 		return Awilix.createBuildResolver({
 			...options,
@@ -357,13 +367,6 @@ export class DIContext {
 					{},
 					{
 						get(_, name) {
-							if (
-								wrapForExport &&
-								options?.lifetime === Awilix.Lifetime.TRANSIENT
-							) {
-								return resolver.resolve(container)[name];
-							}
-
 							if (!resolved) {
 								resolved = resolver.resolve(container);
 							}

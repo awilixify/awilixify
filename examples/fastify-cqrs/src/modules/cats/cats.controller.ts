@@ -1,10 +1,18 @@
 import { type Controller } from "awilix-modular";
 
 import { mapApplicationErrorToHttpError } from "@/common/error-to-http-error.mapper.js";
-import { cron } from "@/modules/scheduler/cron.decorator.js";
+import {
+	createCronDefinition,
+	cron,
+} from "@/modules/scheduler/cron.decorator.js";
 
 import type { Deps } from "./cats.module.js";
 import { GetCatsSchema } from "./get-cats.dto.js";
+
+export const CatsHeartbeatCron = createCronDefinition({
+	id: "heartbeat",
+	seconds: 10,
+});
 
 export class CatsController implements Controller {
 	private readonly instanceId = Math.random().toString(36).substring(7);
@@ -12,6 +20,7 @@ export class CatsController implements Controller {
 	constructor(
 		private readonly app: Deps["app"],
 		private readonly queryMediator: Deps["queryMediator"],
+		private scheduler: Deps["scheduler"],
 	) {}
 
 	registerRoutes() {
@@ -53,8 +62,8 @@ export class CatsController implements Controller {
 		});
 	}
 
-	@cron("*/30 * * * * *")
-	onHeartbeat(payload: unknown) {
-		console.log("[CatsController] cron tick", payload);
+	@cron(CatsHeartbeatCron)
+	onHeartbeat() {
+		console.log("[CatsController] cron tick", this.scheduler.getJobs()[0]?.id);
 	}
 }

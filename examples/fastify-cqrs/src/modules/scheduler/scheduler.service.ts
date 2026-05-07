@@ -1,26 +1,18 @@
-import nodeCron from "node-cron";
+import { type Deps } from "./scheduler.module.js";
 
-export type CronScheduleDefinition = {
-	name: string;
-	expression: string;
-	run: () => unknown | Promise<unknown>;
-	options?: Record<string, unknown>;
-};
+export class Scheduler {
+	constructor(
+		private readonly toadScheduler: Deps["toadScheduler"],
+		private readonly allowedCronDefinitions: Deps["allowedCronDefinitions"],
+	) {}
 
-export class SchedulerService {
-	scheduleCron(definition: CronScheduleDefinition): void {
-		if (!nodeCron.validate(definition.expression)) {
-			throw new Error(
-				`Invalid cron expression for \"${definition.name}\": ${definition.expression}`,
-			);
-		}
+	getJobs() {
+		return this.toadScheduler
+			.getAllJobs()
+			.filter((job) => job.id && this.allowedIds.includes(job.id));
+	}
 
-		nodeCron.schedule(
-			definition.expression,
-			() => {
-				void Promise.resolve(definition.run());
-			},
-			definition.options,
-		);
+	private get allowedIds() {
+		return this.allowedCronDefinitions.map((el) => el.id);
 	}
 }

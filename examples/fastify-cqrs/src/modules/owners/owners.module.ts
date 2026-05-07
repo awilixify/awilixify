@@ -7,16 +7,18 @@ import {
 } from "awilix-modular";
 import { CatsModule, type CatsModuleDef } from "../cats/cats.module.js";
 import { DbModule } from "@/modules/db/db.module.js";
+import { ScheduleModule } from "@/modules/scheduler/scheduler.module.js";
 
 import { OwnersService } from "./owners.service.js";
 import { Owners1Service } from "./owners1.service.js";
 import { GetOwnersQueryHandler } from "./get-owners.q-handler.js";
-import { OwnersController } from "./owners.controller.js";
+import { OwnersController, OwnersHeartbeatCron } from "./owners.controller.js";
 
 const dbScope = {
 	readTables: ["cats"],
 	writeTables: ["cats"],
 } as const;
+const OwnersSchedulerModule = ScheduleModule([OwnersHeartbeatCron]);
 
 export type OwnersModuleDef = ModuleDef<{
 	providers: {
@@ -27,6 +29,7 @@ export type OwnersModuleDef = ModuleDef<{
 	imports: [
 		ModuleRef<CatsModuleDef>,
 		ReturnType<typeof DbModule<typeof dbScope>>,
+		typeof OwnersSchedulerModule,
 	];
 	queryHandlers: [GetOwnersQueryHandler];
 }>;
@@ -37,7 +40,11 @@ export const OwnersModule: StaticModule<OwnersModuleDef> =
 	createStaticModule<OwnersModuleDef>({
 		name: "OwnersModule",
 
-		imports: [forwardRef(() => CatsModule), DbModule(dbScope)],
+		imports: [
+			forwardRef(() => CatsModule),
+			DbModule(dbScope),
+			OwnersSchedulerModule,
+		],
 
 		queryHandlers: [GetOwnersQueryHandler],
 		controllers: [OwnersController],

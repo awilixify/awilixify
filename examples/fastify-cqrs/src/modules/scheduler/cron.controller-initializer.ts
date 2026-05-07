@@ -1,29 +1,48 @@
-import type { ControllerInitializer } from "awilix-modular";
+import type {
+	ControllerInitializer,
+	ControllerInitializerContext,
+} from "awilix-modular";
+import { AsyncTask, SimpleIntervalJob } from "toad-scheduler";
+
 import { CRON_METADATA_TOKEN, type CronMetadata } from "./cron.decorator.js";
-import type { Deps } from "./scheduler.module.ts";
+import { Deps } from "./scheduler.module.js";
 
 export class CronControllerInitializer
 	implements ControllerInitializer<CronMetadata>
 {
 	public readonly token = CRON_METADATA_TOKEN;
 
-	constructor(private readonly cronScheduler: Deps["cronScheduler"]) {}
+	constructor(
+		private readonly toadScheduler: Deps["toadScheduler"],
+		private readonly allowedCronDefinitions: Deps["allowedCronDefinitions"],
+	) {}
 
-	initialize(context: {
-		moduleName: string;
-		controllerClass: new (...args: any[]) => any;
-		methodName: string | symbol;
-		metadata: CronMetadata;
-		invoke: (...args: unknown[]) => unknown | Promise<unknown>;
-	}): void {
-		const methodName = String(context.methodName);
-		const jobName = `${context.moduleName}.${context.controllerClass.name}.${methodName}`;
+	initialize(context: ControllerInitializerContext<CronMetadata>): void {
+		const { id, preventOverrun, ...settings } = context.metadata;
 
-		this.cronScheduler.scheduleCron({
-			name: jobName,
-			expression: context.metadata.expression,
-			options: context.metadata.options,
-			run: () => context.invoke({ source: "cron", jobName, at: new Date() }),
+		if (!this.allowedCronDefinitions.includes(context.metadata)) {
+			throw new Error(
+				`Cron definition with id: "${id}" is not allowed for module "${context.moduleName}"`,
+			);
+		}
+
+		if (this.toadScheduler.existsById(id)) {
+			throw new Error(`Cron already exists: ${id}`);
+		}
+
+		const task = new AsyncTask(
+			id,
+			() => Promise.resolve(context.invoke()),
+			(error: unknown) => {
+				console.error(`[Scheduler] job failed: ${id}`, error);
+			},
+		);
+
+		const job = new SimpleIntervalJob(settings, task, {
+			id,
+			preventOverrun,
 		});
+
+		this.toadScheduler.addSimpleIntervalJob(job);
 	}
 }

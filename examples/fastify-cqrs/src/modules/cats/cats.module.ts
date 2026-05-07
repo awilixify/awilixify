@@ -13,7 +13,8 @@ import { GetCatsQueryHandler } from "./get-cats.q-handler.js";
 import { GetCatsService } from "./get-cats.service.js";
 import { InterceptedCatsService } from "./intercepted-cats.service.js";
 import { CatsCacheInterceptor } from "./cats-cache.interceptor.js";
-import { SchedulerModule } from "@/modules/scheduler/scheduler.module.js";
+import { ScheduleModule } from "@/modules/scheduler/scheduler.module.js";
+import { CatsHeartbeatCron } from "./cats.controller.js";
 
 const dbScope = {
 	readTables: ["cats"],
@@ -31,7 +32,7 @@ export type CatsModuleDef = ModuleDef<{
 	imports: [
 		typeof OwnersModule,
 		ReturnType<typeof DbModule<typeof dbScope>>,
-		typeof SchedulerModule,
+		ReturnType<typeof ScheduleModule>,
 	];
 	queryHandlers: [GetCatsQueryHandler];
 	queryPreHandlers: {
@@ -48,7 +49,11 @@ export type Deps = CatsModuleDef["deps"];
 export const CatsModule = createStaticModule<CatsModuleDef>({
 	name: "CatsModule",
 
-	imports: [OwnersModule, DbModule(dbScope), SchedulerModule],
+	imports: [
+		OwnersModule,
+		DbModule(dbScope),
+		ScheduleModule([CatsHeartbeatCron]),
+	],
 
 	queryPreHandlers: {
 		auth: CatsAuthMiddleware,

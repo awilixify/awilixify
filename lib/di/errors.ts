@@ -129,3 +129,13 @@ export class ControllerInitializerConflictError extends Error {
 		this.name = "ControllerInitializerConflictError";
 	}
 }
+
+export class InvalidProviderDefinitionError extends Error {
+	constructor(moduleName: string, providerKey: string) {
+		super(
+			`Module "${moduleName}" has invalid provider definition for key "${providerKey}". ` +
+				`Provider value is undefined or unsupported.`,
+		);
+		this.name = "InvalidProviderDefinitionError";
+	}
+}

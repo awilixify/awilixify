@@ -483,6 +483,62 @@ describe("DIContext", () => {
 	});
 
 	describe("Module Imports and Exports", () => {
+		it("should reuse the same static module scope across repeated imports", () => {
+			class SharedSingleton extends TestableBase {}
+			class ConsumerA extends TestableBase {}
+			class ConsumerB extends TestableBase {}
+
+			const SharedModule: AnyModule = {
+				name: "SharedModule",
+				providers: {
+					sharedSingleton: SharedSingleton,
+				},
+				exports: {
+					sharedSingleton: SharedSingleton,
+				},
+			};
+
+			const ModuleA: AnyModule = {
+				name: "ModuleA",
+				imports: [SharedModule],
+				providers: {
+					consumerA: ConsumerA,
+				},
+				exports: {
+					consumerA: ConsumerA,
+				},
+			};
+
+			const ModuleB: AnyModule = {
+				name: "ModuleB",
+				imports: [SharedModule],
+				providers: {
+					consumerB: ConsumerB,
+				},
+				exports: {
+					consumerB: ConsumerB,
+				},
+			};
+
+			const { scope, importedScopes } = registerModule({
+				name: "RootModule",
+				imports: [ModuleA, ModuleB],
+			});
+
+			const sharedModuleScopeFromA = importedScopes
+				.get("ModuleA")
+				?.importedScopes.get("SharedModule")?.scope;
+			const sharedModuleScopeFromB = importedScopes
+				.get("ModuleB")
+				?.importedScopes.get("SharedModule")?.scope;
+
+			const sharedFromA = sharedModuleScopeFromA?.resolve("sharedSingleton");
+			const sharedFromB = sharedModuleScopeFromB?.resolve("sharedSingleton");
+
+			expect(sharedModuleScopeFromA).toBe(sharedModuleScopeFromB);
+			expect(sharedFromA?.instanceId).toBe(sharedFromB?.instanceId);
+		});
+
 		it("should exported factory providers to have correct deps", () => {
 			class P1 extends TestableBase {}
 			class P2 extends TestableBase {}
@@ -514,7 +570,6 @@ describe("DIContext", () => {
 					p2: {
 						provide: {
 							useClass: P2,
-							lifetime: Lifetime.SINGLETON,
 						},
 						inject: ["p1"],
 						useFactory: (p1: TestableBase) => new P2({ p1 }),
@@ -530,11 +585,15 @@ describe("DIContext", () => {
 			});
 
 			const p2 = scope.resolve("p2");
+			const p2Again = scope.resolve("p2");
 
 			expect(p2.getDepKeys()).toContain("p1");
 			expect(p2.getDepKeys().length).toBe(1);
 			expect(p2.getDeps().p1.getName()).toBe("P1");
-			expect(scope.registrations.p2.lifetime).toBe(Lifetime.SINGLETON);
+			// transient only for wrapper function for exported. Actual lifetime of
+			// provider stays correct
+			expect(scope.registrations.p2.lifetime).toBe(Lifetime.TRANSIENT);
+			expect(p2.instanceId).toBe(p2Again.instanceId);
 		});
 
 		it("should make exported providers from imported module available in importing module", () => {

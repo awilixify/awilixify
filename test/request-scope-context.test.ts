@@ -155,6 +155,14 @@ describe("Request scope context (AsyncLocalStorage)", () => {
 					useClass: SharedRequestMarker,
 					lifetime: Lifetime.SCOPED,
 				},
+				exportedServiceA: {
+					useClass: ExportedServiceA,
+					lifetime: Lifetime.SCOPED,
+				},
+				exportedServiceB: {
+					useClass: ExportedServiceB,
+					lifetime: Lifetime.SCOPED,
+				},
 			},
 			exports: {
 				exportedServiceA: {

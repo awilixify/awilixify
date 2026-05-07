@@ -15,7 +15,11 @@ export * from "./lib/di/module.types.js";
 export * from "./lib/di/module-def.types.js";
 export * from "./lib/di/module-factories.js";
 export * from "./lib/di/module-ref.types.js";
-export type { Controller, ControllerInitializer } from "./lib/di/provider.types.js";
+export type {
+	Controller,
+	ControllerInitializer,
+	ControllerInitializerContext,
+} from "./lib/di/provider.types.js";
 export * from "./lib/http/http-exception.js";
 export * from "./lib/http/openapi-builder.js";
 export * from "./lib/mediator/contract.types.js";

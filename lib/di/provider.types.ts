@@ -129,15 +129,17 @@ export type AnyInterceptor = ClassInterceptor | ConstructorInterceptor;
 // Controller Initializer Types
 // ============================================================================
 
+export type ControllerInitializerContext<M = unknown> = {
+	moduleName: string;
+	controllerClass: Constructor<any>;
+	methodName: string | symbol;
+	metadata: M;
+	invoke: (...args: unknown[]) => unknown | Promise<unknown>;
+};
+
 export interface ControllerInitializer<M = unknown> {
 	token: ControllerMetadataToken<M>;
-	initialize: (context: {
-		moduleName: string;
-		controllerClass: Constructor<any>;
-		methodName: string | symbol;
-		metadata: M;
-		invoke: (...args: unknown[]) => unknown | Promise<unknown>;
-	}) => void | Promise<void>;
+	initialize: (context: ControllerInitializerContext<M>) => void | Promise<void>;
 }
 
 export interface ConstructorControllerInitializer {

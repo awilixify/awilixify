@@ -15,6 +15,10 @@ export function runInRequestScopeContext<T>(fn: () => T): T {
 	return requestScopeStorage.run(new Map(), fn);
 }
 
+export function hasRequestScopeContext(): boolean {
+	return !!requestScopeStorage.getStore();
+}
+
 export function getOrCreateRequestScope(
 	scope: Awilix.AwilixContainer,
 ): Awilix.AwilixContainer {

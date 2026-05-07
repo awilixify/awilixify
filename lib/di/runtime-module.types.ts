@@ -1,4 +1,5 @@
 import type { BuildResolverOptions } from "awilix";
+import type { ForwardRef } from "./module-ref.types.js";
 import type {
 	AnyController,
 	AnyControllerInitializer,
@@ -12,7 +13,7 @@ import type {
 // (StaticModule/ModuleDef helpers) to keep TS/LSP responsive in runtime files.
 export interface InternalModuleLike {
 	name: string;
-	imports?: InternalModuleLike[];
+	imports?: readonly (InternalModuleLike | ForwardRef<InternalModuleLike>)[];
 	providers?: Record<string, AnyProvider>;
 	exports?: Record<string, AnyProvider>;
 	controllers?: AnyController[];

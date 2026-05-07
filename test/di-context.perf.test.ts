@@ -24,10 +24,7 @@ describe("DIContext Performance", () => {
 			}, {});
 
 			const exports = [...Array(8)].reduce((acc, _, j) => {
-				acc[`${name}-export-${j}`] = class InfraExport {
-					infraId = i;
-					serviceId = j;
-				};
+				acc[`${name}-provider-${j}`] = providers[`${name}-provider-${j}`];
 				return acc;
 			}, {});
 
@@ -51,10 +48,7 @@ describe("DIContext Performance", () => {
 			}, {});
 
 			const exports = [...Array(10)].reduce((acc, _, j) => {
-				acc[`${name}-export-${j}`] = class DomainExport {
-					domainId = i;
-					serviceId = j;
-				};
+				acc[`${name}-provider-${j}`] = providers[`${name}-provider-${j}`];
 				return acc;
 			}, {});
 
@@ -86,10 +80,7 @@ describe("DIContext Performance", () => {
 			}, {});
 
 			const exports = [...Array(8)].reduce((acc, _, j) => {
-				acc[`${name}-export-${j}`] = class BaseFeatureExport {
-					featureId = i;
-					serviceId = j;
-				};
+				acc[`${name}-provider-${j}`] = providers[`${name}-provider-${j}`];
 				return acc;
 			}, {});
 
