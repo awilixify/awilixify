@@ -22,6 +22,7 @@ import {
 } from "./request-scope-context.js";
 import type { InternalModuleLike as M } from "./runtime-module.types.js";
 import { isClassController } from "./type-guards.js";
+import type { ControllerRuntimeEntry } from "./controller-initializer-processor.js";
 
 type RouteRegistrationParams = {
 	verb: HttpVerb;
@@ -56,9 +57,13 @@ export class ControllerProcessor {
 		this.frameworkType = this.detectFramework();
 	}
 
-	public processControllers(m: M, diScope: Awilix.AwilixContainer): void {
-		if (!m.controllers?.length) return;
-		if (m.registerControllers === false) return;
+	public processControllers(
+		m: M,
+		diScope: Awilix.AwilixContainer,
+	): ControllerRuntimeEntry[] {
+		if (!m.controllers?.length) return [];
+		if (m.registerControllers === false) return [];
+		const runtimeEntries: ControllerRuntimeEntry[] = [];
 
 		if (new Set(m.controllers).size !== m.controllers.length) {
 			throw new ERRORS.DuplicateControllersInModuleError(m.name);
@@ -107,9 +112,14 @@ export class ControllerProcessor {
 					controllerInstance.registerRoutes();
 				}
 
-				this.processDecoratedController(useClass, () =>
-					this.resolveBySymbol(controllerSymbol, diScope, isWithNewScope),
-				);
+				const resolveController = () =>
+					this.resolveBySymbol(controllerSymbol, diScope, isWithNewScope);
+
+				this.processDecoratedController(useClass, resolveController);
+				runtimeEntries.push({
+					controllerClass: useClass,
+					resolve: resolveController,
+				});
 
 				continue;
 			}
@@ -125,6 +135,8 @@ export class ControllerProcessor {
 				existingModule.name,
 			);
 		}
+
+		return runtimeEntries;
 	}
 
 	private resolveBySymbol(

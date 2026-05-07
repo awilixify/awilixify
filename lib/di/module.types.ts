@@ -6,6 +6,7 @@ import type {
 	ClassHandler,
 	ClassMiddleware,
 	DefInterceptorMap,
+	DefControllerInitializerArray,
 	DefPreHandlerMap,
 	DefProviderMap,
 	Provider,
@@ -30,6 +31,8 @@ export type StaticModuleDef = {
 	commandPreHandlerExports?: DefPreHandlerMap;
 	interceptors?: DefInterceptorMap;
 	interceptorExports?: DefInterceptorMap;
+	controllerInitializers?: DefControllerInitializerArray;
+	controllerInitializerExports?: DefControllerInitializerArray;
 };
 
 export type DynamicModuleDef = StaticModuleDef & WithForRootConfig;
@@ -44,6 +47,8 @@ export type StaticModule<Def extends StaticModuleDef> = {
 	providerOptions?: Partial<BuildResolverOptions<any>>;
 	interceptors?: Record<string, any>;
 	interceptorExports?: Record<string, any>;
+	controllerInitializers?: DefControllerInitializerArray;
+	controllerInitializerExports?: DefControllerInitializerArray;
 } & WithProviderMap<Def, "providers"> &
 	WithProviderMap<Def, "exports"> &
 	WithImports<Def> &

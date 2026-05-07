@@ -1,6 +1,7 @@
 import type { BuildResolverOptions } from "awilix";
 import type {
 	AnyController,
+	AnyControllerInitializer,
 	AnyInterceptor,
 	AnyMiddleware,
 	AnyProvider,
@@ -25,4 +26,6 @@ export interface InternalModuleLike {
 	commandPreHandlerExports?: Record<string, AnyMiddleware>;
 	interceptors?: Record<string, AnyInterceptor>;
 	interceptorExports?: Record<string, AnyInterceptor>;
+	controllerInitializers?: readonly AnyControllerInitializer[];
+	controllerInitializerExports?: readonly AnyControllerInitializer[];
 }

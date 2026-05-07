@@ -13,6 +13,7 @@ import { GetCatsQueryHandler } from "./get-cats.q-handler.js";
 import { GetCatsService } from "./get-cats.service.js";
 import { InterceptedCatsService } from "./intercepted-cats.service.js";
 import { CatsCacheInterceptor } from "./cats-cache.interceptor.js";
+import { SchedulerModule } from "@/modules/scheduler/scheduler.module.js";
 
 const dbScope = {
 	readTables: ["cats"],
@@ -27,7 +28,11 @@ export type CatsModuleDef = ModuleDef<{
 		interceptedCatsService: InterceptedCatsService;
 	};
 	exportKeys: "catsService";
-	imports: [typeof OwnersModule, ReturnType<typeof DbModule<typeof dbScope>>];
+	imports: [
+		typeof OwnersModule,
+		ReturnType<typeof DbModule<typeof dbScope>>,
+		typeof SchedulerModule,
+	];
 	queryHandlers: [GetCatsQueryHandler];
 	queryPreHandlers: {
 		auth: CatsAuthMiddleware;
@@ -43,7 +48,7 @@ export type Deps = CatsModuleDef["deps"];
 export const CatsModule = createStaticModule<CatsModuleDef>({
 	name: "CatsModule",
 
-	imports: [OwnersModule, DbModule(dbScope)],
+	imports: [OwnersModule, DbModule(dbScope), SchedulerModule],
 
 	queryPreHandlers: {
 		auth: CatsAuthMiddleware,

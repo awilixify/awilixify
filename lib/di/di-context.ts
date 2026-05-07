@@ -1,5 +1,6 @@
 import * as Awilix from "awilix";
 import type { RouteRegistration } from "../http/openapi-builder.js";
+import { ControllerInitializerProcessor } from "./controller-initializer-processor.js";
 import { ControllerProcessor } from "./controller-processor.js";
 import * as ERRORS from "./errors.js";
 import { HandlerProcessor, HandlerType } from "./handler-processor.js";
@@ -33,6 +34,7 @@ export class DIContext {
 	private readonly controllerProcessor: ControllerProcessor;
 	private readonly handlerProcessor: HandlerProcessor;
 	private readonly interceptorProcessor: InterceptorProcessor;
+	private readonly controllerInitializerProcessor: ControllerInitializerProcessor;
 	private readonly options: DiContextOptions;
 	private globalModulesWithScope: (ModuleScopeTree & { module: M })[] = [];
 
@@ -61,6 +63,7 @@ export class DIContext {
 		this.interceptorProcessor = new InterceptorProcessor(
 			this.options.providerOptions || {},
 		);
+		this.controllerInitializerProcessor = new ControllerInitializerProcessor();
 	}
 
 	static create(module: M, options: DiContextOptions): ModuleScopeTree {
@@ -169,7 +172,13 @@ export class DIContext {
 			importedModulesWithScope,
 			HandlerType.Command,
 		);
-		this.controllerProcessor.processControllers(m, scope);
+		const controllers = this.controllerProcessor.processControllers(m, scope);
+		this.controllerInitializerProcessor.processControllerInitializers(
+			m,
+			scope,
+			importedModulesWithScope,
+			controllers,
+		);
 
 		return {
 			scope,

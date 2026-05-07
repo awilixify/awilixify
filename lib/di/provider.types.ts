@@ -6,6 +6,9 @@ import type {
 	Middleware,
 } from "lib/mediator/middleware.types.js";
 import type { Interceptor } from "./interceptor.types.js";
+import type {
+	ControllerMetadataToken,
+} from "../decorators/controller-initializer-state.js";
 
 export type DefProviderMap = Record<string, object | string | boolean | number>;
 
@@ -14,6 +17,8 @@ export type DefProviderMap = Record<string, object | string | boolean | number>;
  */
 export type DefPreHandlerMap = Record<string, object>;
 export type DefInterceptorMap = Record<string, object>;
+export type DefControllerInitializerArray =
+	readonly ConstructorControllerInitializer[];
 // ============================================================================
 // Provider Types
 // ============================================================================
@@ -119,6 +124,27 @@ export type ClassInterceptor<I extends Constructor<any> = Constructor<any>> = {
 } & BuildResolverOptions<any>;
 
 export type AnyInterceptor = ClassInterceptor | ConstructorInterceptor;
+
+// ============================================================================
+// Controller Initializer Types
+// ============================================================================
+
+export interface ControllerInitializer<M = unknown> {
+	token: ControllerMetadataToken<M>;
+	initialize: (context: {
+		moduleName: string;
+		controllerClass: Constructor<any>;
+		methodName: string | symbol;
+		metadata: M;
+		invoke: (...args: unknown[]) => unknown | Promise<unknown>;
+	}) => void | Promise<void>;
+}
+
+export interface ConstructorControllerInitializer {
+	new (...args: any[]): ControllerInitializer<any>;
+}
+
+export type AnyControllerInitializer = ConstructorControllerInitializer;
 
 // ============================================================================
 // Provider Mapping Helper

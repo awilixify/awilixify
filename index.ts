@@ -1,4 +1,6 @@
 export * from "./lib/decorators/http-decorators.js";
+export * from "./lib/decorators/controller-initializer-decorator-factory.js";
+export * from "./lib/decorators/controller-initializer-state.js";
 export {
 	hasValidationSchema,
 	type RouteSchema,
@@ -13,7 +15,7 @@ export * from "./lib/di/module.types.js";
 export * from "./lib/di/module-def.types.js";
 export * from "./lib/di/module-factories.js";
 export * from "./lib/di/module-ref.types.js";
-export type { Controller } from "./lib/di/provider.types.js";
+export type { Controller, ControllerInitializer } from "./lib/di/provider.types.js";
 export * from "./lib/http/http-exception.js";
 export * from "./lib/http/openapi-builder.js";
 export * from "./lib/mediator/contract.types.js";

@@ -8,6 +8,7 @@ import type {
 } from "./module.types.js";
 import type {
 	ClassHandler,
+	DefControllerInitializerArray,
 	DefInterceptorMap,
 	DefPreHandlerMap,
 	DefProviderMap,
@@ -46,6 +47,10 @@ export type ModuleDef<
 		exportInterceptorKeys?: D["interceptors"] extends DefInterceptorMap
 			? keyof D["interceptors"]
 			: never;
+		controllerInitializers?: DefControllerInitializerArray;
+		exportControllerInitializers?: D["controllerInitializers"] extends DefControllerInitializerArray
+			? D["controllerInitializers"][number]
+			: never;
 		imports?: readonly ModuleImport[];
 		forRootConfig?: UnknownRecord;
 		queryHandlers?: readonly any[];
@@ -62,6 +67,8 @@ export type ModuleDef<
 	commandPreHandlerExports: ExtractPreHandlerExports<"command", D>;
 	interceptors: ExtractInterceptors<D>;
 	interceptorExports: ExtractInterceptorExports<D>;
+	controllerInitializers: ExtractControllerInitializers<D>;
+	controllerInitializerExports: ExtractControllerInitializerExports<D>;
 	imports: ExtractImports<D>;
 	deps: ExtractDeps<D>;
 	queryHandlers: ExtractHandlers<"query", D>;
@@ -151,6 +158,25 @@ type ExtractInterceptorExports<
 		? Pick<D["interceptors"], D["exportInterceptorKeys"]>
 		: EmptyObject
 	: EmptyObject;
+
+type ExtractControllerInitializers<
+	D extends { controllerInitializers?: DefControllerInitializerArray },
+> = D["controllerInitializers"] extends DefControllerInitializerArray
+	? D["controllerInitializers"]
+	: readonly [];
+
+type ExtractControllerInitializerExports<
+	D extends {
+		controllerInitializers?: DefControllerInitializerArray;
+		exportControllerInitializers?: D["controllerInitializers"] extends DefControllerInitializerArray
+			? D["controllerInitializers"][number]
+			: never;
+	},
+> = D["controllerInitializers"] extends DefControllerInitializerArray
+	? D["exportControllerInitializers"] extends D["controllerInitializers"][number]
+		? readonly D["exportControllerInitializers"][]
+		: readonly []
+	: readonly [];
 
 // ============================================================================
 // ExtractDeps

@@ -1,6 +1,7 @@
 import { type Controller } from "awilix-modular";
 
 import { mapApplicationErrorToHttpError } from "@/common/error-to-http-error.mapper.js";
+import { cron } from "@/modules/scheduler/cron.decorator.js";
 
 import type { Deps } from "./cats.module.js";
 import { GetCatsSchema } from "./get-cats.dto.js";
@@ -50,5 +51,10 @@ export class CatsController implements Controller {
 				return res.status(error.statusCode).send(error.getResponse());
 			},
 		});
+	}
+
+	@cron("*/30 * * * * *")
+	onHeartbeat(payload: unknown) {
+		console.log("[CatsController] cron tick", payload);
 	}
 }
