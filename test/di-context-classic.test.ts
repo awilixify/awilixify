@@ -116,7 +116,7 @@ describe("DIContext - CLASSIC Injection Mode - Circular Dependencies", () => {
 					serviceA: ServiceA;
 				};
 				imports: [ModuleRef<ModuleBDef>];
-				exportKeys: "serviceA";
+				exportKeys: ["serviceA"];
 			}>;
 
 			const ModuleA = createStaticModule<ModuleADef>({
@@ -125,16 +125,14 @@ describe("DIContext - CLASSIC Injection Mode - Circular Dependencies", () => {
 				providers: {
 					serviceA: ServiceA,
 				},
-				exports: {
-					serviceA: ServiceA,
-				},
+				exports: ["serviceA"],
 			});
 
 			type ModuleBDef = ModuleDef<{
 				providers: {
 					serviceB: ServiceB;
 				};
-				exportKeys: "serviceB";
+				exportKeys: ["serviceB"];
 				imports: [typeof ModuleA];
 			}>;
 
@@ -147,9 +145,7 @@ describe("DIContext - CLASSIC Injection Mode - Circular Dependencies", () => {
 						allowCircular: true,
 					},
 				},
-				exports: {
-					serviceB: ServiceB,
-				},
+				exports: ["serviceB"],
 			});
 
 			ModuleA.imports = [forwardRef(() => ModuleB)];
@@ -212,7 +208,7 @@ describe("DIContext - CLASSIC Injection Mode - Circular Dependencies", () => {
 			type ModuleADef = ModuleDef<{
 				providers: { serviceA: ServiceA };
 				imports: [ModuleRef<ModuleBDef>];
-				exportKeys: "serviceA";
+				exportKeys: ["serviceA"];
 			}>;
 
 			const ModuleA = createStaticModule<ModuleADef>({
@@ -223,16 +219,12 @@ describe("DIContext - CLASSIC Injection Mode - Circular Dependencies", () => {
 						useClass: ServiceA,
 					},
 				},
-				exports: {
-					serviceA: {
-						useClass: ServiceA,
-					},
-				},
+				exports: ["serviceA"],
 			});
 
 			type ModuleBDef = ModuleDef<{
 				providers: { serviceB: ServiceB };
-				exportKeys: "serviceB";
+				exportKeys: ["serviceB"];
 				imports: [typeof ModuleA];
 			}>;
 
@@ -245,9 +237,7 @@ describe("DIContext - CLASSIC Injection Mode - Circular Dependencies", () => {
 						allowCircular: true,
 					},
 				},
-				exports: {
-					serviceB: ServiceB,
-				},
+				exports: ["serviceB"],
 			});
 
 			ModuleA.imports = [forwardRef(() => ModuleB)];
@@ -293,7 +283,7 @@ describe("DIContext - CLASSIC Injection Mode - Circular Dependencies", () => {
 			type ModuleADef = ModuleDef<{
 				providers: { serviceA: ServiceA };
 				imports: [ModuleRef<ModuleBDef>];
-				exportKeys: "serviceA";
+				exportKeys: ["serviceA"];
 			}>;
 
 			const ModuleA = createStaticModule<ModuleADef>({
@@ -305,14 +295,12 @@ describe("DIContext - CLASSIC Injection Mode - Circular Dependencies", () => {
 						lifetime: Lifetime.TRANSIENT,
 					},
 				},
-				exports: {
-					serviceA: ServiceA,
-				},
+				exports: ["serviceA"],
 			});
 
 			type ModuleBDef = ModuleDef<{
 				providers: { serviceB: ServiceB };
-				exportKeys: "serviceB";
+				exportKeys: ["serviceB"];
 				imports: [typeof ModuleA];
 			}>;
 
@@ -326,9 +314,7 @@ describe("DIContext - CLASSIC Injection Mode - Circular Dependencies", () => {
 						lifetime: Lifetime.TRANSIENT,
 					},
 				},
-				exports: {
-					serviceB: ServiceB,
-				},
+				exports: ["serviceB"],
 			});
 
 			ModuleA.imports = [forwardRef(() => ModuleB)];
@@ -375,7 +361,7 @@ describe("DIContext - CLASSIC Injection Mode - Circular Dependencies", () => {
 			type ModuleADef = ModuleDef<{
 				providers: { serviceA: ServiceA };
 				imports: [ModuleRef<ModuleBDef>];
-				exportKeys: "serviceA";
+				exportKeys: ["serviceA"];
 			}>;
 
 			const ModuleA = createStaticModule<ModuleADef>({
@@ -387,14 +373,12 @@ describe("DIContext - CLASSIC Injection Mode - Circular Dependencies", () => {
 						lifetime: Lifetime.SCOPED,
 					},
 				},
-				exports: {
-					serviceA: ServiceA,
-				},
+				exports: ["serviceA"],
 			});
 
 			type ModuleBDef = ModuleDef<{
 				providers: { serviceB: ServiceB };
-				exportKeys: "serviceB";
+				exportKeys: ["serviceB"];
 				imports: [typeof ModuleA];
 			}>;
 
@@ -408,9 +392,7 @@ describe("DIContext - CLASSIC Injection Mode - Circular Dependencies", () => {
 						allowCircular: true,
 					},
 				},
-				exports: {
-					serviceB: ServiceB,
-				},
+				exports: ["serviceB"],
 			});
 
 			ModuleA.imports = [forwardRef(() => ModuleB)];
@@ -454,15 +436,7 @@ describe("DIContext - CLASSIC Injection Mode - globalModules", () => {
 								lifetime: Lifetime.SCOPED,
 							},
 						},
-						exports: {
-							singletonService: GlobalService,
-							transientService: {
-								useClass: GlobalService,
-							},
-							scopedService: {
-								useClass: GlobalService,
-							},
-						},
+						exports: ["singletonService", "transientService", "scopedService"],
 					},
 				],
 			},
@@ -516,9 +490,7 @@ describe("DIContext - CLASSIC Injection Mode - globalModules", () => {
 								providers: {
 									importedService: ImportedService,
 								},
-								exports: {
-									importedService: ImportedService,
-								},
+								exports: ["importedService"],
 							},
 						],
 						providers: {
@@ -526,11 +498,7 @@ describe("DIContext - CLASSIC Injection Mode - globalModules", () => {
 								constructor(public readonly importedService: ImportedService) {}
 							},
 						},
-						exports: {
-							globalConsumer: class {
-								constructor(public readonly importedService: ImportedService) {}
-							},
-						},
+						exports: ["globalConsumer"],
 					},
 				],
 			},
@@ -573,9 +541,7 @@ describe("DIContext - CLASSIC Injection Mode - globalModules", () => {
 					globalModules: [
 						{
 							name: "GlobalModule",
-							exports: {
-								conflictService: GlobalService,
-							},
+							exports: ["conflictService"],
 						},
 					],
 				},

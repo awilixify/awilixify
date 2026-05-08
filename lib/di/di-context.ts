@@ -133,7 +133,7 @@ export class DIContext {
 
 		importedModulesWithScope.forEach(
 			({ module: importedModule, scope: importedScope }) => {
-				Object.keys(importedModule.exports || {}).forEach((key) => {
+				this.getExportedProviderKeys(importedModule).forEach((key) => {
 					if (!importedModule.providers?.[key]) {
 						throw new ERRORS.InvalidProviderDefinitionError(
 							importedModule.name,
@@ -421,11 +421,11 @@ export class DIContext {
 		const importConflicts = [
 			...(includeGlobalModules
 				? this.globalModulesWithScope.flatMap(({ module: globalModule }) =>
-						Object.keys(globalModule.exports || {}),
+						this.getExportedProviderKeys(globalModule),
 					)
 				: []),
 			...this.resolveImports(m).flatMap((importItem) =>
-				Object.keys(importItem.exports || {}),
+				this.getExportedProviderKeys(importItem),
 			),
 		].filter((key) => moduleProviderKeys.includes(key));
 
@@ -448,5 +448,9 @@ export class DIContext {
 
 			return acc;
 		}, new Map());
+	}
+
+	private getExportedProviderKeys(module: M): string[] {
+		return module.exports ? [...module.exports] : [];
 	}
 }

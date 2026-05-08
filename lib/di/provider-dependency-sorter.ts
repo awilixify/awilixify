@@ -46,7 +46,7 @@ export class ProviderDependencySorter {
 				const importedModule = isForwardRef(importItem)
 					? importItem.resolve()
 					: importItem;
-				return Object.keys(importedModule.exports || {});
+				return importedModule.exports ? [...importedModule.exports] : [];
 			}),
 		);
 

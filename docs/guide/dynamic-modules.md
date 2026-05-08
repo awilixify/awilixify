@@ -10,7 +10,7 @@ type DatabaseModuleDef = ModuleDef<{
     connectionString: string;
     databaseService: DatabaseService;
   };
-  exportKeys: "databaseService";
+  exportKeys: ["databaseService"];
   // adding forRootConfig makes module dynamic
   forRootConfig: { connectionString: string };
 }>;

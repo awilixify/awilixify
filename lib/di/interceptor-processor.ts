@@ -35,9 +35,15 @@ export class InterceptorProcessor {
 			module: importedModule,
 			scope: importedScope,
 		} of importedModulesWithScope) {
-			for (const [key, interceptor] of Object.entries(
-				importedModule.interceptorExports || {},
-			)) {
+			for (const key of importedModule.interceptorExports || []) {
+				const interceptor = importedModule.interceptors?.[key];
+				if (!interceptor) {
+					throw new ERRORS.InvalidProviderDefinitionError(
+						importedModule.name,
+						key,
+					);
+				}
+
 				if (ownerByKey.has(key)) {
 					throw new ERRORS.InterceptorNameConflictError(
 						m.name,

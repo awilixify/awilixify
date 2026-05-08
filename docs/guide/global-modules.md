@@ -25,9 +25,9 @@ export type GlobalModuleDef = ModuleDef<{
   commandPreHandlers: {
     audit: AuditPreHandler;
   };
-  exportKeys: "logger";
-  exportQueryPreHandlerKeys: "auth";
-  exportCommandPreHandlerKeys: "audit";
+  exportKeys: ["logger"];
+  exportQueryPreHandlerKeys: ["auth"];
+  exportCommandPreHandlerKeys: ["audit"];
 }>;
 
 export const GlobalModule = createStaticModule<GlobalModuleDef>({

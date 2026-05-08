@@ -118,9 +118,16 @@ export class HandlerProcessor {
 			module: importedModule,
 			scope: importedScope,
 		} of importedModulesWithScope) {
-			for (const [key, middleware] of Object.entries(
-				importedModule[preHandlerExportsKey] ?? {},
-			)) {
+			for (const key of importedModule[preHandlerExportsKey] ?? []) {
+				const middleware = importedModule[preHandlersKey]?.[key];
+
+				if (!middleware) {
+					throw new ERRORS.InvalidProviderDefinitionError(
+						importedModule.name,
+						key,
+					);
+				}
+
 				if (resolverMap.has(key)) {
 					throw new ERRORS.MiddlewareNameConflictError(
 						m.name,

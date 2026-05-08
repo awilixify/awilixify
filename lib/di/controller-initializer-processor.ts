@@ -81,8 +81,11 @@ export class ControllerInitializerProcessor {
 			module: importedModule,
 			scope: importedScope,
 		} of importedModulesWithScope) {
-			for (const initializer of importedModule.controllerInitializerExports ||
+			for (const initializerKey of importedModule.controllerInitializerExports ||
 				[]) {
+				const initializer = importedModule.controllerInitializers?.[initializerKey];
+				if (!initializer) continue;
+
 				if (seen.has(initializer)) continue;
 				seen.add(initializer);
 
@@ -100,7 +103,7 @@ export class ControllerInitializerProcessor {
 			}
 		}
 
-		for (const initializer of m.controllerInitializers || []) {
+		for (const initializer of Object.values(m.controllerInitializers || {})) {
 			if (seen.has(initializer)) {
 				throw new ERRORS.ControllerInitializerConflictError(m.name);
 			}

@@ -41,10 +41,10 @@ export class CatsController implements Controller {
 					},
 					{
 						executionContext: req.context,
-						scenario: "auth-logging",
-						includePreHandlerKeys: ["auth", "logging"],
-						// scenario: "logging-tenant",
-						// includePreHandlerKeys: ["logging", "tenant"],
+						// scenario: "auth-logging",
+						// includePreHandlerKeys: ["auth", "logging"],
+						scenario: "logging-tenant",
+						includePreHandlerKeys: ["logging", "tenant"],
 						// scenario: "default",
 					},
 				);

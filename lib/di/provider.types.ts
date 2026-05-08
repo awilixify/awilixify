@@ -6,9 +6,7 @@ import type {
 	Middleware,
 } from "lib/mediator/middleware.types.js";
 import type { Interceptor } from "./interceptor.types.js";
-import type {
-	ControllerMetadataToken,
-} from "../decorators/controller-initializer-state.js";
+import type { ControllerMetadataToken } from "../decorators/controller-initializer-state.js";
 
 export type DefProviderMap = Record<string, object | string | boolean | number>;
 
@@ -17,8 +15,10 @@ export type DefProviderMap = Record<string, object | string | boolean | number>;
  */
 export type DefPreHandlerMap = Record<string, object>;
 export type DefInterceptorMap = Record<string, object>;
-export type DefControllerInitializerArray =
-	readonly ConstructorControllerInitializer[];
+export type DefControllerInitializerMap = Record<
+	string,
+	ConstructorControllerInitializer
+>;
 // ============================================================================
 // Provider Types
 // ============================================================================
@@ -139,7 +139,9 @@ export type ControllerInitializerContext<M = unknown> = {
 
 export interface ControllerInitializer<M = unknown> {
 	token: ControllerMetadataToken<M>;
-	initialize: (context: ControllerInitializerContext<M>) => void | Promise<void>;
+	initialize: (
+		context: ControllerInitializerContext<M>,
+	) => void | Promise<void>;
 }
 
 export interface ConstructorControllerInitializer {

@@ -47,7 +47,7 @@ export type CatsModuleDef = ModuleDef<{
     catsService: CatsService;
   };
   imports: [typeof OwnersModule];
-  exportKeys: "catsService";
+  exportKeys: ["catsService"];
 }>;
 
 export const CatsModule = createStaticModule<CatsModuleDef>({

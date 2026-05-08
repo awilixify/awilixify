@@ -15,7 +15,7 @@ export interface InternalModuleLike {
 	name: string;
 	imports?: readonly (InternalModuleLike | ForwardRef<InternalModuleLike>)[];
 	providers?: Record<string, AnyProvider>;
-	exports?: Record<string, AnyProvider>;
+	exports?: readonly string[];
 	controllers?: AnyController[];
 	registerControllers?: boolean;
 	providerOptions?: Partial<BuildResolverOptions<any>>;
@@ -23,10 +23,10 @@ export interface InternalModuleLike {
 	commandHandlers?: readonly any[];
 	queryPreHandlers?: Record<string, AnyMiddleware>;
 	commandPreHandlers?: Record<string, AnyMiddleware>;
-	queryPreHandlerExports?: Record<string, AnyMiddleware>;
-	commandPreHandlerExports?: Record<string, AnyMiddleware>;
+	queryPreHandlerExports?: readonly string[];
+	commandPreHandlerExports?: readonly string[];
 	interceptors?: Record<string, AnyInterceptor>;
-	interceptorExports?: Record<string, AnyInterceptor>;
-	controllerInitializers?: readonly AnyControllerInitializer[];
-	controllerInitializerExports?: readonly AnyControllerInitializer[];
+	interceptorExports?: readonly string[];
+	controllerInitializers?: Record<string, AnyControllerInitializer>;
+	controllerInitializerExports?: readonly string[];
 }

@@ -37,10 +37,6 @@ export class GetCatsQueryHandler
 		_payload: Payload,
 		context: this["context"],
 	): Promise<Response> {
-		return Result.ok({
-			test: this.catsService.getCats(),
-			catsService: await this.interceptedCatsService.getCatsInterceped(),
-		});
 		console.log(context, "CONTExt");
 		const { userId, roles } = this.normalizeContext(context);
 

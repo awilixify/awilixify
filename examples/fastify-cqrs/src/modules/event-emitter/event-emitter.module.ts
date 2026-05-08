@@ -22,9 +22,11 @@ type EventEmitterModuleDef<
 	TEmittable extends Record<string, AnyEventConstructor>,
 > = ModuleDef<{
 	providers: EventEmitterProviders<TEmittable>;
-	exportKeys: "eventEmitter";
-	controllerInitializers: [typeof EventListenerControllerInitializer];
-	exportControllerInitializers: typeof EventListenerControllerInitializer;
+	controllerInitializers: {
+		onEvent: typeof EventListenerControllerInitializer;
+	};
+	exportKeys: ["eventEmitter"];
+	exportControllerInitializerKeys: ["onEvent"];
 }>;
 
 export type Deps = EventEmitterModuleDef<
@@ -43,11 +45,11 @@ export function EventEmitterModule<const TConfig extends EventEmitterConfig>(
 				listenableEvents: config.listeners,
 				eventEmitter: EventEmitter,
 			},
-			exports: {
-				eventEmitter: EventEmitter,
+			exports: ["eventEmitter"],
+			controllerInitializers: {
+				onEvent: EventListenerControllerInitializer,
 			},
-			controllerInitializers: [EventListenerControllerInitializer],
-			controllerInitializerExports: [EventListenerControllerInitializer],
+			controllerInitializerExports: ["onEvent"],
 		},
 		{ hashNameFrom: config },
 	);

@@ -164,16 +164,7 @@ describe("Request scope context (AsyncLocalStorage)", () => {
 					lifetime: Lifetime.SCOPED,
 				},
 			},
-			exports: {
-				exportedServiceA: {
-					useClass: ExportedServiceA,
-					lifetime: Lifetime.SCOPED,
-				},
-				exportedServiceB: {
-					useClass: ExportedServiceB,
-					lifetime: Lifetime.SCOPED,
-				},
-			},
+			exports: ["exportedServiceA", "exportedServiceB"],
 		};
 
 		DIContext.create(

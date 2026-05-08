@@ -131,17 +131,17 @@ describe("Interceptors", () => {
 
 		type ImportedDef = ModuleDef<{
 			interceptors: { shared: ImportedInterceptor };
-			exportInterceptorKeys: "shared";
+			exportInterceptorKeys: ["shared"];
 		}>;
 		const ImportedA = createStaticModule<ImportedDef>({
 			name: "ImportedA",
 			interceptors: { shared: ImportedInterceptor },
-			interceptorExports: { shared: ImportedInterceptor },
+			interceptorExports: ["shared"],
 		});
 		const ImportedB = createStaticModule<ImportedDef>({
 			name: "ImportedB",
 			interceptors: { shared: ImportedInterceptor },
-			interceptorExports: { shared: ImportedInterceptor },
+			interceptorExports: ["shared"],
 		});
 
 		type AppOkDef = ModuleDef<{

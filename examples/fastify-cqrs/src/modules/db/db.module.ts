@@ -28,7 +28,7 @@ type DbModuleDef<TConfig extends DbScopeConfig> = ModuleDef<{
 		readQb: ReadQb<TConfig["readTables"]>;
 		writeQb: WriteQb<TConfig["writeTables"]>;
 	};
-	exportKeys: "readQb" | "writeQb";
+	exportKeys: ["readQb", "writeQb"];
 }>;
 
 const pool = new pg.Pool({
@@ -57,9 +57,6 @@ export function DbModule<const TConfig extends DbScopeConfig>(config: TConfig) {
 			writeQb,
 		},
 
-		exports: {
-			readQb,
-			writeQb,
-		},
+		exports: ["readQb", "writeQb"],
 	});
 }

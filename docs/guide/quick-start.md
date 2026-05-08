@@ -17,7 +17,7 @@ type OrderModuleDef = ModuleDef<{
   providers: {
     orderService: OrderService;
   };
-  exportKeys: "orderService";
+  exportKeys: ["orderService"];
 }>;
 
 export const OrderModule = createStaticModule<OrderModuleDef>({
@@ -87,7 +87,7 @@ export type GlobalModuleDef = ModuleDef<{
   providers: {
     app: Express;
   };
-  exportKeys: "app";
+  exportKeys: ["app"];
 }>;
 
 export const GlobalModule = createDynamicModule<GlobalModuleDef>(

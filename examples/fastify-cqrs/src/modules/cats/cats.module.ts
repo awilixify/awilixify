@@ -30,7 +30,8 @@ export type CatsModuleDef = ModuleDef<{
 		getCatsService: GetCatsService;
 		interceptedCatsService: InterceptedCatsService;
 	};
-	exportKeys: "catsService";
+	// exportKeys: ["catsService", 'catsService'];
+	exportKeys: ["catsService"];
 	imports: [
 		typeof OwnersModule,
 		ReturnType<typeof DbModule<typeof dbScope>>,
@@ -47,6 +48,7 @@ export type CatsModuleDef = ModuleDef<{
 	interceptors: {
 		cache: CatsCacheInterceptor;
 	};
+	exportInterceptorKeys: ["cache"];
 }>;
 
 export type Deps = CatsModuleDef["deps"];
@@ -64,11 +66,13 @@ export const CatsModule = createStaticModule<CatsModuleDef>({
 	queryPreHandlers: {
 		auth: CatsAuthMiddleware,
 		logging: { useClass: CatsLoggingMiddleware },
-		// logging: CatsLoggingMiddleware,
 	},
 	interceptors: {
 		cache: CatsCacheInterceptor,
 	},
+
+	interceptorExports: ["cache"],
+	// interceptorExports: [],
 
 	providerOptions: {
 		// lifetime: "SCOPED",
@@ -95,16 +99,8 @@ export const CatsModule = createStaticModule<CatsModuleDef>({
 		},
 	},
 
-	exports: {
-		catsService: {
-			allowCircular: true,
-			// lifetime: "SINGLETON",
-			// lifetime: "SCOPED",
-			lifetime: "TRANSIENT",
-
-			useClass: CatsService,
-		},
-	},
+	exports: ["catsService"],
+	// exports: ['catsService', 'catsService'],
 
 	// queryHandlers: [GetCatsQueryHandler],
 	queryHandlers: [{ useClass: GetCatsQueryHandler }],

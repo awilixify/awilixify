@@ -10,7 +10,7 @@ export type CatsModuleDef = ModuleDef<{
 		catsService: CatsService;
 		getCatsService: GetCatsService;
 	};
-	exportKeys: "catsService";
+	exportKeys: ["catsService"];
 }>;
 
 export type Deps = CatsModuleDef["deps"];

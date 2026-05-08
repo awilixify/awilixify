@@ -23,10 +23,7 @@ describe("DIContext Performance", () => {
 				return acc;
 			}, {});
 
-			const exports = [...Array(8)].reduce((acc, _, j) => {
-				acc[`${name}-provider-${j}`] = providers[`${name}-provider-${j}`];
-				return acc;
-			}, {});
+			const exports = [...Array(8)].map((_, j) => `${name}-provider-${j}`);
 
 			return createStaticModule<any>({
 				name,
@@ -47,10 +44,7 @@ describe("DIContext Performance", () => {
 				return acc;
 			}, {});
 
-			const exports = [...Array(10)].reduce((acc, _, j) => {
-				acc[`${name}-provider-${j}`] = providers[`${name}-provider-${j}`];
-				return acc;
-			}, {});
+			const exports = [...Array(10)].map((_, j) => `${name}-provider-${j}`);
 
 			// Each domain imports 3-4 infrastructure modules
 			const importCount = 3 + (i % 2);
@@ -79,10 +73,7 @@ describe("DIContext Performance", () => {
 				return acc;
 			}, {});
 
-			const exports = [...Array(8)].reduce((acc, _, j) => {
-				acc[`${name}-provider-${j}`] = providers[`${name}-provider-${j}`];
-				return acc;
-			}, {});
+			const exports = [...Array(8)].map((_, j) => `${name}-provider-${j}`);
 
 			const domainImports = [...Array(10)].map((_, j) => {
 				const domainIndex = (i + j * 3) % 40;

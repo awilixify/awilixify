@@ -13,9 +13,11 @@ type SchedulerModuleDef = ModuleDef<{
 		allowedCronDefinitions: readonly CronMetadata[];
 		scheduler: Scheduler;
 	};
-	exportKeys: "scheduler";
-	controllerInitializers: [typeof CronControllerInitializer];
-	exportControllerInitializers: typeof CronControllerInitializer;
+	exportKeys: ["scheduler"];
+	controllerInitializers: {
+		cron: typeof CronControllerInitializer;
+	};
+	exportControllerInitializerKeys: ["cron"];
 }>;
 
 export type Deps = SchedulerModuleDef["deps"];
@@ -31,11 +33,11 @@ export function ScheduleModule(
 				allowedCronDefinitions,
 				scheduler: Scheduler,
 			},
-			exports: {
-				scheduler: Scheduler,
+			exports: ["scheduler"],
+			controllerInitializers: {
+				cron: CronControllerInitializer,
 			},
-			controllerInitializers: [CronControllerInitializer],
-			controllerInitializerExports: [CronControllerInitializer],
+			controllerInitializerExports: ["cron"],
 		},
 		{
 			hashNameFrom: allowedCronDefinitions,

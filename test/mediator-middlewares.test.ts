@@ -330,12 +330,13 @@ describe("Mediator middleware scenarios", () => {
 
 		const sharedModule: AnyModule = {
 			name: "SharedMiddlewareModule",
-			queryPreHandlerExports: {
+			queryPreHandlers: {
 				auth: {
 					useClass: ImportedAuthMiddleware,
 					lifetime: Lifetime.SINGLETON,
 				},
 			},
+			queryPreHandlerExports: ["auth"],
 		};
 
 		const { scope } = registerModule({

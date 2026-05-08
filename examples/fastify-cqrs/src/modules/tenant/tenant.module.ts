@@ -14,11 +14,11 @@ export type TenantModuleDef = ModuleDef<{
 	providers: {
 		app: FastifyInstance;
 	};
-	exportKeys: "app";
+	exportKeys: ["app"];
 	queryPreHandlers: {
 		tenant: TenantMiddleware;
 	};
-	exportQueryPreHandlerKeys: "tenant";
+	exportQueryPreHandlerKeys: ["tenant"];
 }>;
 
 export const TenantModule = createDynamicModule<TenantModuleDef>((config) => ({
@@ -28,22 +28,18 @@ export const TenantModule = createDynamicModule<TenantModuleDef>((config) => ({
 		app: config.app,
 	},
 
-	exports: {
-		app: config.app,
-	},
+	exports: ["app"],
 
 	queryPreHandlers: {
 		tenant: TenantMiddleware,
 	},
 
-	queryPreHandlerExports: {
-		tenant: { useClass: TenantMiddleware },
-		// tenant: TenantMiddleware,
-	},
+	queryPreHandlerExports: ["tenant"],
 }));
 
 declare module "awilix-modular" {
-	interface GlobalDependencies extends InferGlobalDependencies<TenantModuleDef> {}
+	interface GlobalDependencies
+		extends InferGlobalDependencies<TenantModuleDef> {}
 
 	interface GlobalQueryPreHandlers
 		extends InferGlobalQueryPreHandlers<TenantModuleDef> {}

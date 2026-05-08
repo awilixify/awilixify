@@ -1,12 +1,14 @@
 import type { BuildResolverOptions, Constructor } from "awilix";
 import type { EmptyObject, UnknownRecord } from "./common.types.js";
 import type { ForwardRef, ModuleRef } from "./module-ref.types.js";
+import type { InternalModuleLike } from "./runtime-module.types.js";
 import type {
 	AnyController,
+	AnyInterceptor,
 	ClassHandler,
 	ClassMiddleware,
+	DefControllerInitializerMap,
 	DefInterceptorMap,
-	DefControllerInitializerArray,
 	DefPreHandlerMap,
 	DefProviderMap,
 	Provider,
@@ -16,7 +18,23 @@ import type {
 // Module Definition Types
 // ============================================================================
 
-export type AnyModule = StaticModule<any> & DynamicModuleOptions;
+declare const importModuleDefMarker: unique symbol;
+
+// Lightweight structural carrier for module definition inference.
+// We use it to extract imported module defs without forcing full StaticModule<any>
+// expansion in every type path.
+export type ImportModule<TDef extends StaticModuleDef = StaticModuleDef> = {
+	name: string;
+	imports?: readonly unknown[];
+	exports?: readonly string[];
+	[importModuleDefMarker]?: TDef;
+};
+
+export type AnyModule = InternalModuleLike &
+	ImportModule<any> &
+	DynamicModuleOptions;
+// export type AnyModule = StaticModule<any> & DynamicModuleOptions;
+
 export type ModuleImport = AnyModule | ModuleRef<any>;
 
 export type StaticModuleDef = {
@@ -27,12 +45,14 @@ export type StaticModuleDef = {
 	commandHandlers?: readonly any[];
 	queryPreHandlers?: DefPreHandlerMap;
 	commandPreHandlers?: DefPreHandlerMap;
-	queryPreHandlerExports?: DefPreHandlerMap;
-	commandPreHandlerExports?: DefPreHandlerMap;
 	interceptors?: DefInterceptorMap;
-	interceptorExports?: DefInterceptorMap;
-	controllerInitializers?: DefControllerInitializerArray;
-	controllerInitializerExports?: DefControllerInitializerArray;
+	controllerInitializers?: DefControllerInitializerMap;
+
+	exportKeys?: readonly string[];
+	queryPreHandlerExportKeys?: readonly string[];
+	commandPreHandlerExportKeys?: readonly string[];
+	interceptorExportKeys?: readonly string[];
+	controllerInitializerExportKeys?: readonly string[];
 };
 
 export type DynamicModuleDef = StaticModuleDef & WithForRootConfig;
@@ -41,23 +61,107 @@ export type WithForRootConfig = {
 	forRootConfig: UnknownRecord;
 };
 
+type NormalizeModuleDef<Def extends StaticModuleDef> = {
+	deps: Def extends {
+		deps: infer D extends Record<string, unknown>;
+	}
+		? D
+		: Record<string, unknown>;
+
+	providers: Def["providers"] extends DefProviderMap
+		? Def["providers"]
+		: EmptyObject;
+
+	exports: Def["exports"] extends DefProviderMap ? Def["exports"] : EmptyObject;
+
+	imports: Def["imports"] extends readonly unknown[]
+		? Def["imports"]
+		: readonly [];
+
+	queryHandlers: Def["queryHandlers"] extends readonly any[]
+		? Def["queryHandlers"]
+		: readonly [];
+
+	commandHandlers: Def["commandHandlers"] extends readonly any[]
+		? Def["commandHandlers"]
+		: readonly [];
+
+	queryPreHandlers: Def["queryPreHandlers"] extends DefPreHandlerMap
+		? Def["queryPreHandlers"]
+		: EmptyObject;
+
+	commandPreHandlers: Def["commandPreHandlers"] extends DefPreHandlerMap
+		? Def["commandPreHandlers"]
+		: EmptyObject;
+
+	controllerInitializers: Def["controllerInitializers"] extends DefControllerInitializerMap
+		? Def["controllerInitializers"]
+		: EmptyObject;
+
+	interceptors: Def["interceptors"] extends DefInterceptorMap
+		? Def["interceptors"]
+		: EmptyObject;
+
+	exportKeys: Def["exportKeys"] extends readonly string[]
+		? Def["exportKeys"]
+		: readonly [];
+
+	queryPreHandlerExportKeys: Def["queryPreHandlerExportKeys"] extends readonly string[]
+		? Def["queryPreHandlerExportKeys"]
+		: readonly [];
+
+	commandPreHandlerExportKeys: Def["commandPreHandlerExportKeys"] extends readonly string[]
+		? Def["commandPreHandlerExportKeys"]
+		: readonly [];
+
+	controllerInitializerExportKeys: Def["controllerInitializerExportKeys"] extends readonly string[]
+		? Def["controllerInitializerExportKeys"]
+		: readonly [];
+
+	interceptorExportKeys: Def["interceptorExportKeys"] extends readonly string[]
+		? Def["interceptorExportKeys"]
+		: readonly [];
+};
+
 export type StaticModule<Def extends StaticModuleDef> = {
 	name: string;
 	controllers?: AnyController[];
 	providerOptions?: Partial<BuildResolverOptions<any>>;
-	interceptors?: Record<string, any>;
-	interceptorExports?: Record<string, any>;
-	controllerInitializers?: DefControllerInitializerArray;
-	controllerInitializerExports?: DefControllerInitializerArray;
-} & WithProviderMap<Def, "providers"> &
-	WithProviderMap<Def, "exports"> &
-	WithImports<Def> &
-	WithHandlers<Def, "query"> &
-	WithHandlers<Def, "command"> &
-	WithPreHandlers<Def, "query"> &
-	WithPreHandlers<Def, "command"> &
-	WithPreHandlerExports<Def, "query"> &
-	WithPreHandlerExports<Def, "command">;
+	[importModuleDefMarker]?: Def;
+} & StaticModuleFromNormalized<NormalizeModuleDef<Def>>;
+
+type StaticModuleFromNormalized<
+	Def extends {
+		deps: Record<string, unknown>;
+		providers: DefProviderMap | EmptyObject;
+		exports: DefProviderMap | EmptyObject;
+		imports: readonly unknown[];
+		queryHandlers: readonly any[];
+		commandHandlers: readonly any[];
+		interceptors: DefInterceptorMap | EmptyObject;
+		controllerInitializers: DefControllerInitializerMap | EmptyObject;
+		queryPreHandlers: DefPreHandlerMap | EmptyObject;
+		commandPreHandlers: DefPreHandlerMap | EmptyObject;
+
+		exportKeys: readonly string[];
+		queryPreHandlerExportKeys: readonly string[];
+		commandPreHandlerExportKeys: readonly string[];
+		controllerInitializerExportKeys: readonly string[];
+		interceptorExportKeys: readonly string[];
+	},
+> = WithProviders<Def["providers"], Def["deps"]> &
+	WithImports<Def["imports"]> &
+	WithQueryHandlers<Def["queryHandlers"]> &
+	WithCommandHandlers<Def["commandHandlers"]> &
+	WithQueryPreHandlers<Def["queryPreHandlers"]> &
+	WithCommandPreHandlers<Def["commandPreHandlers"]> &
+	WithControllerInitializers<Def["controllerInitializers"]> &
+	WithInterceptors<Def["interceptors"]> &
+	WithExports<Def["exportKeys"]> &
+	WithQueryPreHandlerExports<Def["queryPreHandlerExportKeys"]> &
+	WithCommandPreHandlerExports<Def["commandPreHandlerExportKeys"]> &
+	WithControllerInitializerExports<Def["controllerInitializerExportKeys"]> &
+	WithInterceptorExports<Def["interceptorExportKeys"]>;
 
 export type DynamicModule<TDef extends DynamicModuleDef> = {
 	forRoot(
@@ -74,35 +178,20 @@ export type DynamicModuleOptions = {
 // Module Building Helpers
 // ============================================================================
 
-type ProviderMapKey = "providers" | "exports";
+type WithProviders<
+	TProviders extends DefProviderMap | EmptyObject,
+	TDeps extends Record<string, unknown>,
+> = TProviders extends EmptyObject
+	? {
+			providers?: EmptyObject;
+		}
+	: {
+			providers: ToModuleProviderMap<TProviders & DefProviderMap, TDeps>;
+		};
 
-type WithProviderMap<
-	Def extends StaticModuleDef,
-	TKey extends ProviderMapKey,
-> = Def[TKey] extends DefProviderMap
-	? Def[TKey] extends EmptyObject
-		? { [K in TKey]?: ToModuleProviderMap<Def[TKey], ExtractDeps<Def>> }
-		: { [K in TKey]: ToModuleProviderMap<Def[TKey], ExtractDeps<Def>> }
-	: { [K in TKey]?: never };
-
-type HandlerKindMap = {
-	query: {
-		handlersKey: "queryHandlers";
-		preHandlersKey: "queryPreHandlers";
-		preHandlerExportsKey: "queryPreHandlerExports";
-	};
-	command: {
-		handlersKey: "commandHandlers";
-		preHandlersKey: "commandPreHandlers";
-		preHandlerExportsKey: "commandPreHandlerExports";
-	};
-};
-
-type ExtractDeps<Def> = Def extends {
-	deps: infer D;
-}
-	? D
-	: Record<string, unknown>;
+type WithExports<TKeys extends readonly string[]> = TKeys extends readonly []
+	? { exports?: readonly [] }
+	: { exports: TKeys };
 
 type ToModuleProviderMap<
 	T extends DefProviderMap,
@@ -129,28 +218,15 @@ type RawValueObject<T> = T & {
 // Handlers
 // ============================================================================
 
-type WithHandlers<
-	Def extends StaticModuleDef,
-	TKind extends keyof HandlerKindMap,
-> =
-	ResolveHandlerArray<Def, TKind> extends readonly []
-		? {
-				[K in HandlerKindMap[TKind]["handlersKey"]]?: ToModuleHandlerArray<
-					ResolveHandlerArray<Def, TKind>
-				>;
-			}
-		: {
-				[K in HandlerKindMap[TKind]["handlersKey"]]: ToModuleHandlerArray<
-					ResolveHandlerArray<Def, TKind>
-				>;
-			};
+type WithQueryHandlers<THandlers extends readonly any[]> =
+	THandlers extends readonly []
+		? { queryHandlers?: readonly [] }
+		: { queryHandlers: ToModuleHandlerArray<THandlers> };
 
-type ResolveHandlerArray<
-	Def extends StaticModuleDef,
-	TKind extends keyof HandlerKindMap,
-> = Def[HandlerKindMap[TKind]["handlersKey"]] extends readonly any[]
-	? Def[HandlerKindMap[TKind]["handlersKey"]]
-	: readonly [];
+type WithCommandHandlers<THandlers extends readonly any[]> =
+	THandlers extends readonly []
+		? { commandHandlers?: readonly [] }
+		: { commandHandlers: ToModuleHandlerArray<THandlers> };
 
 type ToModuleHandlerArray<T extends readonly any[]> = T extends readonly []
 	? readonly []
@@ -172,56 +248,74 @@ type ToModulePreHandlerMap<T extends DefPreHandlerMap> = [keyof T] extends [
 			[K in keyof T]: Constructor<T[K]> | ClassMiddleware<Constructor<T[K]>>;
 		};
 
-type WithPreHandlers<
-	Def extends StaticModuleDef,
-	TKind extends keyof HandlerKindMap,
-> = Def[HandlerKindMap[TKind]["preHandlersKey"]] extends DefPreHandlerMap
-	? Def[HandlerKindMap[TKind]["preHandlersKey"]] extends EmptyObject
-		? {
-				[K in HandlerKindMap[TKind]["preHandlersKey"]]?: ToModulePreHandlerMap<
-					Def[HandlerKindMap[TKind]["preHandlersKey"]]
-				>;
-			}
-		: {
-				[K in HandlerKindMap[TKind]["preHandlersKey"]]: ToModulePreHandlerMap<
-					Def[HandlerKindMap[TKind]["preHandlersKey"]]
-				>;
-			}
-	: { [K in HandlerKindMap[TKind]["preHandlersKey"]]?: never };
+type WithQueryPreHandlers<TPreHandlers extends DefPreHandlerMap | EmptyObject> =
+	TPreHandlers extends EmptyObject
+		? { queryPreHandlers?: EmptyObject }
+		: { queryPreHandlers: ToModulePreHandlerMap<TPreHandlers> };
 
-type WithPreHandlerExports<
-	Def extends StaticModuleDef,
-	TKind extends keyof HandlerKindMap,
-> = Def[HandlerKindMap[TKind]["preHandlerExportsKey"]] extends DefPreHandlerMap
-	? Def[HandlerKindMap[TKind]["preHandlerExportsKey"]] extends EmptyObject
+type WithCommandPreHandlers<
+	TPreHandlers extends DefPreHandlerMap | EmptyObject,
+> = TPreHandlers extends EmptyObject
+	? { commandPreHandlers?: EmptyObject }
+	: { commandPreHandlers: ToModulePreHandlerMap<TPreHandlers> };
+
+type WithQueryPreHandlerExports<TKeys extends readonly string[]> =
+	TKeys extends readonly []
+		? { queryPreHandlerExports?: readonly [] }
+		: { queryPreHandlerExports: TKeys };
+
+type WithCommandPreHandlerExports<TKeys extends readonly string[]> =
+	TKeys extends readonly []
+		? { commandPreHandlerExports?: readonly [] }
+		: { commandPreHandlerExports: TKeys };
+
+type WithControllerInitializers<
+	TInitializers extends DefControllerInitializerMap | EmptyObject,
+> = TInitializers extends EmptyObject
+	? { controllerInitializers?: EmptyObject }
+	: { controllerInitializers: TInitializers };
+
+type WithControllerInitializerExports<TKeys extends readonly string[]> =
+	TKeys extends readonly []
+		? { controllerInitializerExports?: readonly [] }
+		: { controllerInitializerExports: TKeys };
+
+type ToModuleInterceptorMap<T extends DefInterceptorMap> = [keyof T] extends [
+	never,
+]
+	? EmptyObject
+	: {
+			[K in keyof T]: AnyInterceptor;
+		};
+
+type WithInterceptors<TInterceptors extends DefInterceptorMap | EmptyObject> =
+	TInterceptors extends EmptyObject
 		? {
-				[K in HandlerKindMap[TKind]["preHandlerExportsKey"]]?: ToModulePreHandlerMap<
-					Def[HandlerKindMap[TKind]["preHandlerExportsKey"]]
-				>;
+				interceptors?: EmptyObject;
 			}
 		: {
-				[K in HandlerKindMap[TKind]["preHandlerExportsKey"]]: ToModulePreHandlerMap<
-					Def[HandlerKindMap[TKind]["preHandlerExportsKey"]]
-				>;
-			}
-	: { [K in HandlerKindMap[TKind]["preHandlerExportsKey"]]?: never };
+				interceptors: ToModuleInterceptorMap<TInterceptors>;
+			};
+
+type WithInterceptorExports<TKeys extends readonly string[]> =
+	TKeys extends readonly []
+		? { interceptorExports?: readonly [] }
+		: { interceptorExports: TKeys };
 
 // ============================================================================
 // Imports
 // ============================================================================
 
-type WithImports<Def extends StaticModuleDef> = 0 extends 1 & Def
+type WithImports<TImports extends readonly unknown[]> = 0 extends 1 & TImports
 	? { imports?: (AnyModule | ForwardRef)[] }
-	: Def["imports"] extends ModuleImport[]
-		? Def["imports"] extends []
-			? { imports?: [] }
-			: { imports: WithForwardRefImports<Def["imports"]> }
-		: { imports?: never };
+	: TImports extends readonly []
+		? { imports?: [] }
+		: { imports: WithForwardRefImports<TImports> };
 
-type WithForwardRefImports<T extends readonly ModuleImport[]> = {
+type WithForwardRefImports<T extends readonly unknown[]> = {
 	[K in keyof T]: T[K] extends ModuleRef<infer MDef>
 		? ForwardRef<ForwardRefModule<MDef>>
-		: T[K] extends StaticModule<any>
+		: T[K] extends ImportModule<any>
 			? T[K]
 			: T[K];
 };
@@ -232,7 +326,7 @@ type ForwardRefModule<MDef> = MDef extends {
 }
 	? {
 			name: string;
-			exports: ToModuleProviderMap<E, any>;
+			exports: readonly Extract<keyof E, string>[];
 			providers: ToModuleProviderMap<P, any>;
 		}
 	: AnyModule;

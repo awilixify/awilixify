@@ -101,9 +101,7 @@ describe("DIContext", () => {
 							providers: {
 								sharedService: class SharedService extends TestableBase {},
 							},
-							exports: {
-								sharedService: class SharedService extends TestableBase {},
-							},
+							exports: ["sharedService"],
 						},
 					],
 					providers: {
@@ -123,9 +121,10 @@ describe("DIContext", () => {
 					imports: [
 						{
 							name: "ImportedModule",
-							queryPreHandlerExports: {
+							queryPreHandlers: {
 								auth: ImportedQueryMiddleware,
 							},
+							queryPreHandlerExports: ["auth"],
 						},
 					],
 					queryPreHandlers: {
@@ -145,15 +144,17 @@ describe("DIContext", () => {
 					imports: [
 						{
 							name: "ImportedModuleA",
-							queryPreHandlerExports: {
+							queryPreHandlers: {
 								auth: ImportedQueryMiddlewareA,
 							},
+							queryPreHandlerExports: ["auth"],
 						},
 						{
 							name: "ImportedModuleB",
-							queryPreHandlerExports: {
+							queryPreHandlers: {
 								auth: ImportedQueryMiddlewareB,
 							},
+							queryPreHandlerExports: ["auth"],
 						},
 					],
 				});
@@ -255,7 +256,7 @@ describe("DIContext", () => {
 					serviceA: ServiceA;
 				};
 				imports: [ModuleRef<ModuleBDef>];
-				exportKeys: "serviceA";
+				exportKeys: ["serviceA"];
 			}>;
 
 			const ModuleA = createStaticModule<ModuleADef>({
@@ -265,16 +266,14 @@ describe("DIContext", () => {
 				providers: {
 					serviceA: ServiceA,
 				},
-				exports: {
-					serviceA: ServiceA,
-				},
+				exports: ["serviceA"],
 			});
 
 			type ModuleBDef = ModuleDef<{
 				providers: {
 					serviceB: ServiceB;
 				};
-				exportKeys: "serviceB";
+				exportKeys: ["serviceB"];
 				// ModuleA imports ModuleB via forwardRef, ModuleB imports ModuleA directly
 				imports: [typeof ModuleA];
 			}>;
@@ -285,9 +284,7 @@ describe("DIContext", () => {
 				providers: {
 					serviceB: ServiceB,
 				},
-				exports: {
-					serviceB: ServiceB,
-				},
+				exports: ["serviceB"],
 			});
 
 			ModuleA.imports = [forwardRef(() => ModuleB)];
@@ -347,9 +344,7 @@ describe("DIContext", () => {
 							p1: class P1 extends TestableBase {},
 							innerService: class InnerService extends TestableBase {},
 						},
-						exports: {
-							innerService: class InnerService extends TestableBase {},
-						},
+						exports: ["innerService"],
 					},
 				],
 				providers: {
@@ -493,9 +488,7 @@ describe("DIContext", () => {
 				providers: {
 					sharedSingleton: SharedSingleton,
 				},
-				exports: {
-					sharedSingleton: SharedSingleton,
-				},
+				exports: ["sharedSingleton"],
 			};
 
 			const ModuleA: AnyModule = {
@@ -504,9 +497,7 @@ describe("DIContext", () => {
 				providers: {
 					consumerA: ConsumerA,
 				},
-				exports: {
-					consumerA: ConsumerA,
-				},
+				exports: ["consumerA"],
 			};
 
 			const ModuleB: AnyModule = {
@@ -515,9 +506,7 @@ describe("DIContext", () => {
 				providers: {
 					consumerB: ConsumerB,
 				},
-				exports: {
-					consumerB: ConsumerB,
-				},
+				exports: ["consumerB"],
 			};
 
 			const { scope, importedScopes } = registerModule({
@@ -551,9 +540,7 @@ describe("DIContext", () => {
 					p1: P1,
 					p3: P3,
 				},
-				exports: {
-					p1: P1,
-				},
+				exports: ["p1"],
 			};
 
 			const M2: AnyModule = {
@@ -566,15 +553,7 @@ describe("DIContext", () => {
 						useFactory: (p1: TestableBase) => new P2({ p1 }),
 					},
 				},
-				exports: {
-					p2: {
-						provide: {
-							useClass: P2,
-						},
-						inject: ["p1"],
-						useFactory: (p1: TestableBase) => new P2({ p1 }),
-					},
-				},
+				exports: ["p2"],
 			};
 
 			const { scope } = registerModule({
@@ -605,21 +584,14 @@ describe("DIContext", () => {
 						providers: {
 							internalService1: class InternalService1 extends TestableBase {},
 						},
-						exports: {
-							internalService1: class InternalService1 extends TestableBase {},
-						},
+						exports: ["internalService1"],
 					},
 				],
 				providers: {
 					sharedService: class SharedService extends TestableBase {},
 					internalService: class InternalService extends TestableBase {},
 				},
-				exports: {
-					sharedService: {
-						useClass: class SharedService extends TestableBase {},
-						lifetime: Lifetime.TRANSIENT,
-					},
-				},
+				exports: ["sharedService"],
 			};
 
 			const { scope, importedScopes } = registerModule({
@@ -674,9 +646,7 @@ describe("DIContext", () => {
 				providers: {
 					loggerService: class Logger extends TestableBase {},
 				},
-				exports: {
-					loggerService: class Logger extends TestableBase {},
-				},
+				exports: ["loggerService"],
 			};
 
 			const ConfigModule: AnyModule = {
@@ -685,9 +655,7 @@ describe("DIContext", () => {
 				providers: {
 					configService: class Config extends TestableBase {},
 				},
-				exports: {
-					configService: class Config extends TestableBase {},
-				},
+				exports: ["configService"],
 			};
 
 			const { importedScopes } = registerModule({
@@ -759,9 +727,7 @@ describe("DIContext", () => {
 							level: config.level,
 							loggerService: class LoggerService extends TestableBase {},
 						},
-						exports: {
-							loggerService: class LoggerService extends TestableBase {},
-						},
+						exports: ["loggerService"],
 					};
 				},
 			};

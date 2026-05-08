@@ -42,20 +42,24 @@ export function createStaticModule<TDef extends StaticModuleDef>(
 ): StaticModule<StripDynamic<TDef>> {
 	const hashNameFrom = options?.hashNameFrom;
 
+	// TODO: simplify
 	if (hashNameFrom !== undefined) {
+		const rawModule: any = module;
 		const hashLength = options?.hashLength ?? 8;
 		const hash = createHash("sha256")
 			.update(stableStringify(hashNameFrom))
 			.digest("hex")
 			.slice(0, Math.max(4, hashLength));
+		const moduleName = getModuleName(rawModule);
 
-		return {
-			...module,
-			name: `${module.name}_${hash}`,
-		};
+		const hashedModule = Object.assign({}, rawModule, {
+			name: `${moduleName}_${hash}`,
+		}) as unknown as StaticModule<StripDynamic<TDef>>;
+
+		return hashedModule;
 	}
 
-	return module;
+	return module as unknown as StaticModule<StripDynamic<TDef>>;
 }
 
 export function createDynamicModule<TDef extends DynamicModuleDef>(
@@ -66,16 +70,25 @@ export function createDynamicModule<TDef extends DynamicModuleDef>(
 ): DynamicModule<TDef> {
 	return {
 		forRoot(config, options) {
-			return {
-				...factory(config, options),
+			const builtModule = factory(config, options) as unknown as Record<
+				string,
+				unknown
+			>;
+			const dynamicModule = Object.assign({}, builtModule, {
 				registerControllers: options?.registerControllers ?? false,
-			};
+			}) as unknown as StaticModule<TDef>;
+
+			return dynamicModule;
 		},
 	};
 }
 
 function stableStringify(value: unknown): string {
 	return JSON.stringify(sortRecursively(value));
+}
+
+function getModuleName(module: unknown): string {
+	return String((module as { name?: unknown }).name);
 }
 
 function sortRecursively(value: unknown): unknown {

@@ -25,7 +25,7 @@ export type OwnersModuleDef = ModuleDef<{
 		ownersService: OwnersService;
 		owners1Service: Owners1Service;
 	};
-	exportKeys: "ownersService" | "owners1Service";
+	exportKeys: ["ownersService", "owners1Service"];
 	imports: [
 		ModuleRef<CatsModuleDef>,
 		ReturnType<typeof DbModule<typeof dbScope>>,
@@ -65,18 +65,5 @@ export const OwnersModule: StaticModule<OwnersModuleDef> =
 			},
 		},
 
-		exports: {
-			owners1Service: {
-				useClass: Owners1Service,
-				// lifetime: "SCOPED",
-				lifetime: "SCOPED",
-			},
-			ownersService: {
-				useClass: OwnersService,
-				// lifetime: "TRANSIENT",
-				lifetime: "SCOPED",
-
-				// allowCircular: true,
-			},
-		},
+		exports: ["ownersService", "owners1Service"],
 	});

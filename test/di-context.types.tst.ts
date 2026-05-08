@@ -121,7 +121,7 @@ describe("Module", () => {
 		type M1 = M<
 			D<{
 				providers: { p1: ""; p2: boolean; p3: true; p4: 2 };
-				exportKeys: "p3";
+				exportKeys: ["p3"];
 			}>
 		>;
 
@@ -212,7 +212,7 @@ describe("Module", () => {
 		type M1 = M<
 			D<{
 				providers: { p1: P1; p2: P2 };
-				exportKeys: "p1";
+				exportKeys: ["p1"];
 			}>
 		>;
 
@@ -251,13 +251,13 @@ describe("Module", () => {
 		type M1 = M<
 			D<{
 				providers: { p1: P1; p5: P5 };
-				exportKeys: "p1";
+				exportKeys: ["p1"];
 			}>
 		>;
 		type M2 = M<
 			D<{
 				providers: { p2: P2 };
-				exportKeys: "p2";
+				exportKeys: ["p2"];
 			}>
 		>;
 		type M3 = M<
@@ -315,7 +315,7 @@ describe("createStaticModule", () => {
 	it("catches extra modules in imports", () => {
 		type D2 = D<{
 			providers: { service3: Service3 };
-			exportKeys: "service3";
+			exportKeys: ["service3"];
 		}>;
 		const Mod = createStaticModule<D2>({
 			name: "Mod",
@@ -359,7 +359,7 @@ describe("createStaticModule", () => {
 	it("catches extra properties in exports", () => {
 		type D1 = D<{
 			providers: { service1: Service1; service2: Service2 };
-			exportKeys: "service1";
+			exportKeys: ["service1"];
 		}>;
 
 		// Negative: Should reject extra properties in exports
@@ -427,7 +427,7 @@ describe("createDynamicModule", () => {
 	it("catches extra properties in exports", () => {
 		type D1 = D<{
 			providers: { service1: Service1; service2: Service2 };
-			exportKeys: "service1";
+			exportKeys: ["service1"];
 			forRootConfig: { host: string; port: number };
 		}>;
 

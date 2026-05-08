@@ -61,14 +61,14 @@ describe("Mediator Contracts", () => {
 	type ImportedQueryModule = M<
 		D<{
 			queryPreHandlers: { tenant: ImportedTenantMiddleware };
-			exportQueryPreHandlerKeys: "tenant";
+			exportQueryPreHandlerKeys: ["tenant"];
 		}>
 	>;
 
 	type ImportedCommandModule = M<
 		D<{
 			commandPreHandlers: { policy: CommandPolicyMiddleware };
-			exportCommandPreHandlerKeys: "policy";
+			exportCommandPreHandlerKeys: ["policy"];
 		}>
 	>;
 
