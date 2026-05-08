@@ -16,6 +16,7 @@ import * as GUARGS from "./type-guards.js";
 
 export interface DiContextOptions {
 	framework: unknown;
+	// TODO: intializer for swagger also can be used!
 	beforeRouteRegistered?: (params: RouteRegistration) => any[];
 	containerOptions?: Awilix.ContainerOptions;
 	providerOptions?: Partial<Awilix.BuildResolverOptions<any>>;

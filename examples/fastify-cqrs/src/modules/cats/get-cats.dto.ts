@@ -5,6 +5,8 @@ import {
 	CatsNotFoundError,
 	LoggerError,
 } from "@/common/error-to-http-error.mapper.js";
+import { InvalidEventPayloadError } from "../event-emitter/event-emitter.service.js";
+import { CatsViewedEvent, CatsViewedEventError } from "./cats.event.js";
 
 export const GetCatsQuerySchema = Type.Object({
 	// breed: Type.Optional(Type.String()),
@@ -58,7 +60,12 @@ export const GetCatsSchema = {
 	querystring: GetCatsQuerySchema,
 	response: {
 		[HttpStatus.OK]: GetCatsResponseSchema,
-		...mapErrorsToSchemas([CatsNotFoundError, LoggerError]),
+		...mapErrorsToSchemas([
+			CatsNotFoundError,
+			LoggerError,
+			InvalidEventPayloadError,
+			CatsViewedEventError,
+		]),
 	},
 };
 

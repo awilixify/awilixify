@@ -15,6 +15,8 @@ import { InterceptedCatsService } from "./intercepted-cats.service.js";
 import { CatsCacheInterceptor } from "./cats-cache.interceptor.js";
 import { ScheduleModule } from "@/modules/scheduler/scheduler.module.js";
 import { CatsHeartbeatCron } from "./cats.controller.js";
+import { EventEmitterModule } from "@/modules/event-emitter/event-emitter.module.js";
+import { CatsEventController } from "./cats.event.js";
 
 const dbScope = {
 	readTables: ["cats"],
@@ -33,6 +35,9 @@ export type CatsModuleDef = ModuleDef<{
 		typeof OwnersModule,
 		ReturnType<typeof DbModule<typeof dbScope>>,
 		ReturnType<typeof ScheduleModule>,
+		ReturnType<
+			typeof EventEmitterModule<(typeof CatsEventController)["eventScope"]>
+		>,
 	];
 	queryHandlers: [GetCatsQueryHandler];
 	queryPreHandlers: {
@@ -53,6 +58,7 @@ export const CatsModule = createStaticModule<CatsModuleDef>({
 		OwnersModule,
 		DbModule(dbScope),
 		ScheduleModule([CatsHeartbeatCron]),
+		EventEmitterModule(CatsEventController.eventScope),
 	],
 
 	queryPreHandlers: {
@@ -104,6 +110,7 @@ export const CatsModule = createStaticModule<CatsModuleDef>({
 	queryHandlers: [{ useClass: GetCatsQueryHandler }],
 	controllers: [
 		CatsController,
+		CatsEventController,
 		CatsDecoratedController,
 		{
 			useClass: CatsScopedController,

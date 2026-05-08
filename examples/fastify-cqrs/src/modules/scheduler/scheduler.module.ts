@@ -1,5 +1,6 @@
 import { createStaticModule, type ModuleDef } from "awilix-modular";
 import { ToadScheduler } from "toad-scheduler";
+
 import { type CronMetadata } from "./cron.decorator.js";
 import { Scheduler } from "./scheduler.service.js";
 import { CronControllerInitializer } from "./cron.controller-initializer.js";
@@ -22,20 +23,22 @@ export type Deps = SchedulerModuleDef["deps"];
 export function ScheduleModule(
 	allowedCronDefinitions: readonly CronMetadata[],
 ) {
-	return createStaticModule<SchedulerModuleDef>({
-		// TODO: maybe auto generation on awilix-modular level??
-		name: `SchedulerModule_${allowedCronDefinitions
-			.map((definition) => definition.id)
-			.join("_")}`,
-		providers: {
-			toadScheduler: SHARED_SCHEDULER,
-			allowedCronDefinitions,
-			scheduler: Scheduler,
+	return createStaticModule<SchedulerModuleDef>(
+		{
+			name: "SchedulerModule",
+			providers: {
+				toadScheduler: SHARED_SCHEDULER,
+				allowedCronDefinitions,
+				scheduler: Scheduler,
+			},
+			exports: {
+				scheduler: Scheduler,
+			},
+			controllerInitializers: [CronControllerInitializer],
+			controllerInitializerExports: [CronControllerInitializer],
 		},
-		exports: {
-			scheduler: Scheduler,
+		{
+			hashNameFrom: allowedCronDefinitions,
 		},
-		controllerInitializers: [CronControllerInitializer],
-		controllerInitializerExports: [CronControllerInitializer],
-	});
+	);
 }

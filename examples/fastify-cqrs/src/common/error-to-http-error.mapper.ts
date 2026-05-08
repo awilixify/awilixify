@@ -1,6 +1,8 @@
 import { httpException, HttpException } from "awilix-modular";
 
 import { BaseError } from "./base.error.js";
+import { CatsViewedEventError } from "@/modules/cats/cats.event.js";
+import { InvalidEventPayloadError } from "@/modules/event-emitter/event-emitter.service.js";
 
 export class UnauthorizedError extends BaseError {
 	static readonly CODE = "auth.unauthorized";
@@ -47,6 +49,8 @@ export const Errors = {
 	TENANT_NOT_FOUND: TenantNotFoundError,
 	CATS_NOT_FOUND: CatsNotFoundError,
 	UNAUTHORIZED: UnauthorizedError,
+	CATS_VIEWED_EVENT_EMIT_FAILED: CatsViewedEventError,
+	INVALID_EVENT_PAYLOAD_ERROR: InvalidEventPayloadError,
 } as const;
 
 export type ErrorCode = (typeof Errors)[keyof typeof Errors]["CODE"];
@@ -60,6 +64,12 @@ export const errorCodeToHttpException = {
 		httpException.notFound(Errors.CATS_NOT_FOUND.CODE),
 	[Errors.LOGGER_NOT_FOUND.CODE]: () =>
 		httpException.notFound(Errors.LOGGER_NOT_FOUND.CODE),
+	[Errors.CATS_VIEWED_EVENT_EMIT_FAILED.CODE]: () =>
+		httpException.internalServerError(
+			Errors.CATS_VIEWED_EVENT_EMIT_FAILED.CODE,
+		),
+	[Errors.INVALID_EVENT_PAYLOAD_ERROR.CODE]: () =>
+		httpException.badRequest(Errors.INVALID_EVENT_PAYLOAD_ERROR.CODE),
 } as const satisfies Record<ErrorCode, () => HttpException<string>>;
 
 export function mapApplicationErrorToHttpError<TError extends BaseError>(

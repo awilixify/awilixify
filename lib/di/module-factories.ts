@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import type {
 	AnyModule,
 	DynamicModule,
@@ -12,6 +13,11 @@ import type { FactoryProvider } from "./provider.types.js";
 type StripDynamic<T> = T extends { forRootConfig: any }
 	? Omit<T, "forRootConfig">
 	: T;
+
+export type CreateStaticModuleOptions = {
+	hashNameFrom?: unknown;
+	hashLength?: number;
+};
 
 export function forwardRef<T extends AnyModule>(
 	getter: () => T,
@@ -32,7 +38,23 @@ export function createFactoryProvider<DepsMap extends Record<string, any>>() {
 
 export function createStaticModule<TDef extends StaticModuleDef>(
 	module: StaticModule<StripDynamic<TDef>>,
+	options?: CreateStaticModuleOptions,
 ): StaticModule<StripDynamic<TDef>> {
+	const hashNameFrom = options?.hashNameFrom;
+
+	if (hashNameFrom !== undefined) {
+		const hashLength = options?.hashLength ?? 8;
+		const hash = createHash("sha256")
+			.update(stableStringify(hashNameFrom))
+			.digest("hex")
+			.slice(0, Math.max(4, hashLength));
+
+		return {
+			...module,
+			name: `${module.name}_${hash}`,
+		};
+	}
+
 	return module;
 }
 
@@ -50,4 +72,26 @@ export function createDynamicModule<TDef extends DynamicModuleDef>(
 			};
 		},
 	};
+}
+
+function stableStringify(value: unknown): string {
+	return JSON.stringify(sortRecursively(value));
+}
+
+function sortRecursively(value: unknown): unknown {
+	if (Array.isArray(value)) {
+		return value.map(sortRecursively);
+	}
+
+	if (value && typeof value === "object") {
+		return Object.keys(value as Record<string, unknown>)
+			.sort()
+			.reduce<Record<string, unknown>>((acc, key) => {
+				acc[key] = sortRecursively((value as Record<string, unknown>)[key]);
+
+				return acc;
+			}, {});
+	}
+
+	return value;
 }
