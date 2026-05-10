@@ -1,4 +1,4 @@
-import { DIContext, OpenAPIBuilder } from "awilix-modular";
+import { DIContext, OpenAPIBuilder } from "awilixify";
 import { buildApp } from "@/app.js";
 import { AppModule } from "@/modules/index.js";
 import { setupSwagger } from "./setup-swagger.js";

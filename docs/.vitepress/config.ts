@@ -69,7 +69,7 @@ const docsSidebar = [
 ];
 
 export default defineConfig({
-	title: "awilix-modular",
+	title: "awilixify",
 	description:
 		"HTTP-framework-agnostic modular DI and CQRS framework for Awilix",
 	base,
@@ -84,7 +84,7 @@ export default defineConfig({
 			"/docs/": docsSidebar,
 		},
 		socialLinks: [
-			{ icon: "github", link: "https://github.com/wildstyles/awilix-modular" },
+			{ icon: "github", link: "https://github.com/wildstyles/awilixify" },
 		],
 	},
 	markdown: {
@@ -93,8 +93,8 @@ export default defineConfig({
 				tsconfigPath: "./docs/.vitepress/tsconfig.twoslash.json",
 				twoslashOptions: {
 					extraFiles: {
-						"/node_modules/awilix-modular/index.d.ts": `
-declare module "awilix-modular" {
+						"/node_modules/awilixify/index.d.ts": `
+declare module "awilixify" {
 	export type ModuleDef<T> = T & { deps: Record<string, any> };
 	export function createStaticModule<T>(def: any): any;
 	export function createDynamicModule<T>(factory: (config: any) => any): { forRoot(config: any): any };

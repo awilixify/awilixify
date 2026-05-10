@@ -1,13 +1,13 @@
 # CQRS Quick Start
 
-Awilix-modular encourages and provides utilities for implementing the CQRS (Command Query Responsibility Segregation) pattern with type-safe query and command handlers.
+awilixify encourages and provides utilities for implementing the CQRS (Command Query Responsibility Segregation) pattern with type-safe query and command handlers.
 
 ### Defining Handlers
 
 Create handlers that implement the `Handler<QueryContract<...>>` interface with a unique static key and executor function:
 
 ```typescript
-import { type Handler, type QueryContract } from "awilix-modular";
+import { type Handler, type QueryContract } from "awilixify";
 import type { UserModuleDeps } from "./user.module";
 
 // Define payload and response types
@@ -37,7 +37,7 @@ export class GetUserQueryHandler implements Handler<
 Add query handlers to the module's `queryHandlers` array. Include them in the `ModuleDef` type for full mediator type safety:
 
 ```typescript
-import { createStaticModule, type ModuleDef } from "awilix-modular";
+import { createStaticModule, type ModuleDef } from "awilixify";
 
 type UserModuleDef = ModuleDef<{
   providers: {

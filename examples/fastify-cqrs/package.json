@@ -1,5 +1,5 @@
 {
-	"name": "awilix-modular-fastify-cqrs-example",
+	"name": "awilixify-fastify-cqrs-example",
 	"version": "1.0.0",
 	"private": true,
 	"type": "module",
@@ -15,7 +15,7 @@
 		"@fastify/type-provider-typebox": "^5.0.0",
 		"@sinclair/typebox": "^0.34.15",
 		"awilix": "^10.0.2",
-		"awilix-modular": "link:../..",
+		"awilixify": "link:../..",
 		"emittery": "^2.0.0",
 		"fastify": "^5.2.0",
 		"kysely": "^0.28.16",

@@ -1,4 +1,4 @@
-import { GET, schema, HttpStatus } from "awilix-modular";
+import { GET, schema, HttpStatus } from "awilixify";
 import type { Request, Reply } from "@/types.js";
 import {
 	createCronDefinition,

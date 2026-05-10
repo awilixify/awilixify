@@ -8,7 +8,7 @@ Both `QueryContract` and `CommandContract` are supported.
 Each handler defines its contract within itself:
 
 ```typescript
-import type { QueryContract, CommandContract } from "awilix-modular";
+import type { QueryContract, CommandContract } from "awilixify";
 
 export class GetUserQueryHandler {
   static readonly key = "users/get-user";

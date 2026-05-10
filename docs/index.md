@@ -2,7 +2,7 @@
 layout: home
 
 hero:
-  name: awilix-modular
+  name: awilixify
   text: Type-safe, modular DI and CQRS
   tagline: HTTP-framework-agnostic architecture with explicit module boundaries, typed contracts, and minimal runtime overhead.
   actions:
@@ -11,7 +11,7 @@ hero:
       link: /docs/quick-start
     - theme: alt
       text: View on GitHub
-      link: https://github.com/wildstyles/awilix-modular
+      link: https://github.com/wildstyles/awilixify
 
 features:
   - title: Type-Safe Module System

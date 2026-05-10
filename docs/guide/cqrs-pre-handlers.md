@@ -19,7 +19,7 @@ import {
   Result,
   type Middleware,
   type MiddlewareContract,
-} from "awilix-modular";
+} from "awilixify";
 
 class UnauthorizedError extends Error {}
 class TenantNotFoundError extends Error {}
@@ -71,7 +71,7 @@ class TenantMiddleware implements Middleware {
 3. merged data becomes handler `context`
 
 ```typescript
-import type { QueryContract } from "awilix-modular";
+import type { QueryContract } from "awilixify";
 
 class AuthMiddleware {
   async execute() {

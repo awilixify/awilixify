@@ -1,6 +1,6 @@
 # Circular Dependencies
 
-Awilix-modular supports circular dependencies between providers and modules using `allowCircular` and `forwardRef`.
+awilixify supports circular dependencies between providers and modules using `allowCircular` and `forwardRef`.
 
 ### Within Same Module
 
@@ -58,7 +58,7 @@ export const CatsModule = createStaticModule<CatsModuleDef>({
 });
 
 // owners.module.ts
-import { forwardRef, type ModuleRef } from "awilix-modular";
+import { forwardRef, type ModuleRef } from "awilixify";
 import { CatsModule, type CatsModuleDef } from "./cats.module";
 
 export type OwnersModuleDef = ModuleDef<{
@@ -109,7 +109,7 @@ export const OwnersModule: StaticModule<OwnersModuleDef> =
     exports: {
       ownersService: OwnersService,
     },
-});
+  });
 ```
 
 > [!TIP]

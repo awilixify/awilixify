@@ -1,7 +1,7 @@
 import {
 	createControllerInitializerDecorator,
 	createControllerMetadataToken,
-} from "awilix-modular";
+} from "awilixify";
 import type { AnyEventConstructor } from "./event-emitter.types.js";
 
 export const ON_EVENT_METADATA_TOKEN =

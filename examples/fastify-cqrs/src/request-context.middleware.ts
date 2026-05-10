@@ -23,6 +23,6 @@ declare module "fastify" {
 	}
 }
 
-declare module "awilix-modular" {
+declare module "awilixify" {
 	interface ExecutionContext extends RequestContext {}
 }

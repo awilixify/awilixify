@@ -1,5 +1,5 @@
 import { type Static, Type } from "@sinclair/typebox";
-import { HttpStatus } from "awilix-modular";
+import { HttpStatus } from "awilixify";
 import { mapErrorsToSchemas } from "@/common/base.dto.js";
 import {
 	CatsNotFoundError,

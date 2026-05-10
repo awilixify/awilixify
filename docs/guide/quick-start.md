@@ -8,7 +8,7 @@ Define `OrderModule` with typed providers and export `orderService` for other mo
 
 ```typescript
 // order.module.ts
-import { createStaticModule, type ModuleDef } from "awilix-modular";
+import { createStaticModule, type ModuleDef } from "awilixify";
 
 import { OrderService } from "./order.service";
 
@@ -37,7 +37,7 @@ Define `UserModule` and import `OrderModule`:
 
 ```typescript
 // user.module.ts
-import { createStaticModule, type ModuleDef } from "awilix-modular";
+import { createStaticModule, type ModuleDef } from "awilixify";
 
 import { OrderModule } from "../order/order.module";
 import { UserService } from "./user.service";
@@ -76,7 +76,7 @@ import {
   createDynamicModule,
   type ModuleDef,
   type InferGlobalDependencies,
-} from "awilix-modular";
+} from "awilixify";
 import type { Express } from "express";
 
 export type GlobalModuleDef = ModuleDef<{
@@ -103,7 +103,7 @@ export const GlobalModule = createDynamicModule<GlobalModuleDef>(
 );
 
 // Extend GlobalDependencies to make global module exports available everywhere
-declare module "awilix-modular" {
+declare module "awilixify" {
   interface GlobalDependencies extends InferGlobalDependencies<GlobalModuleDef> {}
 }
 ```
@@ -114,7 +114,7 @@ Instantiate DIContext with root module and global modules:
 
 ```typescript
 // app.module.ts
-import { DIContext } from "awilix-modular";
+import { DIContext } from "awilixify";
 
 import { UserModule } from "./user.module";
 import { GlobalModule } from "./global.module";
@@ -192,7 +192,7 @@ This is especially useful for gradually migrating existing applications to a mod
 ```typescript
 // user.controller.ts
 import type { Express, Request, Response } from "express";
-import { Controller } from "awilix-modular";
+import { Controller } from "awilixify";
 
 import { UserModuleDeps } from "./user.module.ts";
 

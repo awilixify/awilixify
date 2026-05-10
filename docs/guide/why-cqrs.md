@@ -1,6 +1,6 @@
 # Why CQRS?
 
-CQRS isn't just an architectural pattern—it's a mindset that brings clarity to your application structure. With awilix-modular, CQRS costs almost nothing to implement but provides significant benefits:
+CQRS isn't just an architectural pattern—it's a mindset that brings clarity to your application structure. With awilixify, CQRS costs almost nothing to implement but provides significant benefits:
 
 **Clear Mental Separation from Controllers**: Controllers become thin routing layers that delegate to handlers, keeping HTTP concerns separate from business logic:
 
@@ -21,7 +21,7 @@ app.get("/users/:id", async (req, res) => {
 **Strict Contract in One Place**: Each handler defines its contract (key, payload, response) in a single location, making it easy to understand what data flows through your system:
 
 ```typescript
-import type { QueryContract } from "awilix-modular";
+import type { QueryContract } from "awilixify";
 
 export class GetUserQueryHandler {
   static readonly key = "users/get-user"; // Unique identifier
@@ -43,4 +43,4 @@ export class GetUserQueryHandler {
 - **Middleware Pipeline**: Cross-cutting concerns (auth, logging, validation) apply consistently to all handlers
 - **Framework Agnostic**: Business logic isn't coupled to Express, Fastify, or any HTTP framework
 
-**Zero Cost**: Adding CQRS with awilix-modular requires minimal setup—just define handlers and register them. No complex configuration, no boilerplate, just clean separation of concerns.
+**Zero Cost**: Adding CQRS with awilixify requires minimal setup—just define handlers and register them. No complex configuration, no boilerplate, just clean separation of concerns.

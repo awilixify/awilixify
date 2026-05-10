@@ -1,5 +1,5 @@
 import { type Static, Type } from "@sinclair/typebox";
-import { HttpStatus } from "awilix-modular";
+import { HttpStatus } from "awilixify";
 
 export const GetOwnersQuerySchema = Type.Object({
 	name: Type.String(),

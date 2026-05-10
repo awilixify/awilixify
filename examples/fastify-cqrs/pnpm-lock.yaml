@@ -23,7 +23,7 @@ importers:
       awilix:
         specifier: ^10.0.2
         version: 10.0.2
-      awilix-modular:
+      awilixify:
         specifier: link:../..
         version: link:../..
       emittery:

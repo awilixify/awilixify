@@ -10,7 +10,7 @@ import {
   type InferGlobalCommandPreHandlers,
   type InferGlobalDependencies,
   type InferGlobalQueryPreHandlers,
-} from "awilix-modular";
+} from "awilixify";
 
 import { AuthPreHandler } from "./auth.pre-handler";
 import { AuditPreHandler } from "./audit.pre-handler";
@@ -52,7 +52,7 @@ export const GlobalModule = createStaticModule<GlobalModuleDef>({
   },
 });
 
-declare module "awilix-modular" {
+declare module "awilixify" {
   interface GlobalDependencies extends InferGlobalDependencies<GlobalModuleDef> {}
   interface GlobalQueryPreHandlers extends InferGlobalQueryPreHandlers<GlobalModuleDef> {}
   interface GlobalCommandPreHandlers extends InferGlobalCommandPreHandlers<GlobalModuleDef> {}

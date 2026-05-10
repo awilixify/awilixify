@@ -3,7 +3,7 @@ import {
 	type InferGlobalDependencies,
 	type InferGlobalQueryPreHandlers,
 	type ModuleDef,
-} from "awilix-modular";
+} from "awilixify";
 import type { FastifyInstance } from "@/types.js";
 import { TenantMiddleware } from "./tenant.middleware.js";
 
@@ -37,7 +37,7 @@ export const TenantModule = createDynamicModule<TenantModuleDef>((config) => ({
 	queryPreHandlerExports: ["tenant"],
 }));
 
-declare module "awilix-modular" {
+declare module "awilixify" {
 	interface GlobalDependencies
 		extends InferGlobalDependencies<TenantModuleDef> {}
 

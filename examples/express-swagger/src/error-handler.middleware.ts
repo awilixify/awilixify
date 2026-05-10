@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
-import { HttpException, HttpStatus } from "awilix-modular";
+import { HttpException, HttpStatus } from "awilixify";
 
 export function errorHandler(
 	err: Error,

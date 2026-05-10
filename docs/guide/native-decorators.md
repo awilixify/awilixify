@@ -4,7 +4,7 @@ Use native ES decorators (Stage 3) to define routes directly in controller metho
 Native decorators are standardized JavaScript syntax, which means better long-term compatibility, clearer runtime behavior, and no reliance on legacy TypeScript-only decorator semantics.
 
 ```typescript
-import { controller, GET, POST, before, after, schema } from "awilix-modular";
+import { controller, GET, POST, before, after, schema } from "awilixify";
 import type { Express } from "express";
 import { UserModuleDeps } from "./user.module";
 import { authMiddleware, logMiddleware } from "./middlewares";

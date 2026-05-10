@@ -14,7 +14,7 @@ Interceptors let you add cross-cutting behavior (caching, logging, metrics, retr
 1. Register interceptor classes in module `interceptors`.
 2. Create own decorator using `createInterceptDecorator(...)` and assign some
    metadata.
-3. At runtime, awilix-modular wraps only providers that have decorated methods.
+3. At runtime, awilixify wraps only providers that have decorated methods.
 4. On decorated method call, registered module interceptors run in chain.
 
 ## Basic Usage
@@ -25,7 +25,7 @@ import {
   createStaticModule,
   type ModuleDef,
   type Interceptor,
-} from "awilix-modular";
+} from "awilixify";
 
 const Cachable = (tag: string, ttlMs = 5000) =>
   createInterceptDecorator("cachable")({ tag, ttlMs });

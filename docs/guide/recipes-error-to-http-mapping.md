@@ -37,7 +37,7 @@ export abstract class BaseError extends Error {
 `error-to-http-error.mapper.ts`
 
 ```ts
-import { httpException, HttpException } from "awilix-modular";
+import { httpException, HttpException } from "awilixify";
 import { BaseError } from "./base.error.js";
 
 export class UnauthorizedError extends BaseError {
@@ -81,7 +81,7 @@ export function mapApplicationErrorToHttpError<TError extends BaseError>(
 
 ```ts
 import { Type } from "@sinclair/typebox";
-import { HttpStatus } from "awilix-modular";
+import { HttpStatus } from "awilixify";
 import { BaseError } from "./base.error.js";
 import {
   errorCodeToHttpException,
@@ -169,7 +169,7 @@ export function mapErrorsToSchemas<const T extends readonly BaseErrorClass[]>(
 
 ```ts
 import { Type } from "@sinclair/typebox";
-import { HttpStatus } from "awilix-modular";
+import { HttpStatus } from "awilixify";
 import { mapErrorsToSchemas } from "@/common/base.dto.js";
 import {
   CatsNotFoundError,

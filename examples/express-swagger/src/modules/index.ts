@@ -1,7 +1,7 @@
 import {
 	createStaticModule,
 	type ModuleDef,
-} from "awilix-modular";
+} from "awilixify";
 import { CatsModule } from "@/modules/cats/cats.module.js";
 
 export type AppModuleDef = ModuleDef<{

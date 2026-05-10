@@ -1,5 +1,5 @@
 {
-	"name": "awilix-modular",
+	"name": "awilixify",
 	"description": "HTTP-framework-agnostic modular DI and CQRS framework for Awilix with Nest-like module patterns and strict type safety",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
@@ -38,7 +38,7 @@
 	"type": "module",
 	"repository": {
 		"type": "git",
-		"url": "git://github.com/wildstyles/awilix-modular.git"
+		"url": "git://github.com/wildstyles/awilixify.git"
 	},
 	"keywords": [
 		"modular",
@@ -49,7 +49,7 @@
 		"cqrs",
 		"mediator"
 	],
-	"homepage": "https://github.com/wildstyles/awilix-modular",
+	"homepage": "https://github.com/wildstyles/awilixify",
 	"files": [
 		"README.md",
 		"LICENSE",

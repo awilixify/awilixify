@@ -1,4 +1,4 @@
-import type { QueryContract, Handler } from "awilix-modular";
+import type { QueryContract, Handler } from "awilixify";
 import type {
 	GetOwnersQuery as Payload,
 	GetOwnersResponse as Response,

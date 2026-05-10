@@ -1,4 +1,4 @@
-import { createStaticModule, type ModuleDef } from "awilix-modular";
+import { createStaticModule, type ModuleDef } from "awilixify";
 
 import { OwnersModule } from "@/modules/owners/owners.module.js";
 import { DbModule } from "@/modules/db/db.module.js";

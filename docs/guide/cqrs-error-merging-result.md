@@ -9,7 +9,7 @@ Handler `context` is calculated from active pre-handlers.
 - If middlewares return `Result`, their error types are merged into handler `returnType`.
 
 ```typescript
-import { type Handler, type QueryContract, Result } from "awilix-modular";
+import { type Handler, type QueryContract, Result } from "awilixify";
 import type { UsersModuleDef } from "./users.module";
 
 class HandlerError extends Error {}

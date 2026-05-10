@@ -1,4 +1,4 @@
-import type { Interceptor, InterceptContext } from "awilix-modular";
+import type { Interceptor, InterceptContext } from "awilixify";
 
 type CacheEntry = {
 	expiresAt: number;

@@ -4,7 +4,7 @@
 
 As projects grow, DI typing often becomes repetitive: every service re-declares and re-imports the same dependency types.
 
-awilix-modular was created to make module definitions the source of truth for dependency typing and wiring, so business code stays focused on business logic - not on tens lines of imports.
+awilixify was created to make module definitions the source of truth for dependency typing and wiring, so business code stays focused on business logic - not on tens lines of imports.
 
 ### Core motivation
 

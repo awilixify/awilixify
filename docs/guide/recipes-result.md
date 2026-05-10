@@ -1,6 +1,6 @@
 # Result vs throw
 
-`Result` is the recommended error model for application logic in awilix-modular.
+`Result` is the recommended error model for application logic in awilixify.
 
 It keeps business logic transport-agnostic and type-safe, then maps domain errors to HTTP only at the boundary.
 
@@ -31,7 +31,7 @@ class UserService {
 ### Result (recommended)
 
 ```typescript
-import { Result } from "awilix-modular";
+import { Result } from "awilixify";
 import type { UserModuleDeps } from "./user.module";
 
 class UserService {
@@ -58,7 +58,7 @@ class UserService {
 ### Result in services
 
 ```typescript
-import { Result } from "awilix-modular";
+import { Result } from "awilixify";
 import type { UserModuleDeps } from "./user.module";
 
 class UserService {

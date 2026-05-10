@@ -11,7 +11,7 @@ import type {
 } from "fastify";
 import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 import type { Static, TSchema } from "@sinclair/typebox";
-import type { RouteSchema } from "awilix-modular";
+import type { RouteSchema } from "awilixify";
 
 export type FastifyInstance = DefaultFastifyInstance<
 	RawServerDefault,

@@ -3,7 +3,7 @@ import type {
 	Response as ExpressResponse,
 } from "express";
 import type { Static, TSchema } from "@sinclair/typebox";
-import type { RouteSchema } from "awilix-modular";
+import type { RouteSchema } from "awilixify";
 
 export type Request<S extends RouteSchema> = ExpressRequest<
 	S["params"] extends TSchema ? Static<S["params"]> : any,

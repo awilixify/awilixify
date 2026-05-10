@@ -2,7 +2,7 @@ import {
 	type Middleware,
 	type MiddlewareContract,
 	Result,
-} from "awilix-modular";
+} from "awilixify";
 import { UnauthorizedError } from "@/common/error-to-http-error.mapper.js";
 
 type ReturnType = Result<

@@ -1,6 +1,6 @@
 # Awilix Modular Examples
 
-Examples demonstrating how to use `awilix-modular` with Fastify and TypeBox.
+Examples demonstrating how to use `awilixify` with Fastify and TypeBox.
 
 ## Getting Started
 

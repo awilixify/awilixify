@@ -1,5 +1,5 @@
 import Emittery from "emittery";
-import { createStaticModule, type ModuleDef } from "awilix-modular";
+import { createStaticModule, type ModuleDef } from "awilixify";
 import { EventListenerControllerInitializer } from "./event-listener.controller-initializer.js";
 import { EventEmitter } from "./event-emitter.service.js";
 import type {

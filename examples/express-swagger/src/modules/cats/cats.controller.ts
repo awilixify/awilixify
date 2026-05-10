@@ -1,4 +1,4 @@
-import { GET, schema } from "awilix-modular";
+import { GET, schema } from "awilixify";
 import type { Request, Response } from "@/types.js";
 import type { Deps } from "./cats.module.js";
 import { GetCatsSchema } from "./get-cats.dto.js";

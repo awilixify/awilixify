@@ -6,10 +6,10 @@ You can define global query/command pre-handlers once and have their context/err
 import type {
   InferGlobalCommandPreHandlers,
   InferGlobalQueryPreHandlers,
-} from "awilix-modular";
+} from "awilixify";
 import type { AppGlobalsModuleDef } from "./app-globals.module";
 
-declare module "awilix-modular" {
+declare module "awilixify" {
   interface GlobalQueryPreHandlers extends InferGlobalQueryPreHandlers<AppGlobalsModuleDef> {}
 
   interface GlobalCommandPreHandlers extends InferGlobalCommandPreHandlers<AppGlobalsModuleDef> {}

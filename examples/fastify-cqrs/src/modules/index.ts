@@ -1,4 +1,4 @@
-import { createStaticModule, type ModuleDef } from "awilix-modular";
+import { createStaticModule, type ModuleDef } from "awilixify";
 
 import { CatsModule } from "@/modules/cats/cats.module.js";
 

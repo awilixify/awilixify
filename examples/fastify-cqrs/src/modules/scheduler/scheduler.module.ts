@@ -1,4 +1,4 @@
-import { createStaticModule, type ModuleDef } from "awilix-modular";
+import { createStaticModule, type ModuleDef } from "awilixify";
 import { ToadScheduler } from "toad-scheduler";
 
 import { type CronMetadata } from "./cron.decorator.js";

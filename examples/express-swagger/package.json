@@ -1,5 +1,5 @@
 {
-	"name": "awilix-modular-express-swagger-example",
+	"name": "awilixify-express-swagger-example",
 	"version": "1.0.0",
 	"private": true,
 	"type": "module",
@@ -11,7 +11,7 @@
 		"@sinclair/typebox": "^0.34.15",
 		"ajv": "^8.18.0",
 		"awilix": "^10.0.2",
-		"awilix-modular": "link:../..",
+		"awilixify": "link:../..",
 		"express": "^4.21.2",
 		"swagger-ui-express": "^5.0.1"
 	},

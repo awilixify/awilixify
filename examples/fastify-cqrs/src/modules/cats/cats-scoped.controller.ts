@@ -1,4 +1,4 @@
-import type { Controller } from "awilix-modular";
+import type { Controller } from "awilixify";
 
 import type { Deps } from "./cats.module.js";
 import { GetCatsSchema } from "./get-cats.dto.js";

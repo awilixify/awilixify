@@ -12,7 +12,7 @@ import type {
   Response as ExpressResponse,
 } from "express";
 import type { Static, TSchema } from "@sinclair/typebox";
-import type { RouteSchema } from "awilix-modular";
+import type { RouteSchema } from "awilixify";
 
 export type Request<S extends RouteSchema> = ExpressRequest<
   S["params"] extends TSchema ? Static<S["params"]> : any,
@@ -50,7 +50,7 @@ For Fastify, combine with TypeBox type provider for full type inference:
 import type { FastifyRequest, FastifyReply } from "fastify";
 import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 import type { Static, TSchema } from "@sinclair/typebox";
-import type { RouteSchema } from "awilix-modular";
+import type { RouteSchema } from "awilixify";
 
 export type Request<S extends RouteSchema> = FastifyRequest<{
   Querystring: S["querystring"] extends TSchema
@@ -76,7 +76,7 @@ export type Reply<S extends RouteSchema> = FastifyReply<
 Once defined, use these types in your controllers for full type safety:
 
 ```typescript
-import { GET, schema } from "awilix-modular";
+import { GET, schema } from "awilixify";
 import { Type } from "@sinclair/typebox";
 import type { Request, Response } from "./types";
 

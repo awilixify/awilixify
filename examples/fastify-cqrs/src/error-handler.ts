@@ -1,5 +1,5 @@
 import type { FastifyError, FastifyReply, FastifyRequest } from "fastify";
-import { HttpException, HttpStatus } from "awilix-modular";
+import { HttpException, HttpStatus } from "awilixify";
 
 import type { FastifyInstance } from "./types.js";
 

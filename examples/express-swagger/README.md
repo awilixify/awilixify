@@ -1,6 +1,6 @@
 # Express + Swagger Example
 
-Examples demonstrating how to use `awilix-modular` with Express and TypeBox.
+Examples demonstrating how to use `awilixify` with Express and TypeBox.
 
 ## Getting Started
 

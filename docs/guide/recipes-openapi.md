@@ -1,6 +1,6 @@
 # OpenAPI/Swagger Integration
 
-Awilix-modular provides `OpenAPIBuilder` to automatically generate OpenAPI/Swagger documentation from route schemas. This works seamlessly with JSON Schema libraries like TypeBox.
+awilixify provides `OpenAPIBuilder` to automatically generate OpenAPI/Swagger documentation from route schemas. This works seamlessly with JSON Schema libraries like TypeBox.
 
 > [!NOTE]
 > **This is particularly useful for Express applications.** Fastify and Hono already provide schema validation and OpenAPI generation out of the box through their ecosystems (`@fastify/swagger`, `@hono/zod-openapi`). For Express and other frameworks without built-in schema support, `OpenAPIBuilder` bridges this gap by providing similar functionality.
@@ -13,7 +13,7 @@ The `beforeRouteRegistered` hook allows you to intercept route registration to:
 2. Set up custom validation middleware based on JSON schemas
 
 ```typescript
-import { DIContext, OpenAPIBuilder } from "awilix-modular";
+import { DIContext, OpenAPIBuilder } from "awilixify";
 import express from "express";
 import Ajv from "ajv";
 import swaggerUi from "swagger-ui-express";

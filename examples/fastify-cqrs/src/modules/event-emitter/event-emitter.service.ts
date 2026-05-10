@@ -3,7 +3,7 @@ import { getEventKey } from "./event-listener.controller-initializer.js";
 import type { AnyEventConstructor, Event } from "./event-emitter.types.js";
 import { Deps } from "./event-emitter.module.js";
 import { Value } from "@sinclair/typebox/value";
-import { Result } from "awilix-modular";
+import { Result } from "awilixify";
 
 export class InvalidEventPayloadError extends BaseError {
 	static readonly CODE = "validation.invalid_event_payload";

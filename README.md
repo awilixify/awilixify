@@ -1,9 +1,9 @@
-# awilix-modular
+# awilixify
 
-[![Build Status](https://github.com/wildstyles/awilix-modular/workflows/ci/badge.svg)](https://github.com/wildstyles/awilix-modular/actions)
-[![codecov](https://codecov.io/gh/wildstyles/awilix-modular/branch/main/graph/badge.svg)](https://codecov.io/gh/wildstyles/awilix-modular)
+[![Build Status](https://github.com/wildstyles/awilixify/workflows/ci/badge.svg)](https://github.com/wildstyles/awilixify/actions)
+[![codecov](https://codecov.io/gh/wildstyles/awilixify/branch/main/graph/badge.svg)](https://codecov.io/gh/wildstyles/awilixify)
 
-📚 Documentation: https://wildstyles.github.io/awilix-modular/
+📚 Documentation: https://wildstyles.github.io/awilixify/
 
 A type-safe, modular DI and CQRS framework on top of [Awilix](https://github.com/jeffijoe/awilix) that brings NestJS-like module architecture with powerful CQRS capabilities to any Node.js application.
 
@@ -21,13 +21,13 @@ A type-safe, modular DI and CQRS framework on top of [Awilix](https://github.com
 ## Installation
 
 ```bash
-npm install awilix-modular awilix
+npm install awilixify awilix
 ```
 
 ```bash
-yarn add awilix-modular awilix
+yarn add awilixify awilix
 ```
 
 ```bash
-pnpm add awilix-modular awilix
+pnpm add awilixify awilix
 ```

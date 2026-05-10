@@ -62,7 +62,7 @@ export const EmailModule = createStaticModule<EmailModuleDef>({
 For better type safety, use `createFactoryProvider` which creates a typed helper that provides types for useFactory params:
 
 ```typescript
-import { createFactoryProvider } from "awilix-modular";
+import { createFactoryProvider } from "awilixify";
 
 type NotificationModuleDef = ModuleDef<{
   providers: {

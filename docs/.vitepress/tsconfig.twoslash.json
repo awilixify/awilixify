@@ -6,7 +6,7 @@
 		"strict": true,
 		"baseUrl": "../..",
 		"paths": {
-			"awilix-modular": ["./index.ts"]
+			"awilixify": ["./index.ts"]
 		}
 	},
 	"include": ["../../index.ts", "../../lib/**/*.ts", "../**/*.md"]

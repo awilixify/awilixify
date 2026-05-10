@@ -12,7 +12,7 @@ Scenarios were introduced to control pre-handler execution explicitly per call w
 - caller must pass `scenario` and its required settings
 
 ```typescript
-import { Result, type QueryContract } from "awilix-modular";
+import { Result, type QueryContract } from "awilixify";
 
 class HandlerError extends Error {}
 

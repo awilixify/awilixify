@@ -4,7 +4,7 @@ import {
 	hasValidationSchema,
 	type RouteSchema,
 	httpException,
-} from "awilix-modular";
+} from "awilixify";
 
 const ajv = new Ajv.default({ coerceTypes: true, removeAdditional: true });
 

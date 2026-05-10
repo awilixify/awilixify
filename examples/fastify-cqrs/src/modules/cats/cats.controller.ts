@@ -1,4 +1,4 @@
-import { type Controller } from "awilix-modular";
+import { type Controller } from "awilixify";
 
 import { mapApplicationErrorToHttpError } from "@/common/error-to-http-error.mapper.js";
 import {

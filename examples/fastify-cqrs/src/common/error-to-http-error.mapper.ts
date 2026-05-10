@@ -1,4 +1,4 @@
-import { httpException, HttpException } from "awilix-modular";
+import { httpException, HttpException } from "awilixify";
 
 import { BaseError } from "./base.error.js";
 import { CatsViewedEventError } from "@/modules/cats/cats.event.js";

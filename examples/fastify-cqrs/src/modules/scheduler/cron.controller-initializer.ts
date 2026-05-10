@@ -1,7 +1,7 @@
 import type {
 	ControllerInitializer,
 	ControllerInitializerContext,
-} from "awilix-modular";
+} from "awilixify";
 import { AsyncTask, SimpleIntervalJob } from "toad-scheduler";
 
 import { CRON_METADATA_TOKEN, type CronMetadata } from "./cron.decorator.js";

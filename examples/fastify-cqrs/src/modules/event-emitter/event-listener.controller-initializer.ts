@@ -1,7 +1,7 @@
 import type {
 	ControllerInitializer,
 	ControllerInitializerContext,
-} from "awilix-modular";
+} from "awilixify";
 import { ON_EVENT_METADATA_TOKEN } from "./on-event.decorator.js";
 import type { Deps } from "./event-emitter.module.js";
 import type { AnyEventConstructor } from "./event-emitter.types.js";

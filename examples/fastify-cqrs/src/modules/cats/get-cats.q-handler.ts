@@ -1,4 +1,4 @@
-import { type Handler, type QueryContract, Result } from "awilix-modular";
+import { type Handler, type QueryContract, Result } from "awilixify";
 import { CatsNotFoundError } from "@/common/error-to-http-error.mapper.js";
 import type { CatsModuleDef, Deps } from "./cats.module.js";
 import type {

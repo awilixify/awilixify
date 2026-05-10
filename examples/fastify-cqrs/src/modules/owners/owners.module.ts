@@ -4,7 +4,7 @@ import {
 	type ModuleDef,
 	type ModuleRef,
 	type StaticModule,
-} from "awilix-modular";
+} from "awilixify";
 import { CatsModule, type CatsModuleDef } from "../cats/cats.module.js";
 import { DbModule } from "@/modules/db/db.module.js";
 import { ScheduleModule } from "@/modules/scheduler/scheduler.module.js";

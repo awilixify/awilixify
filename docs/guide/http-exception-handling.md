@@ -1,6 +1,6 @@
 # HTTP Exception Handling
 
-Awilix-modular includes built-in HTTP exception utilities and encourages separation between application errors and HTTP responses.
+awilixify includes built-in HTTP exception utilities and encourages separation between application errors and HTTP responses.
 
 > [!TIP]
 > Prefer `Result` for application logic and map to HTTP at controller boundaries. See [Result recipe](/docs/recipes-result).
@@ -10,7 +10,7 @@ Awilix-modular includes built-in HTTP exception utilities and encourages separat
 The library includes type-safe `HttpException` classes and factory helpers for standard HTTP errors:
 
 ```typescript
-import { httpException, HttpException, HttpStatus } from "awilix-modular";
+import { httpException, HttpException, HttpStatus } from "awilixify";
 
 // Using factory helpers with default messages
 throw httpException.notFound(); // "Not Found" with 404 status
@@ -37,8 +37,8 @@ throw httpException.forbidden("Insufficient permissions");
 Use try/catch blocks to handle thrown exceptions:
 
 ```typescript
-import { GET } from "awilix-modular";
-import { httpException } from "awilix-modular";
+import { GET } from "awilixify";
+import { httpException } from "awilixify";
 import type { Request, Response } from "./types";
 
 export class UserController {
@@ -76,7 +76,7 @@ class UserService {
 
 ### Error-as-Value Pattern (Recommended for Application Logic)
 
-While HTTP exceptions work for simple cases, awilix-modular **encourages the error-as-value pattern in application logic** for better separation of concerns and type safety.
+While HTTP exceptions work for simple cases, awilixify **encourages the error-as-value pattern in application logic** for better separation of concerns and type safety.
 
 #### Why Not Throw HTTP Errors in Application Logic?
 
@@ -120,7 +120,7 @@ class UserService {
 The error-as-value pattern makes errors explicit and type-safe:
 
 ```typescript
-import { Result } from "awilix-modular";
+import { Result } from "awilixify";
 import type { UserModuleDeps } from "./user.module";
 
 class UserService {
@@ -143,7 +143,7 @@ class UserService {
 Controllers translate application errors (Result types) into HTTP responses using `httpException`:
 
 ```typescript
-import { GET, PUT, schema, httpException } from "awilix-modular";
+import { GET, PUT, schema, httpException } from "awilixify";
 import type { Request, Response } from "./types";
 
 export class UserController {

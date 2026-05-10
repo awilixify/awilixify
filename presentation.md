@@ -30,7 +30,7 @@ style: |
   }
 ---
 
-# **awilix-modular** 🚀
+# **awilixify** 🚀
 
 ### Type-safe, modular Dedendency Injection for Node.js
 
@@ -118,7 +118,7 @@ After research, I chose **Awilix**:
 
 ---
 
-## Introducing awilix-modular ✨
+## Introducing awilixify ✨
 
 Key principles I tried to follow:
 
@@ -133,7 +133,7 @@ Key principles I tried to follow:
 ## Basic Example: Define Module
 
 ```typescript
-import { createStaticModule, type ModuleDef } from "awilix-modular";
+import { createStaticModule, type ModuleDef } from "awilixify";
 
 type UserModuleDef = ModuleDef<{
   providers: {
@@ -211,7 +211,7 @@ class UserService {
 
 <div>
 
-### awilix-modular approach
+### awilixify approach
 
 ```typescript
 import { UserModuleDeps } from "./user.module";
@@ -265,7 +265,7 @@ class UserController implements Controller {
 ## Key Feature 3: Native ES Decorators 🎨
 
 ```typescript
-import { controller, GET, POST, before } from "awilix-modular";
+import { controller, GET, POST, before } from "awilixify";
 
 @controller("/users")
 @before(authMiddleware)
@@ -324,7 +324,7 @@ async getUsers() { }
 
 <div>
 
-### awilix-modular Mediator
+### awilixify Mediator
 
 True **framework-agnostic** logic:
 
@@ -359,7 +359,7 @@ const authMiddleware: MiddlewareConfig<"auth"> = {
 
 You must rewrite your entire app to use NestJS modules.
 
-### **awilix-modular**: Gradual migration ✅
+### **awilixify**: Gradual migration ✅
 
 You can add modular DI to **existing Express/Fastify apps** without rewriting:
 
@@ -377,7 +377,7 @@ DIContext.create(NewModule, { framework: app });
 
 ---
 
-## NestJS vs awilix-modular ⚖️
+## NestJS vs awilixify ⚖️
 
 <div class="columns">
 
@@ -399,7 +399,7 @@ DIContext.create(NewModule, { framework: app });
 
 <div>
 
-### awilix-modular
+### awilixify
 
 ✅ Native ES decorators
 ✅ No polyfills needed
@@ -431,5 +431,5 @@ DIContext.create(NewModule, { framework: app });
 
 ### Questions? 💬
 
-GitHub: **wildstyles/awilix-modular**
-npm: **awilix-modular**
+GitHub: **wildstyles/awilixify**
+npm: **awilixify**

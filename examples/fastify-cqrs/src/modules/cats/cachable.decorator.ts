@@ -1,4 +1,4 @@
-import { createInterceptDecorator } from "awilix-modular";
+import { createInterceptDecorator } from "awilixify";
 
 type CachableOptions = {
 	ttlMs?: number;

@@ -1,7 +1,7 @@
 import {
 	createControllerInitializerDecorator,
 	createControllerMetadataToken,
-} from "awilix-modular";
+} from "awilixify";
 import { SimpleIntervalSchedule } from "toad-scheduler";
 import { JobOptions } from "toad-scheduler/dist/lib/engines/simple-interval/SimpleIntervalJob.js";
 

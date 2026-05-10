@@ -3,7 +3,7 @@
 Dynamic modules accept runtime configuration using the `forRoot` pattern, so the same module can be configured differently per import.
 
 ```typescript
-import { createDynamicModule, type ModuleDef } from "awilix-modular";
+import { createDynamicModule, type ModuleDef } from "awilixify";
 
 type DatabaseModuleDef = ModuleDef<{
   providers: {

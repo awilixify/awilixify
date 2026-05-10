@@ -50,7 +50,7 @@ export interface Database {
 ```ts
 import { Kysely, PostgresDialect } from "kysely";
 import pg from "pg";
-import { createStaticModule, type ModuleDef } from "awilix-modular";
+import { createStaticModule, type ModuleDef } from "awilixify";
 import type { Database } from "./tables.types.js";
 
 type TableName = keyof Database;

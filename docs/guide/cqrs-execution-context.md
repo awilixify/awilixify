@@ -13,9 +13,9 @@ Use `executionContext` only in pre-handlers.
 Handlers should work with `context` produced by pre-handlers.
 
 ```typescript
-import type { ExecutionContext } from "awilix-modular";
+import type { ExecutionContext } from "awilixify";
 
-declare module "awilix-modular" {
+declare module "awilixify" {
   interface ExecutionContext {
     token?: string;
     tenantName: string;
@@ -32,7 +32,7 @@ await queryMediator.execute(
 ### Example in pre-handlers
 
 ```typescript
-import type { Middleware, MiddlewareContract } from "awilix-modular";
+import type { Middleware, MiddlewareContract } from "awilixify";
 
 class AuthMiddleware implements Middleware {
   static readonly key = "auth";

@@ -1,4 +1,4 @@
-import { DIContext } from "awilix-modular";
+import { DIContext } from "awilixify";
 
 import { buildApp } from "@/app.js";
 import { AppModule } from "@/modules/index.js";
