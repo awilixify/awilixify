@@ -9,6 +9,7 @@ import {
 	setSchema,
 	updateHttpDecoratorState,
 } from "./http-state.js";
+import { registerHttpRouteMarker } from "./http-initializer.js";
 
 type ControllerOptions = string | string[] | { path: string | string[] };
 
@@ -22,6 +23,8 @@ function normalizePaths(options: ControllerOptions): string[] {
 function createRouteDecorator(httpVerb: HttpVerb) {
 	return (path: string = "/") =>
 		(target: any, context: ClassMethodDecoratorContext) => {
+			registerHttpRouteMarker()(target, context);
+
 			updateHttpDecoratorState(context.metadata, (state) => {
 				const withVerbs = addHttpVerbs(state, context.name, [httpVerb]);
 

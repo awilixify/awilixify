@@ -2,7 +2,7 @@ import type { BuildResolverOptions } from "awilix";
 import type { ForwardRef } from "./module-ref.types.js";
 import type {
 	AnyController,
-	AnyControllerInitializer,
+	AnyInitializer,
 	AnyInterceptor,
 	AnyMiddleware,
 	AnyProvider,
@@ -27,6 +27,6 @@ export interface InternalModuleLike {
 	commandPreHandlerExports?: readonly string[];
 	interceptors?: Record<string, AnyInterceptor>;
 	interceptorExports?: readonly string[];
-	controllerInitializers?: Record<string, AnyControllerInitializer>;
-	controllerInitializerExports?: readonly string[];
+	initializers?: Record<string, AnyInitializer>;
+	initializerExports?: readonly string[];
 }

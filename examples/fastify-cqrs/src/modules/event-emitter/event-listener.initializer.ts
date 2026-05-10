@@ -1,6 +1,6 @@
 import type {
-	ControllerInitializer,
-	ControllerInitializerContext,
+	Initializer,
+	InitializerContext,
 } from "awilixify";
 import { ON_EVENT_METADATA_TOKEN } from "./on-event.decorator.js";
 import type { Deps } from "./event-emitter.module.js";
@@ -22,8 +22,8 @@ export function getEventKey(eventClass: AnyEventConstructor): symbol {
 	return key;
 }
 
-export class EventListenerControllerInitializer
-	implements ControllerInitializer<AnyEventConstructor>
+export class EventListenerInitializer
+	implements Initializer<AnyEventConstructor>
 {
 	public readonly token = ON_EVENT_METADATA_TOKEN;
 
@@ -32,7 +32,7 @@ export class EventListenerControllerInitializer
 		private readonly listenableEvents: Deps["listenableEvents"],
 	) {}
 
-	initialize(context: ControllerInitializerContext<AnyEventConstructor>): void {
+	initialize(context: InitializerContext<AnyEventConstructor>): void {
 		const eventClass = context.metadata;
 
 		if (!this.listenableEvents.includes(eventClass)) {

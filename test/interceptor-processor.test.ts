@@ -24,7 +24,7 @@ describe("Interceptors", () => {
 			token: InterceptorMetadataToken<{ tag?: string }> = MARK_TOKEN;
 
 			intercept(context: InterceptContext) {
-				calls.push({ method: context.methodName, meta: context.metadata[0] });
+				calls.push({ method: context.methodName, meta: context.metadata });
 				return context.proceed();
 			}
 		}
@@ -228,6 +228,6 @@ describe("Interceptors", () => {
 			TOKEN,
 			2,
 		);
-		expect(updatedSameMethod.methods.get("m")?.get(TOKEN.key)).toEqual([1, 2]);
+		expect(updatedSameMethod.methods.get("m")?.get(TOKEN.key)).toEqual(2);
 	});
 });

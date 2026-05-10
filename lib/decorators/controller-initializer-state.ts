@@ -1,7 +1,7 @@
 import type { MethodName, MethodNameParameter } from "./http-state.js";
 
 export const CONTROLLER_INITIALIZER_DECORATOR_STATE = Symbol(
-	"ControllerInitializer State",
+	"Initializer State",
 );
 
 export type ControllerMetadataToken<T> = {
@@ -24,7 +24,7 @@ export function createControllerMetadataToken<T>(
 	};
 }
 
-export function updateControllerInitializerState(
+export function updateInitializerState(
 	metadata: DecoratorMetadataObject,
 	updater: (state: ControllerInitializerState) => ControllerInitializerState,
 ): void {
@@ -32,7 +32,7 @@ export function updateControllerInitializerState(
 		(metadata[
 			CONTROLLER_INITIALIZER_DECORATOR_STATE
 		] as ControllerInitializerState) ||
-			createControllerInitializerDecoratorState(),
+			createInitializerDecoratorState(),
 	);
 }
 
@@ -52,7 +52,7 @@ export function addControllerMethodMetadata(
 	return updateMethodState(state, methodName, next);
 }
 
-export function getClassControllerInitializerState(
+export function getClassInitializerState(
 	target: any,
 ): ControllerInitializerState | null {
 	const metadataSymbol =
@@ -73,7 +73,7 @@ export function resolveControllerMethodMetadata<T>(
 	methodName: string | symbol,
 	token: ControllerMetadataToken<T>,
 ): T[] {
-	const state = getClassControllerInitializerState(target);
+	const state = getClassInitializerState(target);
 
 	if (!state) return [];
 
@@ -84,7 +84,7 @@ export function resolveControllerMethodMetadata<T>(
 	return (methodState.get(token.key) || []) as T[];
 }
 
-function createControllerInitializerDecoratorState(): ControllerInitializerState {
+function createInitializerDecoratorState(): ControllerInitializerState {
 	return {
 		methods: new Map<MethodName, ControllerInitializerMethodState>(),
 	};

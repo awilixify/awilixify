@@ -121,12 +121,12 @@ export class InterceptorNameConflictError extends Error {
 	}
 }
 
-export class ControllerInitializerConflictError extends Error {
+export class InitializerConflictError extends Error {
 	constructor(moduleName: string) {
 		super(
-			`Module "${moduleName}" has duplicate controller initializers across imports/local initializers.`,
+			`Module "${moduleName}" has duplicate initializers across imports/local initializers.`,
 		);
-		this.name = "ControllerInitializerConflictError";
+		this.name = "InitializerConflictError";
 	}
 }
 

@@ -5,8 +5,8 @@ import {
 } from "../decorators/controller-initializer-state.js";
 import * as ERRORS from "./errors.js";
 import type {
-	AnyControllerInitializer,
-	ControllerInitializer,
+	AnyInitializer,
+	Initializer,
 	ConstructorController,
 } from "./provider.types.js";
 import type { InternalModuleLike as M } from "./runtime-module.types.js";
@@ -21,13 +21,13 @@ type ModuleWithScope = {
 	scope: Awilix.AwilixContainer;
 };
 
-export class ControllerInitializerProcessor {
+export class InitializerProcessor {
 	private readonly resolversByModule = new WeakMap<
 		M,
-		Array<() => ControllerInitializer<any>>
+		Array<() => Initializer<any>>
 	>();
 
-	public processControllerInitializers(
+	public processInitializers(
 		m: M,
 		scope: Awilix.AwilixContainer,
 		importedModulesWithScope: ModuleWithScope[],
@@ -74,16 +74,15 @@ export class ControllerInitializerProcessor {
 		scope: Awilix.AwilixContainer,
 		importedModulesWithScope: ModuleWithScope[],
 	): void {
-		const resolvers: Array<() => ControllerInitializer<any>> = [];
-		const seen = new Set<AnyControllerInitializer>();
+		const resolvers: Array<() => Initializer<any>> = [];
+		const seen = new Set<AnyInitializer>();
 
 		for (const {
 			module: importedModule,
 			scope: importedScope,
 		} of importedModulesWithScope) {
-			for (const initializerKey of importedModule.controllerInitializerExports ||
-				[]) {
-				const initializer = importedModule.controllerInitializers?.[initializerKey];
+			for (const initializerKey of importedModule.initializerExports || []) {
+				const initializer = importedModule.initializers?.[initializerKey];
 				if (!initializer) continue;
 
 				if (seen.has(initializer)) continue;
@@ -103,9 +102,9 @@ export class ControllerInitializerProcessor {
 			}
 		}
 
-		for (const initializer of Object.values(m.controllerInitializers || {})) {
+		for (const initializer of Object.values(m.initializers || {})) {
 			if (seen.has(initializer)) {
-				throw new ERRORS.ControllerInitializerConflictError(m.name);
+				throw new ERRORS.InitializerConflictError(m.name);
 			}
 			seen.add(initializer);
 
@@ -127,10 +126,10 @@ export class ControllerInitializerProcessor {
 		resolutionScope,
 		wrapForExport,
 	}: {
-		initializer: AnyControllerInitializer;
+		initializer: AnyInitializer;
 		resolutionScope: Awilix.AwilixContainer;
 		wrapForExport?: boolean;
-	}): Awilix.Resolver<ControllerInitializer<any>> {
+	}): Awilix.Resolver<Initializer<any>> {
 		const resolverOptions = {
 			lifetime: Awilix.Lifetime.SINGLETON,
 		};
@@ -148,16 +147,27 @@ export class ControllerInitializerProcessor {
 	private getControllerMethodNames(
 		controllerClass: ConstructorController,
 	): Array<string | symbol> {
-		const proto = controllerClass.prototype;
-		if (!proto) return [];
+		const collected = new Set<string | symbol>();
+		let proto = controllerClass.prototype;
 
-		return [
-			...Object.getOwnPropertyNames(proto).filter(
-				(name) => name !== "constructor" && typeof proto[name] === "function",
-			),
-			...Object.getOwnPropertySymbols(proto).filter(
-				(symbol) => typeof proto[symbol] === "function",
-			),
-		];
+			while (proto && proto !== Object.prototype) {
+				Object.getOwnPropertyNames(proto)
+					.filter(
+						(name) => name !== "constructor" && typeof proto[name] === "function",
+					)
+					.forEach((name) => {
+						collected.add(name);
+					});
+
+				Object.getOwnPropertySymbols(proto)
+					.filter((symbol) => typeof proto[symbol] === "function")
+					.forEach((symbol) => {
+						collected.add(symbol);
+					});
+
+			proto = Object.getPrototypeOf(proto);
+		}
+
+		return [...collected];
 	}
 }

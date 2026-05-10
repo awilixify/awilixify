@@ -97,7 +97,6 @@ export default defineConfig({
 declare module "awilixify" {
 	export type ModuleDef<T> = T & { deps: Record<string, any> };
 	export function createStaticModule<T>(def: any): any;
-	export function createDynamicModule<T>(factory: (config: any) => any): { forRoot(config: any): any };
 	export const DIContext: {
 		create: (module: unknown, options: { framework: unknown; globalModules?: unknown[] }) => void;
 	};

@@ -1,8 +1,11 @@
 export * from "./lib/decorators/http-decorators.js";
+export * from "./lib/decorators/http-initializer.js";
 export * from "./lib/decorators/controller-initializer-decorator-factory.js";
 export * from "./lib/decorators/controller-initializer-state.js";
 export {
+	getClassHttpDecoratorState,
 	hasValidationSchema,
+	type IHttpDecoratorState,
 	type RouteSchema,
 } from "./lib/decorators/http-state.js";
 export * from "./lib/decorators/interceptor-decorator-factory.js";
@@ -19,8 +22,8 @@ export * from "./lib/di/module-factories.js";
 export * from "./lib/di/module-ref.types.js";
 export type {
 	Controller,
-	ControllerInitializer,
-	ControllerInitializerContext,
+	Initializer,
+	InitializerContext,
 } from "./lib/di/provider.types.js";
 export * from "./lib/http/http-exception.js";
 export * from "./lib/http/openapi-builder.js";

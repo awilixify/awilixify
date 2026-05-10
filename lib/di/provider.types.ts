@@ -15,9 +15,9 @@ export type DefProviderMap = Record<string, object | string | boolean | number>;
  */
 export type DefPreHandlerMap = Record<string, object>;
 export type DefInterceptorMap = Record<string, object>;
-export type DefControllerInitializerMap = Record<
+export type DefInitializerMap = Record<
 	string,
-	ConstructorControllerInitializer
+	ConstructorInitializer
 >;
 // ============================================================================
 // Provider Types
@@ -129,7 +129,7 @@ export type AnyInterceptor = ClassInterceptor | ConstructorInterceptor;
 // Controller Initializer Types
 // ============================================================================
 
-export type ControllerInitializerContext<M = unknown> = {
+export type InitializerContext<M = unknown> = {
 	moduleName: string;
 	controllerClass: Constructor<any>;
 	methodName: string | symbol;
@@ -137,18 +137,18 @@ export type ControllerInitializerContext<M = unknown> = {
 	invoke: (...args: unknown[]) => unknown | Promise<unknown>;
 };
 
-export interface ControllerInitializer<M = unknown> {
+export interface Initializer<M = unknown> {
 	token: ControllerMetadataToken<M>;
 	initialize: (
-		context: ControllerInitializerContext<M>,
+		context: InitializerContext<M>,
 	) => void | Promise<void>;
 }
 
-export interface ConstructorControllerInitializer {
-	new (...args: any[]): ControllerInitializer<any>;
+export interface ConstructorInitializer {
+	new (...args: any[]): Initializer<any>;
 }
 
-export type AnyControllerInitializer = ConstructorControllerInitializer;
+export type AnyInitializer = ConstructorInitializer;
 
 // ============================================================================
 // Provider Mapping Helper

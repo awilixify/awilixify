@@ -1,9 +1,10 @@
-# Dynamic Modules
+# Configurable Modules
 
-Dynamic modules accept runtime configuration using the `forRoot` pattern, so the same module can be configured differently per import.
+Configurable modules accept runtime configuration via a wrapper function.
+Each call returns a separate static module instance.
 
 ```typescript
-import { createDynamicModule, type ModuleDef } from "awilixify";
+import { createStaticModule, type ModuleDef } from "awilixify";
 
 type DatabaseModuleDef = ModuleDef<{
   providers: {
@@ -11,46 +12,60 @@ type DatabaseModuleDef = ModuleDef<{
     databaseService: DatabaseService;
   };
   exportKeys: ["databaseService"];
-  // adding forRootConfig makes module dynamic
-  forRootConfig: { connectionString: string };
 }>;
 
-export const DatabaseModule = createDynamicModule<DatabaseModuleDef>((config) =>
-  createStaticModule({
-    name: "DatabaseModule",
-    providers: {
-      connectionString: config.connectionString,
-      databaseService: DatabaseService,
+export function DatabaseModule(config: { connectionString: string }) {
+  return createStaticModule<DatabaseModuleDef>(
+    {
+      name: "DatabaseModule",
+      providers: {
+        connectionString: config.connectionString,
+        databaseService: DatabaseService,
+      },
+      exports: ["databaseService"],
     },
-    exports: {
-      databaseService: DatabaseService,
+    {
+      hashNameFrom: config,
     },
-  }),
-);
+  );
+}
 
 export const UserModule = createStaticModule<UserModuleDef>({
   name: "UserModule",
   imports: [
-    DatabaseModule.forRoot({
+    DatabaseModule({
       connectionString: "postgresql://localhost:5432/myapp",
     }),
   ],
 });
 ```
 
-When the same dynamic module is used multiple times, `registerControllers` controls which instance registers routes:
+When the same configurable module is used multiple times, controllers are registered by default.
+If a secondary instance should provide services only, set `registerControllers: false` in `createStaticModule` options.
 
 ```typescript
+export function AuthModule(config: { jwtSecret: string; audience: string }) {
+  return createStaticModule<AuthModuleDef>(
+    {
+      name: "AuthModule",
+      controllers: [AuthController],
+      providers: {
+        jwtSecret: config.jwtSecret,
+        audience: config.audience,
+      },
+    },
+    {
+      hashNameFrom: config,
+      registerControllers: config.audience === "users",
+    },
+  );
+}
+
 export const AppModule = createStaticModule<AppModuleDef>({
   name: "AppModule",
   imports: [
-    // primary instance: registers controllers and routes
-    AuthModule.forRoot(
-      { jwtSecret: "user-secret", audience: "users" },
-      { registerControllers: true },
-    ),
-    // secondary instance: services only (default)
-    AuthModule.forRoot({ jwtSecret: "admin-secret", audience: "admins" }),
+    AuthModule({ jwtSecret: "user-secret", audience: "users" }),
+    AuthModule({ jwtSecret: "admin-secret", audience: "admins" }),
   ],
 });
 ```

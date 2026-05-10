@@ -3,7 +3,7 @@ import type { InterceptorMetadataToken } from "../di/interceptor.types.js";
 
 export const INTERCEPTOR_DECORATOR_STATE = Symbol("Interceptor State");
 
-type InterceptorMethodState = Map<symbol, unknown[]>;
+type InterceptorMethodState = Map<symbol, unknown>;
 
 type InterceptorState = {
 	methods: Map<MethodName, InterceptorMethodState>;
@@ -28,9 +28,9 @@ export function addInterceptorMethodMetadata(
 	if (methodName === null) return state;
 
 	const methodState = getOrCreateMethodState(state, methodName);
-	const existing = methodState.get(token.key) || [];
+	const existing = methodState.get(token.key);
 	const next = new Map(methodState);
-	next.set(token.key, [...existing, value]);
+	next.set(token.key, mergeMetadata(existing, value));
 
 	return updateMethodState(state, methodName, next);
 }
@@ -51,14 +51,14 @@ export function resolveInterceptorMethodMetadata<T>(
 	target: any,
 	methodName: string | symbol,
 	token: InterceptorMetadataToken<T>,
-): T[] {
+): T | undefined {
 	const state = getClassInterceptorState(target);
-	if (!state) return [];
+	if (!state) return undefined;
 
 	const methodState = state.methods.get(methodName);
-	if (!methodState) return [];
+	if (!methodState) return undefined;
 
-	return (methodState.get(token.key) || []) as T[];
+	return methodState.get(token.key) as T | undefined;
 }
 
 function createInterceptorDecoratorState(): InterceptorState {
@@ -71,7 +71,7 @@ function getOrCreateMethodState(
 	state: InterceptorState,
 	methodName: MethodName,
 ): InterceptorMethodState {
-	return state.methods.get(methodName) || new Map<symbol, unknown[]>();
+	return state.methods.get(methodName) || new Map<symbol, unknown>();
 }
 
 function updateMethodState(
@@ -87,4 +87,16 @@ function updateMethodState(
 		...state,
 		methods: new Map([...filteredEntries, [methodName, methodState]]),
 	};
+}
+
+function mergeMetadata(existing: unknown, incoming: unknown): unknown {
+	if (isPlainObject(existing) && isPlainObject(incoming)) {
+		return { ...existing, ...incoming };
+	}
+
+	return incoming;
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+	return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }

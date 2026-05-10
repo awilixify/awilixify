@@ -73,34 +73,28 @@ Use `declare module` to make global dependencies available to all modules:
 ```typescript
 // global.module.ts
 import {
-  createDynamicModule,
+  createStaticModule,
   type ModuleDef,
   type InferGlobalDependencies,
 } from "awilixify";
 import type { Express } from "express";
 
 export type GlobalModuleDef = ModuleDef<{
-// allows passing params to module(makes it dynamic)
-  forRootConfig: {
-    app: Express;
-  };
   providers: {
     app: Express;
   };
   exportKeys: ["app"];
 }>;
 
-export const GlobalModule = createDynamicModule<GlobalModuleDef>(
-  (config) => ({
+export function GlobalModule(app: Express) {
+  return createStaticModule<GlobalModuleDef>({
     name: "GlobalModule",
     providers: {
-      app: config.app,
+      app,
     },
-    exports: {
-      app: config.app,
-    },
-  }),
-);
+    exports: ["app"],
+  });
+}
 
 // Extend GlobalDependencies to make global module exports available everywhere
 declare module "awilixify" {
@@ -134,7 +128,7 @@ const app = express();
 // Instantiate DIContext with root module and global modules
 DIContext.create(AppModule, {
   framework: app,
-  globalModules: [GlobalModule.forRoot({ app })],
+  globalModules: [GlobalModule(app)],
 });
 
 // run your http framework service as usual

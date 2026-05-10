@@ -18,7 +18,7 @@ export type InterceptContext<M = unknown> = {
 	methodName: MethodName;
 	args: unknown[];
 	proceed: () => unknown | Promise<unknown>;
-	metadata: M[];
+	metadata: M;
 };
 
 export interface Interceptor<M = unknown> {

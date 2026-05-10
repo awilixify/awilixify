@@ -1,5 +1,5 @@
 import {
-	createControllerInitializerDecorator,
+	createInitializerDecorator,
 	createControllerMetadataToken,
 } from "awilixify";
 import { SimpleIntervalSchedule } from "toad-scheduler";
@@ -24,5 +24,5 @@ export const CRON_METADATA_TOKEN =
 	createControllerMetadataToken<CronTaskConstructor>("cron");
 
 export function cron(task: CronTaskConstructor) {
-	return createControllerInitializerDecorator(CRON_METADATA_TOKEN)(task);
+	return createInitializerDecorator(CRON_METADATA_TOKEN)(task);
 }

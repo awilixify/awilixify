@@ -187,7 +187,7 @@ export class InterceptorProcessor {
 		target: object;
 		methodName: string | symbol;
 		args: unknown[];
-		metadataByToken: Map<symbol, unknown[]>;
+		metadataByToken: Map<symbol, unknown>;
 		interceptors: Interceptor[];
 		proceed: () => unknown | Promise<unknown>;
 	}): unknown | Promise<unknown> {
@@ -200,9 +200,9 @@ export class InterceptorProcessor {
 			const current = interceptors[index];
 
 			if (!current) return next();
-			const metadata = metadataByToken.get(current.token.key) || [];
+			const metadata = metadataByToken.get(current.token.key);
 
-			if (metadata.length === 0) {
+			if (metadata === undefined) {
 				return invoke(index + 1, next);
 			}
 

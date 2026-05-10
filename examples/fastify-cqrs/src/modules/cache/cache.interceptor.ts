@@ -12,17 +12,32 @@ export class CacheInterceptor implements Interceptor<CacheMetadata> {
 	) {}
 
 	async intercept(context: InterceptContext<CacheMetadata>) {
-		const cacheConfig = context.metadata[0];
+		const namespace = this.bentoCache.namespace(this.namespace);
+		const args = context.args;
+		const { cache, evict } = context.metadata;
 
-		if (!cacheConfig?.key) {
-			return context.proceed();
+		if (evict) {
+			const result = await context.proceed();
+			const key = evict.key(...args);
+
+			await Promise.resolve(namespace.delete({ key }));
+
+			if (evict.tags?.length) {
+				await namespace.deleteByTag({ tags: evict.tags });
+			}
+
+			return result;
 		}
 
-		return this.bentoCache.namespace(this.namespace).getOrSet({
-			key: cacheConfig.key(...context.args),
-			tags: cacheConfig.tags,
-			factory: async () => context.proceed(),
-			ttl: cacheConfig.ttl,
-		});
+		if (cache) {
+			return namespace.getOrSet({
+				key: cache.key(...args),
+				tags: cache.tags,
+				factory: async () => context.proceed(),
+				ttl: cache.ttl,
+			});
+		}
+
+		return context.proceed();
 	}
 }

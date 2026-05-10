@@ -7,7 +7,7 @@ import type {
 } from "./module.types.js";
 import type {
 	ClassHandler,
-	DefControllerInitializerMap,
+	DefInitializerMap,
 	DefInterceptorMap,
 	DefPreHandlerMap,
 	DefProviderMap,
@@ -52,7 +52,7 @@ export type ModuleDef<
 	D extends {
 		providers?: DefProviderMap;
 		interceptors?: DefInterceptorMap;
-		controllerInitializers?: DefControllerInitializerMap;
+		initializers?: DefInitializerMap;
 		imports?: readonly ModuleImport[];
 		queryHandlers?: readonly any[];
 		commandHandlers?: readonly any[];
@@ -72,9 +72,9 @@ export type ModuleDef<
 			D["interceptors"],
 			D["exportInterceptorKeys"]
 		>;
-		exportControllerInitializerKeys?: ValidExportKeys<
-			D["controllerInitializers"],
-			D["exportControllerInitializerKeys"]
+		exportInitializerKeys?: ValidExportKeys<
+			D["initializers"],
+			D["exportInitializerKeys"]
 		>;
 	},
 > = {
@@ -95,8 +95,8 @@ export type ModuleDef<
 	commandHandlers: ExtractHandlers<D["commandHandlers"]>;
 	queryPreHandlers: ExtractPreHandlers<D["queryPreHandlers"]>;
 	commandPreHandlers: ExtractPreHandlers<D["commandPreHandlers"]>;
-	controllerInitializers: ExtractControllerInitializers<
-		D["controllerInitializers"]
+	initializers: ExtractInitializers<
+		D["initializers"]
 	>;
 
 	exportKeys: ExtractExportKeys<
@@ -115,9 +115,9 @@ export type ModuleDef<
 		ExtractInterceptors<D["interceptors"]>,
 		D["exportInterceptorKeys"]
 	>;
-	controllerInitializerExportKeys: ExtractControllerInitializerExportKeys<
-		ExtractControllerInitializers<D["controllerInitializers"]>,
-		D["exportControllerInitializerKeys"]
+	initializerExportKeys: ExtractInitializerExportKeys<
+		ExtractInitializers<D["initializers"]>,
+		D["exportInitializerKeys"]
 	>;
 };
 
@@ -175,13 +175,13 @@ type ExtractInterceptorExportKeys<TInterceptors, TKeys> =
 			: readonly []
 		: readonly [];
 
-type ExtractControllerInitializers<TInitializers> =
-	TInitializers extends DefControllerInitializerMap
+type ExtractInitializers<TInitializers> =
+	TInitializers extends DefInitializerMap
 		? TInitializers
 		: EmptyObject;
 
-type ExtractControllerInitializerExportKeys<TInitializers, TKeys> =
-	TInitializers extends DefControllerInitializerMap
+type ExtractInitializerExportKeys<TInitializers, TKeys> =
+	TInitializers extends DefInitializerMap
 		? TKeys extends readonly (keyof TInitializers)[]
 			? TKeys
 			: readonly []

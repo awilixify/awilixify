@@ -2,6 +2,7 @@ import { DIContext } from "awilixify";
 
 import { buildApp } from "@/app.js";
 import { AppModule } from "@/modules/index.js";
+import { HttpModule } from "@/modules/http/http.module.js";
 import { TenantModule } from "@/modules/tenant/tenant.module.js";
 import { setupSwagger } from "./setup-swagger.js";
 
@@ -11,8 +12,7 @@ async function bootstrap() {
 	await setupSwagger(fastify);
 
 	DIContext.create(AppModule, {
-		framework: fastify,
-		globalModules: [TenantModule(fastify)],
+		globalModules: [TenantModule(fastify), HttpModule(fastify)],
 	});
 
 	try {

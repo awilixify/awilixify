@@ -7,7 +7,7 @@ import type {
 	AnyInterceptor,
 	ClassHandler,
 	ClassMiddleware,
-	DefControllerInitializerMap,
+	DefInitializerMap,
 	DefInterceptorMap,
 	DefPreHandlerMap,
 	DefProviderMap,
@@ -43,13 +43,13 @@ export type StaticModuleDef = {
 	queryPreHandlers?: DefPreHandlerMap;
 	commandPreHandlers?: DefPreHandlerMap;
 	interceptors?: DefInterceptorMap;
-	controllerInitializers?: DefControllerInitializerMap;
+	initializers?: DefInitializerMap;
 
 	exportKeys?: readonly string[];
 	queryPreHandlerExportKeys?: readonly string[];
 	commandPreHandlerExportKeys?: readonly string[];
 	interceptorExportKeys?: readonly string[];
-	controllerInitializerExportKeys?: readonly string[];
+	initializerExportKeys?: readonly string[];
 };
 
 type NormalizeModuleDef<Def extends StaticModuleDef> = {
@@ -85,8 +85,8 @@ type NormalizeModuleDef<Def extends StaticModuleDef> = {
 		? Def["commandPreHandlers"]
 		: EmptyObject;
 
-	controllerInitializers: Def["controllerInitializers"] extends DefControllerInitializerMap
-		? Def["controllerInitializers"]
+	initializers: Def["initializers"] extends DefInitializerMap
+		? Def["initializers"]
 		: EmptyObject;
 
 	interceptors: Def["interceptors"] extends DefInterceptorMap
@@ -105,8 +105,8 @@ type NormalizeModuleDef<Def extends StaticModuleDef> = {
 		? Def["commandPreHandlerExportKeys"]
 		: readonly [];
 
-	controllerInitializerExportKeys: Def["controllerInitializerExportKeys"] extends readonly string[]
-		? Def["controllerInitializerExportKeys"]
+	initializerExportKeys: Def["initializerExportKeys"] extends readonly string[]
+		? Def["initializerExportKeys"]
 		: readonly [];
 
 	interceptorExportKeys: Def["interceptorExportKeys"] extends readonly string[]
@@ -130,14 +130,14 @@ type StaticModuleFromNormalized<
 		queryHandlers: readonly any[];
 		commandHandlers: readonly any[];
 		interceptors: DefInterceptorMap | EmptyObject;
-		controllerInitializers: DefControllerInitializerMap | EmptyObject;
+		initializers: DefInitializerMap | EmptyObject;
 		queryPreHandlers: DefPreHandlerMap | EmptyObject;
 		commandPreHandlers: DefPreHandlerMap | EmptyObject;
 
 		exportKeys: readonly string[];
 		queryPreHandlerExportKeys: readonly string[];
 		commandPreHandlerExportKeys: readonly string[];
-		controllerInitializerExportKeys: readonly string[];
+		initializerExportKeys: readonly string[];
 		interceptorExportKeys: readonly string[];
 	},
 > = WithProviders<Def["providers"], Def["deps"]> &
@@ -146,12 +146,12 @@ type StaticModuleFromNormalized<
 	WithCommandHandlers<Def["commandHandlers"]> &
 	WithQueryPreHandlers<Def["queryPreHandlers"]> &
 	WithCommandPreHandlers<Def["commandPreHandlers"]> &
-	WithControllerInitializers<Def["controllerInitializers"]> &
+	WithInitializers<Def["initializers"]> &
 	WithInterceptors<Def["interceptors"]> &
 	WithExports<Def["exportKeys"]> &
 	WithQueryPreHandlerExports<Def["queryPreHandlerExportKeys"]> &
 	WithCommandPreHandlerExports<Def["commandPreHandlerExportKeys"]> &
-	WithControllerInitializerExports<Def["controllerInitializerExportKeys"]> &
+	WithInitializerExports<Def["initializerExportKeys"]> &
 	WithInterceptorExports<Def["interceptorExportKeys"]>;
 
 // ============================================================================
@@ -249,16 +249,16 @@ type WithCommandPreHandlerExports<TKeys extends readonly string[]> =
 		? { commandPreHandlerExports?: readonly [] }
 		: { commandPreHandlerExports: TKeys };
 
-type WithControllerInitializers<
-	TInitializers extends DefControllerInitializerMap | EmptyObject,
+type WithInitializers<
+	TInitializers extends DefInitializerMap | EmptyObject,
 > = TInitializers extends EmptyObject
-	? { controllerInitializers?: EmptyObject }
-	: { controllerInitializers: TInitializers };
+	? { initializers?: EmptyObject }
+	: { initializers: TInitializers };
 
-type WithControllerInitializerExports<TKeys extends readonly string[]> =
+type WithInitializerExports<TKeys extends readonly string[]> =
 	TKeys extends readonly []
-		? { controllerInitializerExports?: readonly [] }
-		: { controllerInitializerExports: TKeys };
+		? { initializerExports?: readonly [] }
+		: { initializerExports: TKeys };
 
 type ToModuleInterceptorMap<T extends DefInterceptorMap> = [keyof T] extends [
 	never,

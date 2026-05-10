@@ -41,6 +41,20 @@ export function hasValidationSchema(schema: RouteSchema): boolean {
 	);
 }
 
+export function getClassHttpDecoratorState(
+	target: any,
+): IHttpDecoratorState | null {
+	const metadataSymbol =
+		(typeof Symbol !== "undefined" && Symbol.metadata) ||
+		Object.getOwnPropertySymbols(target).find(
+			(s) => s.toString() === "Symbol(Symbol.metadata)",
+		);
+
+	if (!metadataSymbol) return null;
+
+	return target[metadataSymbol]?.[HTTP_DECORATOR_STATE] || null;
+}
+
 export function updateHttpDecoratorState(
 	metadata: DecoratorMetadataObject,
 	updater: (state: IHttpDecoratorState) => IHttpDecoratorState,

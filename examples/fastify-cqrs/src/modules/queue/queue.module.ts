@@ -1,6 +1,6 @@
 import { createStaticModule, type ModuleDef } from "awilixify";
 import { BullMqCoreModule } from "./bullmq-core.module.js";
-import { QueueJobControllerInitializer } from "./queue-job.controller-initializer.js";
+import { QueueJobInitializer } from "./queue-job.initializer.js";
 import { QueueService } from "./queue.service.js";
 import type {
 	AnyQueueJobConstructor,
@@ -21,10 +21,10 @@ type QueueModuleDef<
 	providers: QueueModuleProviders<TEnqueueable>;
 	exportKeys: ["queue"];
 	imports: [typeof BullMqCoreModule];
-	controllerInitializers: {
-		onQueueJob: typeof QueueJobControllerInitializer;
+	initializers: {
+		onQueueJob: typeof QueueJobInitializer;
 	};
-	exportControllerInitializerKeys: ["onQueueJob"];
+	exportInitializerKeys: ["onQueueJob"];
 }>;
 
 export type Deps = QueueModuleDef<
@@ -43,11 +43,11 @@ export function QueueModule<const TConfig extends QueueModuleConfig>(
 				processableJobs: config.processable,
 				queue: QueueService,
 			},
-			controllerInitializers: {
-				onQueueJob: QueueJobControllerInitializer,
+			initializers: {
+				onQueueJob: QueueJobInitializer,
 			},
 			exports: ["queue"],
-			controllerInitializerExports: ["onQueueJob"],
+			initializerExports: ["onQueueJob"],
 		},
 		{ hashNameFrom: config },
 	);

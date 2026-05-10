@@ -1,6 +1,6 @@
 import Emittery from "emittery";
 import { createStaticModule, type ModuleDef } from "awilixify";
-import { EventListenerControllerInitializer } from "./event-listener.controller-initializer.js";
+import { EventListenerInitializer } from "./event-listener.initializer.js";
 import { EventEmitter } from "./event-emitter.service.js";
 import type {
 	AnyEventConstructor,
@@ -22,11 +22,11 @@ type EventEmitterModuleDef<
 	TEmittable extends Record<string, AnyEventConstructor>,
 > = ModuleDef<{
 	providers: EventEmitterProviders<TEmittable>;
-	controllerInitializers: {
-		onEvent: typeof EventListenerControllerInitializer;
+	initializers: {
+		onEvent: typeof EventListenerInitializer;
 	};
 	exportKeys: ["eventEmitter"];
-	exportControllerInitializerKeys: ["onEvent"];
+	exportInitializerKeys: ["onEvent"];
 }>;
 
 export type Deps = EventEmitterModuleDef<
@@ -46,10 +46,10 @@ export function EventEmitterModule<const TConfig extends EventEmitterConfig>(
 				eventEmitter: EventEmitter,
 			},
 			exports: ["eventEmitter"],
-			controllerInitializers: {
-				onEvent: EventListenerControllerInitializer,
+			initializers: {
+				onEvent: EventListenerInitializer,
 			},
-			controllerInitializerExports: ["onEvent"],
+			initializerExports: ["onEvent"],
 		},
 		{ hashNameFrom: config },
 	);

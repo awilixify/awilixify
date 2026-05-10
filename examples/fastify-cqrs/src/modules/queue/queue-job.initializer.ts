@@ -1,6 +1,6 @@
 import type {
-	ControllerInitializer,
-	ControllerInitializerContext,
+	Initializer,
+	InitializerContext,
 } from "awilixify";
 import { Value } from "@sinclair/typebox/value";
 
@@ -9,8 +9,8 @@ import { Deps } from "./queue.module.js";
 import type { AnyQueueJobConstructor } from "./queue.types.js";
 import { InvalidQueueJobPayloadError } from "./queue.service.js";
 
-export class QueueJobControllerInitializer
-	implements ControllerInitializer<AnyQueueJobConstructor>
+export class QueueJobInitializer
+	implements Initializer<AnyQueueJobConstructor>
 {
 	public readonly token = ON_QUEUE_JOB_METADATA_TOKEN;
 
@@ -20,7 +20,7 @@ export class QueueJobControllerInitializer
 	) {}
 
 	initialize(
-		context: ControllerInitializerContext<AnyQueueJobConstructor>,
+		context: InitializerContext<AnyQueueJobConstructor>,
 	): void {
 		const jobClass = context.metadata;
 

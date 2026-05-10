@@ -420,7 +420,7 @@ DIContext.create(NewModule, { framework: app });
 ## Additional Features 🎁
 
 - **CQRS pattern** with type-safe command/query mediator
-- **Dynamic modules** with `.forRoot()` pattern
+- **Configurable modules** with wrapper function pattern
 - **Circular dependencies** support (cleaner than NestJS)
 - **100% test coverage**
 - **type tests** - interesting finding

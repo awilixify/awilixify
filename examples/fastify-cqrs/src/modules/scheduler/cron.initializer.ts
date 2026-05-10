@@ -1,6 +1,6 @@
 import type {
-	ControllerInitializer,
-	ControllerInitializerContext,
+	Initializer,
+	InitializerContext,
 } from "awilixify";
 import { AsyncTask, SimpleIntervalJob } from "toad-scheduler";
 
@@ -11,8 +11,8 @@ import {
 } from "./cron.decorator.js";
 import { Deps } from "./scheduler.module.js";
 
-export class CronControllerInitializer
-	implements ControllerInitializer<CronTaskConstructor>
+export class CronInitializer
+	implements Initializer<CronTaskConstructor>
 {
 	public readonly token = CRON_METADATA_TOKEN;
 
@@ -21,7 +21,7 @@ export class CronControllerInitializer
 		private readonly allowedCronTasks: Deps["allowedCronTasks"],
 	) {}
 
-	initialize(context: ControllerInitializerContext<CronTaskConstructor>): void {
+	initialize(context: InitializerContext<CronTaskConstructor>): void {
 		const cronTask = context.metadata;
 		const { preventOverrun, ...settings } = cronTask.definition;
 		const id = getCronTaskId(cronTask);

@@ -1,17 +1,17 @@
 import {
 	addControllerMethodMetadata,
 	type ControllerMetadataToken,
-	updateControllerInitializerState,
+	updateInitializerState,
 } from "./controller-initializer-state.js";
 
-export function createControllerInitializerDecorator<T>(
+export function createInitializerDecorator<T>(
 	token: ControllerMetadataToken<T>,
 ) {
 	return (value: T) =>
 		(target: any, context: ClassMethodDecoratorContext) => {
 			if (!context.metadata) return target;
 
-			updateControllerInitializerState(context.metadata, (state) =>
+			updateInitializerState(context.metadata, (state) =>
 				addControllerMethodMetadata(state, context.name, token, value),
 			);
 

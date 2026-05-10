@@ -4,7 +4,13 @@ import { DIContext, type DiContextOptions } from "../lib/di/di-context.js";
 import * as ERRORS from "../lib/di/errors.js";
 import type { AnyModule } from "../lib/di/module.types.js";
 import type { Controller } from "../lib/di/provider.types.js";
-import { controller, GET, POST, schema } from "../lib/decorators/http-decorators.js";
+import {
+	controller,
+	GET,
+	POST,
+	schema,
+} from "../lib/decorators/http-decorators.js";
+import { createHttpTestModule } from "./http-test-module.js";
 
 describe("ControllerProcessor", () => {
 	const createMockExpress = () => {
@@ -34,7 +40,7 @@ describe("ControllerProcessor", () => {
 
 	const registerModule = (
 		module: AnyModule,
-		options?: Partial<DiContextOptions>,
+		options?: Partial<DiContextOptions> & { framework?: any },
 	) => {
 		const framework = options?.framework || mockExpress;
 		const moduleWithAppProvider: AnyModule = {
@@ -46,7 +52,9 @@ describe("ControllerProcessor", () => {
 		};
 
 		return DIContext.create(moduleWithAppProvider, {
-			framework,
+			globalModules: [
+				createHttpTestModule(framework, options?.beforeRouteRegistered),
+			],
 			...options,
 		});
 	};
@@ -143,15 +151,11 @@ describe("ControllerProcessor", () => {
 					imports: [
 						{
 							name: "Wrapper1",
-							imports: [
-								DynamicModule(),
-							],
+							imports: [DynamicModule()],
 						},
 						{
 							name: "Wrapper2",
-							imports: [
-								DynamicModule(),
-							],
+							imports: [DynamicModule()],
 						},
 					],
 				});
@@ -218,41 +222,6 @@ describe("ControllerProcessor", () => {
 				"/test",
 				expect.any(Function),
 			);
-		});
-	});
-
-	describe("Framework Detection", () => {
-		it("should register decorated controllers with Fastify framework", () => {
-			const mockFastify = createMockFastify();
-
-			registerModule(
-				{
-					name: "FastifyModule",
-					controllers: [DecoratedController],
-				},
-				{ framework: mockFastify },
-			);
-
-			expect(mockFastify.route).toHaveBeenCalledWith(
-				expect.objectContaining({
-					method: "GET",
-					url: "/test",
-				}),
-			);
-		});
-
-		it("should throw error when using unsupported framework with decorated controllers", () => {
-			expect(() => {
-				registerModule(
-					{
-						name: "TestModule",
-						controllers: [DecoratedController],
-					},
-					{
-						framework: { someMethod: vi.fn() },
-					},
-				);
-			}).toThrow(ERRORS.UnsupportedFrameworkError);
 		});
 	});
 

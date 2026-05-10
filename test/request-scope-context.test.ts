@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DIContext } from "../lib/di/di-context.js";
 import type { AnyModule } from "../lib/di/module.types.js";
 import { GET } from "../lib/decorators/http-decorators.js";
+import { createHttpTestModule } from "./http-test-module.js";
 
 describe("Request scope context (AsyncLocalStorage)", () => {
 	const createMockExpress = () => {
@@ -81,7 +82,7 @@ describe("Request scope context (AsyncLocalStorage)", () => {
 				],
 			},
 			{
-				framework: mockExpress,
+				globalModules: [createHttpTestModule(mockExpress)],
 				containerOptions: {
 					injectionMode: "PROXY",
 				},
@@ -182,7 +183,7 @@ describe("Request scope context (AsyncLocalStorage)", () => {
 				],
 			},
 			{
-				framework: mockExpress,
+				globalModules: [createHttpTestModule(mockExpress)],
 				containerOptions: {
 					injectionMode: "PROXY",
 				},

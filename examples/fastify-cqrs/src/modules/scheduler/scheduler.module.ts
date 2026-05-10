@@ -3,7 +3,7 @@ import { ToadScheduler } from "toad-scheduler";
 
 import { type CronTaskConstructor } from "./cron.decorator.js";
 import { Scheduler } from "./scheduler.service.js";
-import { CronControllerInitializer } from "./cron.controller-initializer.js";
+import { CronInitializer } from "./cron.initializer.js";
 
 const SHARED_SCHEDULER = new ToadScheduler();
 
@@ -14,15 +14,17 @@ type SchedulerModuleDef = ModuleDef<{
 		scheduler: Scheduler;
 	};
 	exportKeys: ["scheduler"];
-	controllerInitializers: {
-		cron: typeof CronControllerInitializer;
+	initializers: {
+		cron: typeof CronInitializer;
 	};
-	exportControllerInitializerKeys: ["cron"];
+	exportInitializerKeys: ["cron"];
 }>;
 
 export type Deps = SchedulerModuleDef["deps"];
 
-export function ScheduleModule(allowedCronTasks: readonly CronTaskConstructor[]) {
+export function ScheduleModule(
+	allowedCronTasks: readonly CronTaskConstructor[],
+) {
 	return createStaticModule<SchedulerModuleDef>(
 		{
 			name: "SchedulerModule",
@@ -32,10 +34,10 @@ export function ScheduleModule(allowedCronTasks: readonly CronTaskConstructor[])
 				scheduler: Scheduler,
 			},
 			exports: ["scheduler"],
-			controllerInitializers: {
-				cron: CronControllerInitializer,
+			initializers: {
+				cron: CronInitializer,
 			},
-			controllerInitializerExports: ["cron"],
+			initializerExports: ["cron"],
 		},
 		{
 			hashNameFrom: allowedCronTasks,

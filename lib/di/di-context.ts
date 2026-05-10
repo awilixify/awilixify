@@ -1,6 +1,6 @@
 import * as Awilix from "awilix";
 import type { RouteRegistration } from "../http/openapi-builder.js";
-import { ControllerInitializerProcessor } from "./controller-initializer-processor.js";
+import { InitializerProcessor } from "./initializer-processor.js";
 import { ControllerProcessor } from "./controller-processor.js";
 import * as ERRORS from "./errors.js";
 import { HandlerProcessor, HandlerType } from "./handler-processor.js";
@@ -15,8 +15,6 @@ import type { InternalModuleLike as M } from "./runtime-module.types.js";
 import * as GUARGS from "./type-guards.js";
 
 export interface DiContextOptions {
-	framework: unknown;
-	// TODO: intializer for swagger also can be used!
 	beforeRouteRegistered?: (params: RouteRegistration) => any[];
 	containerOptions?: Awilix.ContainerOptions;
 	providerOptions?: Partial<Awilix.BuildResolverOptions<any>>;
@@ -39,7 +37,7 @@ export class DIContext {
 	private readonly controllerProcessor: ControllerProcessor;
 	private readonly handlerProcessor: HandlerProcessor;
 	private readonly interceptorProcessor: InterceptorProcessor;
-	private readonly controllerInitializerProcessor: ControllerInitializerProcessor;
+	private readonly initializerProcessor: InitializerProcessor;
 	private readonly options: DiContextOptions;
 	private globalModulesWithScope: (ModuleScopeTree & { module: M })[] = [];
 
@@ -58,9 +56,7 @@ export class DIContext {
 		};
 
 		this.controllerProcessor = new ControllerProcessor(
-			this.options.framework,
 			this.options.providerOptions || {},
-			this.options.beforeRouteRegistered,
 		);
 		this.handlerProcessor = new HandlerProcessor(
 			this.options.providerOptions || {},
@@ -68,7 +64,7 @@ export class DIContext {
 		this.interceptorProcessor = new InterceptorProcessor(
 			this.options.providerOptions || {},
 		);
-		this.controllerInitializerProcessor = new ControllerInitializerProcessor();
+		this.initializerProcessor = new InitializerProcessor();
 	}
 
 	static create(module: M, options: DiContextOptions): ModuleScopeTree {
@@ -202,7 +198,7 @@ export class DIContext {
 			HandlerType.Command,
 		);
 		const controllers = this.controllerProcessor.processControllers(m, scope);
-		this.controllerInitializerProcessor.processControllerInitializers(
+		this.initializerProcessor.processInitializers(
 			m,
 			scope,
 			importedModulesWithScope,
