@@ -16,6 +16,7 @@
 		"@sinclair/typebox": "^0.34.15",
 		"awilix": "^10.0.2",
 		"awilixify": "link:../..",
+		"bullmq": "^5.61.2",
 		"emittery": "^2.0.0",
 		"fastify": "^5.2.0",
 		"kysely": "^0.28.16",

@@ -20,7 +20,6 @@ export class CatsViewedEvent extends Event<
 	Static<(typeof CatsViewedEvent)["validationSchema"]>,
 	CatsViewedEventError
 > {
-	static readonly emitError = CatsViewedEventError;
 	static readonly validationSchema = Type.Object({
 		catId: Type.String(),
 		at: Type.Number(),

@@ -3,6 +3,7 @@ import { httpException, HttpException } from "awilixify";
 import { BaseError } from "./base.error.js";
 import { CatsViewedEventError } from "@/modules/cats/cats.event.js";
 import { InvalidEventPayloadError } from "@/modules/event-emitter/event-emitter.service.js";
+import { InvalidQueueJobPayloadError } from "@/modules/queue/queue.service.js";
 
 export class UnauthorizedError extends BaseError {
 	static readonly CODE = "auth.unauthorized";
@@ -51,6 +52,7 @@ export const Errors = {
 	UNAUTHORIZED: UnauthorizedError,
 	CATS_VIEWED_EVENT_EMIT_FAILED: CatsViewedEventError,
 	INVALID_EVENT_PAYLOAD_ERROR: InvalidEventPayloadError,
+	INVALID_QUEUE_JOB_PAYLOAD_ERROR: InvalidQueueJobPayloadError,
 } as const;
 
 export type ErrorCode = (typeof Errors)[keyof typeof Errors]["CODE"];
@@ -70,6 +72,8 @@ export const errorCodeToHttpException = {
 		),
 	[Errors.INVALID_EVENT_PAYLOAD_ERROR.CODE]: () =>
 		httpException.badRequest(Errors.INVALID_EVENT_PAYLOAD_ERROR.CODE),
+	[Errors.INVALID_QUEUE_JOB_PAYLOAD_ERROR.CODE]: () =>
+		httpException.badRequest(Errors.INVALID_QUEUE_JOB_PAYLOAD_ERROR.CODE),
 } as const satisfies Record<ErrorCode, () => HttpException<string>>;
 
 export function mapApplicationErrorToHttpError<TError extends BaseError>(
