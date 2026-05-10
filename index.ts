@@ -7,9 +7,11 @@ export {
 } from "./lib/decorators/http-state.js";
 export * from "./lib/decorators/interceptor-decorator-factory.js";
 export * from "./lib/di/di-context.js";
+export { createInterceptorMetadataToken } from "./lib/di/interceptor.types.js";
 export type {
 	InterceptContext,
 	Interceptor,
+	InterceptorMetadataToken,
 } from "./lib/di/interceptor.types.js";
 export * from "./lib/di/module.types.js";
 export * from "./lib/di/module-def.types.js";

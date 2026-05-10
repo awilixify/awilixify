@@ -1,10 +1,9 @@
 import type { Mediator } from "../mediator/mediator.js";
-import type { EmptyObject, UnknownRecord } from "./common.types.js";
+import type { EmptyObject } from "./common.types.js";
 import type {
 	ImportModule,
 	ModuleImport,
 	StaticModuleDef,
-	WithForRootConfig,
 } from "./module.types.js";
 import type {
 	ClassHandler,
@@ -55,7 +54,6 @@ export type ModuleDef<
 		interceptors?: DefInterceptorMap;
 		controllerInitializers?: DefControllerInitializerMap;
 		imports?: readonly ModuleImport[];
-		forRootConfig?: UnknownRecord;
 		queryHandlers?: readonly any[];
 		commandHandlers?: readonly any[];
 		queryPreHandlers?: DefPreHandlerMap;
@@ -121,7 +119,7 @@ export type ModuleDef<
 		ExtractControllerInitializers<D["controllerInitializers"]>,
 		D["exportControllerInitializerKeys"]
 	>;
-} & ExtractForRootConfig<D>;
+};
 
 // ============================================================================
 // ModuleDef Extracts
@@ -166,11 +164,6 @@ type ExtractHandlers<THandlers> = THandlers extends readonly any[]
 type ExtractPreHandlers<TPreHandlers> = TPreHandlers extends DefPreHandlerMap
 	? TPreHandlers
 	: EmptyObject;
-
-type ExtractForRootConfig<D extends Partial<WithForRootConfig>> =
-	D["forRootConfig"] extends WithForRootConfig["forRootConfig"]
-		? { forRootConfig: D["forRootConfig"] }
-		: EmptyObject;
 
 type ExtractInterceptors<TInterceptors> =
 	TInterceptors extends DefInterceptorMap ? TInterceptors : EmptyObject;

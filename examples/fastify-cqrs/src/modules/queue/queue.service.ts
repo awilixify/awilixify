@@ -33,7 +33,7 @@ export class QueueService<
 		this.enqueueableConstructors = Object.values(this.enqueueableJobs);
 	}
 
-	public enqueue<TJob extends TEnqueueable[keyof TEnqueueable]>(
+	public add<TJob extends TEnqueueable[keyof TEnqueueable]>(
 		job: InstanceType<TJob>,
 		options?: JobsOptions,
 	): Promise<Job<InstanceType<TJob>["payload"], unknown, string>> {
@@ -60,7 +60,7 @@ export class QueueService<
 			});
 	}
 
-	public async enqueueWithResult<
+	public async addWithResult<
 		TJobInstance extends InstanceType<TEnqueueable[keyof TEnqueueable]>,
 	>(
 		job: TJobInstance,
@@ -72,7 +72,7 @@ export class QueueService<
 		>
 	> {
 		try {
-			const queued = await this.enqueue(job, options);
+			const queued = await this.add(job, options);
 			return Result.ok(queued);
 		} catch (error) {
 			return Result.error(error as QueueErrorFromInstance<TJobInstance>);

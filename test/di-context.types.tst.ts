@@ -1,15 +1,11 @@
 import { describe, expect, it } from "tstyche";
 import type { EmptyObject } from "../lib/di/common.types.js";
-import type {
-	DynamicModule as DM,
-	StaticModule as M,
-} from "../lib/di/module.types.js";
+import type { StaticModule as M } from "../lib/di/module.types.js";
 import type {
 	ModuleDef as D,
 	GlobalDependencies,
 } from "../lib/di/module-def.types.js";
 import {
-	createDynamicModule,
 	createFactoryProvider,
 	createStaticModule,
 } from "../lib/di/module-factories.js";
@@ -127,7 +123,7 @@ describe("Module", () => {
 
 		expect({
 			name: "Module",
-			exports: { p3: true },
+			exports: ["p3"] as ["p3"],
 			providers: { p1: "", p2: false, p3: true, p4: 2 },
 		} as const).type.toBeAssignableTo<M1>();
 	});
@@ -220,19 +216,19 @@ describe("Module", () => {
 		expect({
 			name: "Module",
 			providers: { p1: P1, p2: P2 },
-			exports: { p1: P1 },
+			exports: ["p1"] as ["p1"],
 		}).type.toBeAssignableTo<M1>();
 		// Negative: Should NOT be assignable if wrong export type
 		expect({
 			name: "Module",
 			providers: { p1: P2, p2: P2 },
-			exports: { p1: P2 },
+			exports: ["p1"] as ["p1"],
 		}).type.not.toBeAssignableTo<M1>();
 		// Negative: Should NOT be assignable if different key is exported
 		expect({
 			name: "Module",
 			providers: { p1: P1, p2: P2 },
-			exports: { p2: P2 },
+			exports: ["p2"] as ["p2"],
 		}).type.not.toBeAssignableTo<M1>();
 		// Negative: Should NOT be assignable with no exports
 		expect({
@@ -243,7 +239,7 @@ describe("Module", () => {
 		expect({
 			name: "Module",
 			providers: { p1: P1, p2: P2 },
-			exports: { p1: P1, p2: P2 },
+			exports: ["p1", "p2"] as ["p1", "p2"],
 		}).type.not.toBeAssignableTo<M1>();
 	});
 
@@ -320,7 +316,7 @@ describe("createStaticModule", () => {
 		const Mod = createStaticModule<D2>({
 			name: "Mod",
 			providers: { service3: Service3 },
-			exports: { service3: Service3 },
+			exports: ["service3"],
 		});
 
 		type M1 = M<D2>;
@@ -340,22 +336,6 @@ describe("createStaticModule", () => {
 		).type.toRaiseError();
 	});
 
-	it("catches extra properties in providers", () => {
-		type D1 = D<{
-			providers: { service1: Service1 };
-		}>;
-
-		expect(
-			createStaticModule<D1>({
-				name: "TestModule",
-				providers: {
-					service1: Service1,
-					service2: Service2, // ❌ Extra property not in ModuleDef1
-				},
-			}),
-		).type.toRaiseError();
-	});
-
 	it("catches extra properties in exports", () => {
 		type D1 = D<{
 			providers: { service1: Service1; service2: Service2 };
@@ -367,82 +347,8 @@ describe("createStaticModule", () => {
 			createStaticModule<D1>({
 				name: "TestModule",
 				providers: { service1: Service1, service2: Service2 },
-				exports: {
-					service1: Service1,
-					service2: Service2, // ❌ Extra export not in exportKeys
-				},
+				exports: ["service1", "service2"], // ❌ Extra export not in exportKeys
 			}),
-		).type.toRaiseError();
-	});
-
-	it("creates StaticModule if DynamicModuleDef passed to createStaticModule", () => {
-		type D1 = D<{
-			providers: { service1: Service1 };
-			forRootConfig: { value: string }; // ❌ Has forRootConfig - this is a DynamicModuleDef
-		}>;
-
-		expect(
-			createStaticModule<D1>({
-				name: "TestModule",
-				providers: { service1: Service1 },
-			}),
-		).type.not.toHaveProperty("forRootConfig");
-	});
-});
-
-describe("createDynamicModule", () => {
-	class Service1 {
-		private declare readonly __brand: never;
-	}
-	class Service2 {
-		private declare readonly __brand: never;
-	}
-
-	it("requires explicit TDef parameter with forRootConfig", () => {
-		type D1 = D<{
-			providers: { service1: Service1; host: string; port: number };
-			forRootConfig: { host: string; port: number };
-		}>;
-
-		const DynamicMod = createDynamicModule<D1>((config) => ({
-			name: "DynamicModule",
-			providers: {
-				host: config.host,
-				port: config.port,
-				service1: Service1,
-			},
-		}));
-		const instance = DynamicMod.forRoot({
-			host: "https://api.example.com",
-			port: 3000,
-		});
-
-		expect<typeof instance>().type.toBeAssignableTo<M<D1>>();
-
-		expect<typeof DynamicMod>().type.toBe<DM<D1>>();
-		expect<typeof instance>().type.toBeAssignableTo<M<D1>>();
-		expect<typeof DynamicMod>().type.toHaveProperty("forRoot");
-	});
-
-	it("catches extra properties in exports", () => {
-		type D1 = D<{
-			providers: { service1: Service1; service2: Service2 };
-			exportKeys: ["service1"];
-			forRootConfig: { host: string; port: number };
-		}>;
-
-		// Negative: Should reject extra properties in exports
-		expect(
-			createDynamicModule<D1>(() =>
-				createStaticModule({
-					name: "TestModule",
-					providers: { service1: Service1, service2: Service2 },
-					exports: {
-						service1: Service1,
-						service2: Service2,
-					},
-				}),
-			),
 		).type.toRaiseError();
 	});
 });

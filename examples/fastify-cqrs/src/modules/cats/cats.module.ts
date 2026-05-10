@@ -1,7 +1,12 @@
 import { createStaticModule, type ModuleDef } from "awilixify";
 
-import { OwnersModule } from "@/modules/owners/owners.module.js";
 import { DbModule } from "@/modules/db/db.module.js";
+import { ScheduleModule } from "@/modules/scheduler/scheduler.module.js";
+import { EventEmitterModule } from "@/modules/event-emitter/event-emitter.module.js";
+import { QueueModule } from "@/modules/queue/queue.module.js";
+import { CacheModule } from "@/modules/cache/cache.module.js";
+
+import { OwnersModule } from "@/modules/owners/owners.module.js";
 import { CatsController } from "./cats.controller.js";
 import { CatsService } from "./cats.service.js";
 import { CatsAuthMiddleware } from "./cats-auth.middleware.js";
@@ -11,12 +16,12 @@ import { CatsScopedController } from "./cats-scoped.controller.js";
 import { DogsService } from "./dogs.service.js";
 import { GetCatsQueryHandler } from "./get-cats.q-handler.js";
 import { GetCatsService } from "./get-cats.service.js";
-import { InterceptedCatsService } from "./intercepted-cats.service.js";
-import { CatsCacheInterceptor } from "./cats-cache.interceptor.js";
-import { ScheduleModule } from "@/modules/scheduler/scheduler.module.js";
-import { CatsHeartbeatCron } from "./cats.controller.js";
-import { EventEmitterModule } from "@/modules/event-emitter/event-emitter.module.js";
-import { CatsEventController } from "./cats.event.js";
+import {
+	CatsHeartbeatCronTask,
+	CatsCronListeners,
+} from "./cats.cron-listeners.js";
+import { CatsEventListeners } from "./cats.event-listeners.js";
+import { CatsQueueListeners } from "./cats.queue-listeners.js";
 
 const dbScope = {
 	readTables: ["cats"],
@@ -28,7 +33,6 @@ export type CatsModuleDef = ModuleDef<{
 		catsService: CatsService;
 		dogsService: DogsService;
 		getCatsService: GetCatsService;
-		interceptedCatsService: InterceptedCatsService;
 	};
 	// exportKeys: ["catsService", 'catsService'];
 	exportKeys: ["catsService"];
@@ -37,18 +41,16 @@ export type CatsModuleDef = ModuleDef<{
 		ReturnType<typeof DbModule<typeof dbScope>>,
 		ReturnType<typeof ScheduleModule>,
 		ReturnType<
-			typeof EventEmitterModule<(typeof CatsEventController)["eventScope"]>
+			typeof EventEmitterModule<(typeof CatsEventListeners)["EventScope"]>
 		>,
+		ReturnType<typeof QueueModule<(typeof CatsQueueListeners)["QueueScope"]>>,
+		ReturnType<typeof CacheModule>,
 	];
 	queryHandlers: [GetCatsQueryHandler];
 	queryPreHandlers: {
 		auth: CatsAuthMiddleware;
 		logging: CatsLoggingMiddleware;
 	};
-	interceptors: {
-		cache: CatsCacheInterceptor;
-	};
-	exportInterceptorKeys: ["cache"];
 }>;
 
 export type Deps = CatsModuleDef["deps"];
@@ -59,30 +61,22 @@ export const CatsModule = createStaticModule<CatsModuleDef>({
 	imports: [
 		OwnersModule,
 		DbModule(dbScope),
-		ScheduleModule([CatsHeartbeatCron]),
-		EventEmitterModule(CatsEventController.eventScope),
+		ScheduleModule([CatsHeartbeatCronTask]),
+		EventEmitterModule(CatsEventListeners.EventScope),
+		QueueModule(CatsQueueListeners.QueueScope),
+		CacheModule("cats"),
 	],
 
 	queryPreHandlers: {
 		auth: CatsAuthMiddleware,
 		logging: { useClass: CatsLoggingMiddleware },
 	},
-	interceptors: {
-		cache: CatsCacheInterceptor,
-	},
-
-	interceptorExports: ["cache"],
-	// interceptorExports: [],
-
 	providerOptions: {
 		// lifetime: "SCOPED",
 		// lifetime: "TRANSIENT",
 	},
 
 	providers: {
-		interceptedCatsService: {
-			useClass: InterceptedCatsService,
-		},
 		getCatsService: {
 			useClass: GetCatsService,
 		},
@@ -106,7 +100,9 @@ export const CatsModule = createStaticModule<CatsModuleDef>({
 	queryHandlers: [{ useClass: GetCatsQueryHandler }],
 	controllers: [
 		CatsController,
-		CatsEventController,
+		CatsEventListeners,
+		CatsQueueListeners,
+		CatsCronListeners,
 		CatsDecoratedController,
 		{
 			useClass: CatsScopedController,

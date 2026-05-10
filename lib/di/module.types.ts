@@ -1,5 +1,5 @@
 import type { BuildResolverOptions, Constructor } from "awilix";
-import type { EmptyObject, UnknownRecord } from "./common.types.js";
+import type { EmptyObject } from "./common.types.js";
 import type { ForwardRef, ModuleRef } from "./module-ref.types.js";
 import type { InternalModuleLike } from "./runtime-module.types.js";
 import type {
@@ -30,10 +30,7 @@ export type ImportModule<TDef extends StaticModuleDef = StaticModuleDef> = {
 	[importModuleDefMarker]?: TDef;
 };
 
-export type AnyModule = InternalModuleLike &
-	ImportModule<any> &
-	DynamicModuleOptions;
-// export type AnyModule = StaticModule<any> & DynamicModuleOptions;
+export type AnyModule = InternalModuleLike & ImportModule<any>;
 
 export type ModuleImport = AnyModule | ModuleRef<any>;
 
@@ -53,12 +50,6 @@ export type StaticModuleDef = {
 	commandPreHandlerExportKeys?: readonly string[];
 	interceptorExportKeys?: readonly string[];
 	controllerInitializerExportKeys?: readonly string[];
-};
-
-export type DynamicModuleDef = StaticModuleDef & WithForRootConfig;
-
-export type WithForRootConfig = {
-	forRootConfig: UnknownRecord;
 };
 
 type NormalizeModuleDef<Def extends StaticModuleDef> = {
@@ -163,17 +154,6 @@ type StaticModuleFromNormalized<
 	WithControllerInitializerExports<Def["controllerInitializerExportKeys"]> &
 	WithInterceptorExports<Def["interceptorExportKeys"]>;
 
-export type DynamicModule<TDef extends DynamicModuleDef> = {
-	forRoot(
-		config: TDef["forRootConfig"],
-		options?: DynamicModuleOptions,
-	): StaticModule<TDef>;
-};
-
-export type DynamicModuleOptions = {
-	registerControllers?: boolean;
-};
-
 // ============================================================================
 // Module Building Helpers
 // ============================================================================
@@ -186,7 +166,7 @@ type WithProviders<
 			providers?: EmptyObject;
 		}
 	: {
-			providers: ToModuleProviderMap<TProviders & DefProviderMap, TDeps>;
+			providers: ToModuleProviderMap<TProviders, TDeps>;
 		};
 
 type WithExports<TKeys extends readonly string[]> = TKeys extends readonly []

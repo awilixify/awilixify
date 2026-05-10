@@ -30,7 +30,6 @@ export class GetCatsQueryHandler
 	constructor(
 		private readonly catsService: Deps["catsService"],
 		private readonly dogsService: Deps["dogsService"],
-		private readonly interceptedCatsService: Deps["interceptedCatsService"],
 	) {}
 
 	async executor(
@@ -46,17 +45,7 @@ export class GetCatsQueryHandler
 			`[GetCatsQueryHandler] User ${userId} with roles ${roles.join(", ")}`,
 		);
 
-		const cats = await this.catsService.getCats();
-
-		// console.log(cats, "cats");
-
-		// return {
-		// 	handlerId: this.instanceId,
-		// 	dogsServiceId: this.dogsService.getInstanceId(),
-		// 	catsServiceId: this.catsService.getInstanceId(),
-		// 	dogsService: this.dogsService.getDogs(),
-		// 	catsService: cats,
-		// };
+		const cats = await this.catsService.getCats("1");
 
 		if (!cats || userId === "no-cats-user") {
 			console.log(`[GetCatsQueryHandler] No cats found for user ${userId}`);

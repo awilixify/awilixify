@@ -680,31 +680,30 @@ describe("DIContext", () => {
 		});
 	});
 
-	describe("Dynamic Module Registration", () => {
-		it("should register a dynamic module created via forRoot", () => {
+	describe("Factory Module Registration", () => {
+		it("should register a module created via factory function", () => {
 			class Service1 extends TestableBase {}
 
-			const DatabaseModule = {
-				forRoot(config: { host: string; port: number }): AnyModule {
-					return {
-						name: "DatabaseModule",
-						providers: {
-							host: config.host,
-							port: config.port,
-							service2: class Service2 extends TestableBase {},
-							service1: {
-								provide: class Service1 {},
-								inject: ["host", "port"],
-								useFactory: (host: string, port: number) =>
-									new Service1({ host, port }),
-							},
-						},
-					};
+			const DatabaseModule = (config: {
+				host: string;
+				port: number;
+			}): AnyModule => ({
+				name: "DatabaseModule",
+				providers: {
+					host: config.host,
+					port: config.port,
+					service2: class Service2 extends TestableBase {},
+					service1: {
+						provide: class Service1 {},
+						inject: ["host", "port"],
+						useFactory: (host: string, port: number) =>
+							new Service1({ host, port }),
+					},
 				},
-			};
+			});
 
 			const { scope } = registerModule(
-				DatabaseModule.forRoot({
+				DatabaseModule({
 					host: "localhost",
 					port: 5432,
 				}),
@@ -718,37 +717,29 @@ describe("DIContext", () => {
 			expect(scope.resolve("service2").getDeps().port).toEqual(5432);
 		});
 
-		it("should allow importing a dynamic module's exports in other modules", () => {
-			const LoggerModule = {
-				forRoot(config: { level: string }): AnyModule {
-					return {
-						name: "LoggerModule",
-						providers: {
-							level: config.level,
-							loggerService: class LoggerService extends TestableBase {},
-						},
-						exports: ["loggerService"],
-					};
+		it("should allow importing a factory module's exports in other modules", () => {
+			const LoggerModule = (config: { level: string }): AnyModule => ({
+				name: "LoggerModule",
+				providers: {
+					level: config.level,
+					loggerService: class LoggerService extends TestableBase {},
 				},
-			};
+				exports: ["loggerService"],
+			});
 
-			const AppModule = {
-				forRoot(): AnyModule {
-					return {
-						name: "AppModule",
-						imports: [
-							LoggerModule.forRoot({
-								level: "debug",
-							}),
-						],
-						providers: {
-							appService: class AppService extends TestableBase {},
-						},
-					};
+			const AppModule = (): AnyModule => ({
+				name: "AppModule",
+				imports: [
+					LoggerModule({
+						level: "debug",
+					}),
+				],
+				providers: {
+					appService: class AppService extends TestableBase {},
 				},
-			};
+			});
 
-			const { scope: appScope } = registerModule(AppModule.forRoot());
+			const { scope: appScope } = registerModule(AppModule());
 
 			expect(appScope.resolve("appService").getDepKeys()).toContain(
 				"loggerService",

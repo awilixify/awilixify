@@ -163,7 +163,7 @@ export class InterceptorProcessor {
 						target,
 						methodName: propertyKey,
 						args,
-						meta: interceptorState.meta,
+						metadataByToken: interceptorState,
 						interceptors,
 						proceed: () => value.apply(target, args),
 					});
@@ -180,14 +180,14 @@ export class InterceptorProcessor {
 		target,
 		methodName,
 		args,
-		meta,
+		metadataByToken,
 		interceptors,
 		proceed,
 	}: {
 		target: object;
 		methodName: string | symbol;
 		args: unknown[];
-		meta: Record<string, unknown>;
+		metadataByToken: Map<symbol, unknown[]>;
 		interceptors: Interceptor[];
 		proceed: () => unknown | Promise<unknown>;
 	}): unknown | Promise<unknown> {
@@ -200,12 +200,17 @@ export class InterceptorProcessor {
 			const current = interceptors[index];
 
 			if (!current) return next();
+			const metadata = metadataByToken.get(current.token.key) || [];
+
+			if (metadata.length === 0) {
+				return invoke(index + 1, next);
+			}
 
 			return current.intercept({
 				target,
 				methodName,
 				args,
-				meta,
+				metadata,
 				proceed: () => invoke(index + 1, next),
 			});
 		};

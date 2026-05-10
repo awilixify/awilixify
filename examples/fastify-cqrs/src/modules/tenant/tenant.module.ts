@@ -1,5 +1,5 @@
 import {
-	createDynamicModule,
+	createStaticModule,
 	type InferGlobalDependencies,
 	type InferGlobalQueryPreHandlers,
 	type ModuleDef,
@@ -8,9 +8,6 @@ import type { FastifyInstance } from "@/types.js";
 import { TenantMiddleware } from "./tenant.middleware.js";
 
 export type TenantModuleDef = ModuleDef<{
-	forRootConfig: {
-		app: FastifyInstance;
-	};
 	providers: {
 		app: FastifyInstance;
 	};
@@ -21,21 +18,23 @@ export type TenantModuleDef = ModuleDef<{
 	exportQueryPreHandlerKeys: ["tenant"];
 }>;
 
-export const TenantModule = createDynamicModule<TenantModuleDef>((config) => ({
-	name: "TenantModule",
+export function TenantModule(app: FastifyInstance) {
+	return createStaticModule<TenantModuleDef>({
+		name: "TenantModule",
 
-	providers: {
-		app: config.app,
-	},
+		providers: {
+			app,
+		},
 
-	exports: ["app"],
+		exports: ["app"],
 
-	queryPreHandlers: {
-		tenant: TenantMiddleware,
-	},
+		queryPreHandlers: {
+			tenant: TenantMiddleware,
+		},
 
-	queryPreHandlerExports: ["tenant"],
-}));
+		queryPreHandlerExports: ["tenant"],
+	});
+}
 
 declare module "awilixify" {
 	interface GlobalDependencies

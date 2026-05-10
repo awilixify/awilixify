@@ -1,19 +1,9 @@
 import { type Controller } from "awilixify";
 
 import { mapApplicationErrorToHttpError } from "@/common/error-to-http-error.mapper.js";
-import {
-	createCronDefinition,
-	cron,
-} from "@/modules/scheduler/cron.decorator.js";
 
 import type { Deps } from "./cats.module.js";
 import { GetCatsSchema } from "./get-cats.dto.js";
-
-// TODO: take periodic config from config module?
-export const CatsHeartbeatCron = createCronDefinition({
-	id: "heartbeat",
-	seconds: 10,
-});
 
 export class CatsController implements Controller {
 	private readonly instanceId = Math.random().toString(36).substring(7);
@@ -21,8 +11,8 @@ export class CatsController implements Controller {
 	constructor(
 		private readonly app: Deps["app"],
 		private readonly queryMediator: Deps["queryMediator"],
-		private scheduler: Deps["scheduler"],
 		private readonly eventEmitter: Deps["eventEmitter"],
+		private readonly queue: Deps["queue"],
 	) {}
 
 	registerRoutes() {
@@ -64,6 +54,13 @@ export class CatsController implements Controller {
 						.send(eventError.getResponse());
 				}
 
+				await this.queue.add(
+					new this.queue.jobs.CatsViewedQueueJob({
+						catId: String(req.params.id),
+						at: Date.now(),
+					}),
+				);
+
 				if (result.ok) {
 					return res.status(200).send({
 						controllerInstanceId: this.instanceId,
@@ -77,16 +74,4 @@ export class CatsController implements Controller {
 			},
 		});
 	}
-
-	// @cron(CatsHeartbeatCron)
-	// onHeartbeat() {
-	// 	void this.eventEmitter.emit(
-	// 		new this.eventEmitter.events.CatsHeartbeatEvent({
-	// 			at: Date.now(),
-	// 			source: "cron",
-	// 		}),
-	// 	);
-	//
-	// 	console.log("[CatsController] cron tick", this.scheduler.getJobs()[0]?.id);
-	// }
 }

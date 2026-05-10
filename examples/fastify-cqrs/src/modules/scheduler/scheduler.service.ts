@@ -1,9 +1,10 @@
 import { type Deps } from "./scheduler.module.js";
+import { getCronTaskId } from "./cron.decorator.js";
 
 export class Scheduler {
 	constructor(
 		private readonly toadScheduler: Deps["toadScheduler"],
-		private readonly allowedCronDefinitions: Deps["allowedCronDefinitions"],
+		private readonly allowedCronTasks: Deps["allowedCronTasks"],
 	) {}
 
 	getJobs() {
@@ -13,6 +14,6 @@ export class Scheduler {
 	}
 
 	private get allowedIds() {
-		return this.allowedCronDefinitions.map((el) => el.id);
+		return this.allowedCronTasks.map(getCronTaskId);
 	}
 }

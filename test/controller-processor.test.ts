@@ -3,7 +3,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DIContext, type DiContextOptions } from "../lib/di/di-context.js";
 import * as ERRORS from "../lib/di/errors.js";
 import type { AnyModule } from "../lib/di/module.types.js";
-import { createDynamicModule } from "../lib/di/module-factories.js";
 import type { Controller } from "../lib/di/provider.types.js";
 import { controller, GET, POST, schema } from "../lib/decorators/http-decorators.js";
 
@@ -132,11 +131,11 @@ describe("ControllerProcessor", () => {
 			}).toThrow(ERRORS.ControllerAlreadyRegisteredError);
 		});
 
-		it("should throw error when multiple dynamic modules with registerControllers: true use same controller", () => {
-			const DynamicModule = createDynamicModule(() => ({
+		it("should throw error when multiple module instances with default registerControllers use same controller", () => {
+			const DynamicModule = () => ({
 				name: "DynamicModule",
 				controllers: [TestController],
-			}));
+			});
 
 			expect(() => {
 				registerModule({
@@ -145,13 +144,13 @@ describe("ControllerProcessor", () => {
 						{
 							name: "Wrapper1",
 							imports: [
-								DynamicModule.forRoot({}, { registerControllers: true }),
+								DynamicModule(),
 							],
 						},
 						{
 							name: "Wrapper2",
 							imports: [
-								DynamicModule.forRoot({}, { registerControllers: true }),
+								DynamicModule(),
 							],
 						},
 					],
@@ -187,30 +186,32 @@ describe("ControllerProcessor", () => {
 		});
 	});
 
-	describe("Dynamic Module registerControllers Option", () => {
-		it("should skip controller registration when registerControllers is false(by default)", () => {
-			const DynamicModule = createDynamicModule(() => ({
+	describe("Module registerControllers Option", () => {
+		it("should skip controller registration when registerControllers is false", () => {
+			const DynamicModule = () => ({
 				name: "DynamicModule",
 				controllers: [DecoratedController],
-			}));
+				registerControllers: false,
+			});
 
 			registerModule({
 				name: "AppModule",
-				imports: [DynamicModule.forRoot({})],
+				imports: [DynamicModule()],
 			});
 
 			expect(mockExpress.get).not.toHaveBeenCalled();
 		});
 
 		it("should register controllers when registerControllers is true", () => {
-			const DynamicModule = createDynamicModule(() => ({
+			const DynamicModule = () => ({
 				name: "DynamicModule",
 				controllers: [DecoratedController],
-			}));
+				registerControllers: true,
+			});
 
 			registerModule({
 				name: "AppModule",
-				imports: [DynamicModule.forRoot({}, { registerControllers: true })],
+				imports: [DynamicModule()],
 			});
 
 			expect(mockExpress.get).toHaveBeenCalledWith(

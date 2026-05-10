@@ -1,7 +1,7 @@
 import { createStaticModule, type ModuleDef } from "awilixify";
 import { ToadScheduler } from "toad-scheduler";
 
-import { type CronMetadata } from "./cron.decorator.js";
+import { type CronTaskConstructor } from "./cron.decorator.js";
 import { Scheduler } from "./scheduler.service.js";
 import { CronControllerInitializer } from "./cron.controller-initializer.js";
 
@@ -10,7 +10,7 @@ const SHARED_SCHEDULER = new ToadScheduler();
 type SchedulerModuleDef = ModuleDef<{
 	providers: {
 		toadScheduler: ToadScheduler;
-		allowedCronDefinitions: readonly CronMetadata[];
+		allowedCronTasks: readonly CronTaskConstructor[];
 		scheduler: Scheduler;
 	};
 	exportKeys: ["scheduler"];
@@ -22,15 +22,13 @@ type SchedulerModuleDef = ModuleDef<{
 
 export type Deps = SchedulerModuleDef["deps"];
 
-export function ScheduleModule(
-	allowedCronDefinitions: readonly CronMetadata[],
-) {
+export function ScheduleModule(allowedCronTasks: readonly CronTaskConstructor[]) {
 	return createStaticModule<SchedulerModuleDef>(
 		{
 			name: "SchedulerModule",
 			providers: {
 				toadScheduler: SHARED_SCHEDULER,
-				allowedCronDefinitions,
+				allowedCronTasks,
 				scheduler: Scheduler,
 			},
 			exports: ["scheduler"],
@@ -40,7 +38,7 @@ export function ScheduleModule(
 			controllerInitializerExports: ["cron"],
 		},
 		{
-			hashNameFrom: allowedCronDefinitions,
+			hashNameFrom: allowedCronTasks,
 		},
 	);
 }

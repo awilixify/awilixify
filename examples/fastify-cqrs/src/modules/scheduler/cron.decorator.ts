@@ -5,17 +5,24 @@ import {
 import { SimpleIntervalSchedule } from "toad-scheduler";
 import { JobOptions } from "toad-scheduler/dist/lib/engines/simple-interval/SimpleIntervalJob.js";
 
-export type CronMetadata = SimpleIntervalSchedule & JobOptions & { id: string };
+export type CronDefinition = SimpleIntervalSchedule & JobOptions;
 
-export function createCronDefinition<const T extends CronMetadata>(
-	metadata: T,
-): T {
-	return metadata;
+export abstract class CronTask {
+	static definition: CronDefinition;
+}
+
+export type CronTaskConstructor = {
+	new (...args: never[]): CronTask;
+	definition: CronDefinition;
+};
+
+export function getCronTaskId(task: CronTaskConstructor): string {
+	return task.name;
 }
 
 export const CRON_METADATA_TOKEN =
-	createControllerMetadataToken<CronMetadata>("cron");
+	createControllerMetadataToken<CronTaskConstructor>("cron");
 
-export function cron(definition: CronMetadata) {
-	return createControllerInitializerDecorator(CRON_METADATA_TOKEN)(definition);
+export function cron(task: CronTaskConstructor) {
+	return createControllerInitializerDecorator(CRON_METADATA_TOKEN)(task);
 }

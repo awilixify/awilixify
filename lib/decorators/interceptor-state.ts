@@ -1,8 +1,9 @@
 import type { MethodName, MethodNameParameter } from "./http-state.js";
+import type { InterceptorMetadataToken } from "../di/interceptor.types.js";
 
 export const INTERCEPTOR_DECORATOR_STATE = Symbol("Interceptor State");
 
-type InterceptorMethodState = { meta: Record<string, unknown> };
+type InterceptorMethodState = Map<symbol, unknown[]>;
 
 type InterceptorState = {
 	methods: Map<MethodName, InterceptorMethodState>;
@@ -18,24 +19,20 @@ export function updateInterceptorState(
 	);
 }
 
-export function setInterceptorMetadata(
+export function addInterceptorMethodMetadata(
 	state: InterceptorState,
 	methodName: MethodNameParameter,
-	key: string,
+	token: InterceptorMetadataToken<unknown>,
 	value: unknown,
 ): InterceptorState {
-	if (methodName === null) {
-		return state;
-	}
+	if (methodName === null) return state;
 
-	const methodState = getOrCreateInterceptorMethodState(state, methodName);
+	const methodState = getOrCreateMethodState(state, methodName);
+	const existing = methodState.get(token.key) || [];
+	const next = new Map(methodState);
+	next.set(token.key, [...existing, value]);
 
-	return updateInterceptorMethodState(state, methodName, {
-		meta: {
-			...methodState.meta,
-			[key]: value,
-		},
-	});
+	return updateMethodState(state, methodName, next);
 }
 
 export function getClassInterceptorState(target: any): InterceptorState | null {
@@ -50,8 +47,18 @@ export function getClassInterceptorState(target: any): InterceptorState | null {
 	return target[metadataSymbol]?.[INTERCEPTOR_DECORATOR_STATE] || null;
 }
 
-function createInterceptorMethodState(): InterceptorMethodState {
-	return { meta: {} };
+export function resolveInterceptorMethodMetadata<T>(
+	target: any,
+	methodName: string | symbol,
+	token: InterceptorMetadataToken<T>,
+): T[] {
+	const state = getClassInterceptorState(target);
+	if (!state) return [];
+
+	const methodState = state.methods.get(methodName);
+	if (!methodState) return [];
+
+	return (methodState.get(token.key) || []) as T[];
 }
 
 function createInterceptorDecoratorState(): InterceptorState {
@@ -60,33 +67,24 @@ function createInterceptorDecoratorState(): InterceptorState {
 	};
 }
 
-function getOrCreateInterceptorMethodState(
+function getOrCreateMethodState(
 	state: InterceptorState,
-	methodName: MethodNameParameter,
+	methodName: MethodName,
 ): InterceptorMethodState {
-	if (methodName === null) return createInterceptorMethodState();
-
-	return state.methods.get(methodName) || createInterceptorMethodState();
+	return state.methods.get(methodName) || new Map<symbol, unknown[]>();
 }
 
-function updateInterceptorMethodState(
+function updateMethodState(
 	state: InterceptorState,
-	methodName: MethodNameParameter,
-	newState: Partial<InterceptorMethodState>,
+	methodName: MethodName,
+	methodState: InterceptorMethodState,
 ): InterceptorState {
-	const mergedState: InterceptorMethodState = {
-		...getOrCreateInterceptorMethodState(state, methodName),
-		...newState,
-	};
-
-	if (methodName === null) return state;
-
 	const filteredEntries = Array.from(state.methods.entries()).filter(
 		([key]) => key !== methodName,
 	);
 
 	return {
 		...state,
-		methods: new Map([...filteredEntries, [methodName, mergedState]]),
+		methods: new Map([...filteredEntries, [methodName, methodState]]),
 	};
 }

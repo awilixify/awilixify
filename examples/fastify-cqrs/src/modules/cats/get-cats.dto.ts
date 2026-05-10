@@ -6,7 +6,10 @@ import {
 	LoggerError,
 } from "@/common/error-to-http-error.mapper.js";
 import { InvalidEventPayloadError } from "../event-emitter/event-emitter.service.js";
-import { CatsViewedEvent, CatsViewedEventError } from "./cats.event.js";
+import {
+	CatsViewedEvent,
+	CatsViewedEventError,
+} from "./cats.event-listeners.js";
 
 export const GetCatsQuerySchema = Type.Object({
 	// breed: Type.Optional(Type.String()),

@@ -12,13 +12,16 @@ import { ScheduleModule } from "@/modules/scheduler/scheduler.module.js";
 import { OwnersService } from "./owners.service.js";
 import { Owners1Service } from "./owners1.service.js";
 import { GetOwnersQueryHandler } from "./get-owners.q-handler.js";
-import { OwnersController, OwnersHeartbeatCron } from "./owners.controller.js";
+import {
+	OwnersController,
+	OwnersHeartbeatCronTask,
+} from "./owners.controller.js";
 
 const dbScope = {
 	readTables: ["cats"],
 	writeTables: ["cats"],
 } as const;
-const OwnersSchedulerModule = ScheduleModule([OwnersHeartbeatCron]);
+const OwnersSchedulerModule = ScheduleModule([OwnersHeartbeatCronTask]);
 
 export type OwnersModuleDef = ModuleDef<{
 	providers: {

@@ -17,7 +17,7 @@ export class GetCatsService {
 			handlerId: this.instanceId,
 			dogsServiceId: this.dogsService.getInstanceId(),
 			catsServiceId: this.catsService.getInstanceId(),
-			catsService: this.catsService.getCats(),
+			catsService: await this.catsService.getCats("1"),
 			dogsService: this.dogsService.getDogs(),
 		};
 	}

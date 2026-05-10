@@ -7,19 +7,24 @@ import type { ModuleDef } from "../lib/di/module-def.types.js";
 import type {
 	Interceptor,
 	InterceptContext,
+	InterceptorMetadataToken,
 } from "../lib/di/interceptor.types.js";
+import { createInterceptorMetadataToken } from "../lib/di/interceptor.types.js";
 import { createInterceptDecorator } from "../lib/decorators/interceptor-decorator-factory.js";
-import { setInterceptorMetadata } from "../lib/decorators/interceptor-state.js";
+import { addInterceptorMethodMetadata } from "../lib/decorators/interceptor-state.js";
 
-const mark = createInterceptDecorator("mark");
+const MARK_TOKEN = createInterceptorMetadataToken<{ tag?: string }>("mark");
+const mark = createInterceptDecorator(MARK_TOKEN);
 
 describe("Interceptors", () => {
 	it("should run interceptor only for decorated methods", () => {
 		const calls: Array<{ method: string | symbol; meta: unknown }> = [];
 
 		class TrackInterceptor implements Interceptor {
+			token: InterceptorMetadataToken<{ tag?: string }> = MARK_TOKEN;
+
 			intercept(context: InterceptContext) {
-				calls.push({ method: context.methodName, meta: context.meta.mark });
+				calls.push({ method: context.methodName, meta: context.metadata[0] });
 				return context.proceed();
 			}
 		}
@@ -58,12 +63,16 @@ describe("Interceptors", () => {
 
 	it("should preserve sync behavior for sync interceptor and return Promise for async interceptor", async () => {
 		class SyncInterceptor implements Interceptor {
+			token: InterceptorMetadataToken<{ tag?: string }> = MARK_TOKEN;
+
 			intercept(context: InterceptContext) {
 				return context.proceed();
 			}
 		}
 
 		class AsyncInterceptor implements Interceptor {
+			token: InterceptorMetadataToken<{ tag?: string }> = MARK_TOKEN;
+
 			async intercept(context: InterceptContext) {
 				return context.proceed();
 			}
@@ -116,6 +125,8 @@ describe("Interceptors", () => {
 		const calls: string[] = [];
 
 		class ImportedInterceptor implements Interceptor {
+			token: InterceptorMetadataToken<{ tag?: string }> = MARK_TOKEN;
+
 			intercept(context: InterceptContext) {
 				calls.push(String(context.methodName));
 				return context.proceed();
@@ -189,7 +200,8 @@ describe("Interceptors", () => {
 	});
 
 	it("should no-op safely when decorator metadata is missing or methodName is null", () => {
-		const dec = createInterceptDecorator("x");
+		const TOKEN = createInterceptorMetadataToken<number>("x");
+		const dec = createInterceptDecorator(TOKEN);
 		const target = function test() {};
 
 		const result = dec(1)(target, {
@@ -200,22 +212,22 @@ describe("Interceptors", () => {
 		expect(result).toBe(target);
 
 		const state = { methods: new Map<any, any>() } as any;
-		const next = setInterceptorMetadata(state, null, "x", 1);
+		const next = addInterceptorMethodMetadata(state, null, TOKEN, 1);
 		expect(next).toBe(state);
 		expect(state.methods.size).toBe(0);
 
-		const stateWithMethod = setInterceptorMetadata(
+		const stateWithMethod = addInterceptorMethodMetadata(
 			{ methods: new Map() } as any,
 			"m",
-			"a",
+			TOKEN,
 			1,
 		);
-		const updatedSameMethod = setInterceptorMetadata(
+		const updatedSameMethod = addInterceptorMethodMetadata(
 			stateWithMethod as any,
 			"m",
-			"b",
+			TOKEN,
 			2,
 		);
-		expect(updatedSameMethod.methods.get("m")?.meta).toEqual({ a: 1, b: 2 });
+		expect(updatedSameMethod.methods.get("m")?.get(TOKEN.key)).toEqual([1, 2]);
 	});
 });

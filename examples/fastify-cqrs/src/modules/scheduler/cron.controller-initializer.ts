@@ -4,25 +4,31 @@ import type {
 } from "awilixify";
 import { AsyncTask, SimpleIntervalJob } from "toad-scheduler";
 
-import { CRON_METADATA_TOKEN, type CronMetadata } from "./cron.decorator.js";
+import {
+	CRON_METADATA_TOKEN,
+	type CronTaskConstructor,
+	getCronTaskId,
+} from "./cron.decorator.js";
 import { Deps } from "./scheduler.module.js";
 
 export class CronControllerInitializer
-	implements ControllerInitializer<CronMetadata>
+	implements ControllerInitializer<CronTaskConstructor>
 {
 	public readonly token = CRON_METADATA_TOKEN;
 
 	constructor(
 		private readonly toadScheduler: Deps["toadScheduler"],
-		private readonly allowedCronDefinitions: Deps["allowedCronDefinitions"],
+		private readonly allowedCronTasks: Deps["allowedCronTasks"],
 	) {}
 
-	initialize(context: ControllerInitializerContext<CronMetadata>): void {
-		const { id, preventOverrun, ...settings } = context.metadata;
+	initialize(context: ControllerInitializerContext<CronTaskConstructor>): void {
+		const cronTask = context.metadata;
+		const { preventOverrun, ...settings } = cronTask.definition;
+		const id = getCronTaskId(cronTask);
 
-		if (!this.allowedCronDefinitions.includes(context.metadata)) {
+		if (!this.allowedCronTasks.includes(cronTask)) {
 			throw new Error(
-				`Cron definition with id: "${id}" is not allowed for module "${context.moduleName}"`,
+				`Cron task "${cronTask.name}" with id "${id}" is not allowed for module "${context.moduleName}"`,
 			);
 		}
 

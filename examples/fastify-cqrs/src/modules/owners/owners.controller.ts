@@ -1,17 +1,15 @@
 import { GET, schema, HttpStatus } from "awilixify";
 import type { Request, Reply } from "@/types.js";
-import {
-	createCronDefinition,
-	cron,
-} from "@/modules/scheduler/cron.decorator.js";
+import { CronTask, cron } from "@/modules/scheduler/cron.decorator.js";
 
 import type { Deps } from "./owners.module.js";
 import { GetOwnersSchema } from "./get-owners.dto.js";
 
-export const OwnersHeartbeatCron = createCronDefinition({
-	id: "owners-heartbeat",
-	seconds: 12,
-});
+export class OwnersHeartbeatCronTask extends CronTask {
+	static readonly definition = {
+		seconds: 12,
+	};
+}
 
 export class OwnersController {
 	constructor(
@@ -40,7 +38,7 @@ export class OwnersController {
 		}
 	}
 
-	@cron(OwnersHeartbeatCron)
+	// @cron(OwnersHeartbeatCronTask)
 	onHeartbeat() {
 		console.log(
 			"[OwnersController] cron tick",

@@ -1,7 +1,7 @@
 import { httpException, HttpException } from "awilixify";
 
 import { BaseError } from "./base.error.js";
-import { CatsViewedEventError } from "@/modules/cats/cats.event.js";
+import { CatsViewedEventError } from "@/modules/cats/cats.event-listeners.js";
 import { InvalidEventPayloadError } from "@/modules/event-emitter/event-emitter.service.js";
 import { InvalidQueueJobPayloadError } from "@/modules/queue/queue.service.js";
 
