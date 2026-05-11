@@ -1,7 +1,4 @@
-import type {
-	Initializer,
-	InitializerContext,
-} from "awilixify";
+import type { Initializer, InitializerContext } from "awilixify";
 import { ON_EVENT_METADATA_TOKEN } from "./on-event.decorator.js";
 import type { Deps } from "./event-emitter.module.js";
 import type { AnyEventConstructor } from "./event-emitter.types.js";
@@ -22,9 +19,9 @@ export function getEventKey(eventClass: AnyEventConstructor): symbol {
 	return key;
 }
 
-export class EventListenerInitializer
-	implements Initializer<AnyEventConstructor>
-{
+type EventToken = typeof ON_EVENT_METADATA_TOKEN;
+
+export class EventListenerInitializer implements Initializer<EventToken> {
 	public readonly token = ON_EVENT_METADATA_TOKEN;
 
 	constructor(
@@ -32,7 +29,7 @@ export class EventListenerInitializer
 		private readonly listenableEvents: Deps["listenableEvents"],
 	) {}
 
-	initialize(context: InitializerContext<AnyEventConstructor>): void {
+	initialize(context: InitializerContext<EventToken>): void {
 		const eventClass = context.metadata;
 
 		if (!this.listenableEvents.includes(eventClass)) {

@@ -1,9 +1,13 @@
 import { createHash } from "node:crypto";
-import type { StaticModule, StaticModuleDef } from "./module.types.js";
-import type { AnyModule } from "./module.types.js";
+import type {
+	AnyModule,
+	StaticModule,
+	StaticModuleDef,
+} from "./module.types.js";
 import type { ForwardRef } from "./module-ref.types.js";
 import type { FactoryProvider } from "./provider.types.js";
 
+// TODO: StaticModule => Module rename
 export type StaticModuleOptions = {
 	hashNameFrom?: unknown;
 	hashLength?: number;

@@ -1,17 +1,13 @@
-import type {
-	Initializer,
-	InitializerContext,
-} from "awilixify";
+import type { Initializer, InitializerContext } from "awilixify";
 import { Value } from "@sinclair/typebox/value";
 
 import { ON_QUEUE_JOB_METADATA_TOKEN } from "./on-queue-job.decorator.js";
 import { Deps } from "./queue.module.js";
-import type { AnyQueueJobConstructor } from "./queue.types.js";
 import { InvalidQueueJobPayloadError } from "./queue.service.js";
 
-export class QueueJobInitializer
-	implements Initializer<AnyQueueJobConstructor>
-{
+type QueueJobToken = typeof ON_QUEUE_JOB_METADATA_TOKEN;
+
+export class QueueJobInitializer implements Initializer<QueueJobToken> {
 	public readonly token = ON_QUEUE_JOB_METADATA_TOKEN;
 
 	constructor(
@@ -19,9 +15,7 @@ export class QueueJobInitializer
 		private readonly processableJobs: Deps["processableJobs"],
 	) {}
 
-	initialize(
-		context: InitializerContext<AnyQueueJobConstructor>,
-	): void {
+	initialize(context: InitializerContext<QueueJobToken>): void {
 		const jobClass = context.metadata;
 
 		if (!this.processableJobs.includes(jobClass)) {

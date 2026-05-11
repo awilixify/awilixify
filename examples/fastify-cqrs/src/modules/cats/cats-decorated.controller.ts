@@ -1,4 +1,4 @@
-import { GET, schema, HttpStatus } from "awilixify";
+import { GET, schema } from "awilixify/http";
 import type { Request, Reply } from "@/types.js";
 
 import type { Deps } from "./cats.module.js";
@@ -17,7 +17,7 @@ export class CatsDecoratedController {
 	) {
 		const result = await this.getCatsService.executor(req.query);
 
-		res.status(HttpStatus.OK).send({
+		res.status(200).send({
 			controllerInstanceId: this.instanceId,
 			result,
 		});

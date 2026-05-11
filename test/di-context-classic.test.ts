@@ -31,7 +31,6 @@ function registerModule(
 			...module,
 		},
 		{
-			framework: {},
 			...options,
 		},
 	);

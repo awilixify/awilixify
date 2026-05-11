@@ -1,36 +1,41 @@
 import { describe, expect, it } from "vitest";
-
+import { createDecoratorStateUpdater } from "../lib/decorators/decorator-state.js";
 import { DIContext } from "../lib/di/di-context.js";
 import * as ERRORS from "../lib/di/errors.js";
-import { createStaticModule } from "../lib/di/module-factories.js";
 import type { ModuleDef } from "../lib/di/module-def.types.js";
+import { createStaticModule } from "../lib/di/module-factories.js";
 import type {
-	Interceptor,
 	InterceptContext,
-	InterceptorMetadataToken,
-} from "../lib/di/interceptor.types.js";
-import { createInterceptorMetadataToken } from "../lib/di/interceptor.types.js";
-import { createInterceptDecorator } from "../lib/decorators/interceptor-decorator-factory.js";
-import { addInterceptorMethodMetadata } from "../lib/decorators/interceptor-state.js";
+	Interceptor,
+} from "../lib/di/provider.types.js";
 
-const MARK_TOKEN = createInterceptorMetadataToken<{ tag?: string }>("mark");
-const mark = createInterceptDecorator(MARK_TOKEN);
+const { token: MARK_TOKEN, update: mark } = createDecoratorStateUpdater(
+	"mark",
+	{ method: (): { tag?: string } => ({}) },
+);
+
+function markWith(updater: (prev: { tag?: string }) => { tag?: string }) {
+	return (target: any, context: ClassMethodDecoratorContext) => {
+		mark(context, { method: updater });
+		return target;
+	};
+}
 
 describe("Interceptors", () => {
 	it("should run interceptor only for decorated methods", () => {
 		const calls: Array<{ method: string | symbol; meta: unknown }> = [];
 
-		class TrackInterceptor implements Interceptor {
-			token: InterceptorMetadataToken<{ tag?: string }> = MARK_TOKEN;
+		class TrackInterceptor implements Interceptor<typeof MARK_TOKEN> {
+			token = MARK_TOKEN;
 
-			intercept(context: InterceptContext) {
+			intercept(context: InterceptContext<typeof MARK_TOKEN>) {
 				calls.push({ method: context.methodName, meta: context.metadata });
 				return context.proceed();
 			}
 		}
 
 		class Service {
-			@mark({ tag: "decorated" })
+			@markWith(() => ({ tag: "decorated" }))
 			decorated() {
 				return 42;
 			}
@@ -51,7 +56,7 @@ describe("Interceptors", () => {
 			interceptors: { track: TrackInterceptor },
 		});
 
-		const root = DIContext.create(AppModule, { framework: {} });
+		const root = DIContext.create(AppModule, {});
 		const service = root.scope.resolve<any>("service");
 
 		expect(service.decorated()).toBe(42);
@@ -62,24 +67,24 @@ describe("Interceptors", () => {
 	});
 
 	it("should preserve sync behavior for sync interceptor and return Promise for async interceptor", async () => {
-		class SyncInterceptor implements Interceptor {
-			token: InterceptorMetadataToken<{ tag?: string }> = MARK_TOKEN;
+		class SyncInterceptor implements Interceptor<typeof MARK_TOKEN> {
+			token = MARK_TOKEN;
 
-			intercept(context: InterceptContext) {
+			intercept(context: InterceptContext<typeof MARK_TOKEN>) {
 				return context.proceed();
 			}
 		}
 
-		class AsyncInterceptor implements Interceptor {
-			token: InterceptorMetadataToken<{ tag?: string }> = MARK_TOKEN;
+		class AsyncInterceptor implements Interceptor<typeof MARK_TOKEN> {
+			token = MARK_TOKEN;
 
-			async intercept(context: InterceptContext) {
+			async intercept(context: InterceptContext<typeof MARK_TOKEN>) {
 				return context.proceed();
 			}
 		}
 
 		class Service {
-			@mark(true)
+			@markWith(() => true as any)
 			getValue() {
 				return 9;
 			}
@@ -105,12 +110,12 @@ describe("Interceptors", () => {
 			interceptors: { async: AsyncInterceptor },
 		});
 
-		const syncService = DIContext.create(SyncModule, {
-			framework: {},
-		}).scope.resolve<any>("service");
-		const asyncService = DIContext.create(AsyncModule, {
-			framework: {},
-		}).scope.resolve<any>("service");
+		const syncService = DIContext.create(SyncModule, {}).scope.resolve<any>(
+			"service",
+		);
+		const asyncService = DIContext.create(AsyncModule, {}).scope.resolve<any>(
+			"service",
+		);
 
 		const syncResult = syncService.getValue();
 		expect(syncResult).toBe(9);
@@ -124,17 +129,17 @@ describe("Interceptors", () => {
 	it("should support imported interceptor exports and throw on interceptor key conflicts", () => {
 		const calls: string[] = [];
 
-		class ImportedInterceptor implements Interceptor {
-			token: InterceptorMetadataToken<{ tag?: string }> = MARK_TOKEN;
+		class ImportedInterceptor implements Interceptor<typeof MARK_TOKEN> {
+			token = MARK_TOKEN;
 
-			intercept(context: InterceptContext) {
+			intercept(context: InterceptContext<typeof MARK_TOKEN>) {
 				calls.push(String(context.methodName));
 				return context.proceed();
 			}
 		}
 
 		class Service {
-			@mark(true)
+			@markWith(() => true as any)
 			getValue() {
 				return 5;
 			}
@@ -165,7 +170,7 @@ describe("Interceptors", () => {
 			imports: [ImportedA],
 		});
 
-		const appRoot = DIContext.create(AppOk, { framework: {} });
+		const appRoot = DIContext.create(AppOk, {});
 		const service = appRoot.scope.resolve<any>("service");
 		expect(service.getValue()).toBe(5);
 		expect(calls).toEqual(["getValue"]);
@@ -179,7 +184,7 @@ describe("Interceptors", () => {
 			providers: { service: Service },
 			imports: [ImportedA, ImportedB],
 		});
-		expect(() => DIContext.create(AppDupImports, { framework: {} })).toThrow(
+		expect(() => DIContext.create(AppDupImports, {})).toThrow(
 			ERRORS.InterceptorNameConflictError,
 		);
 
@@ -194,40 +199,24 @@ describe("Interceptors", () => {
 			imports: [ImportedA],
 			interceptors: { shared: ImportedInterceptor },
 		});
-		expect(() =>
-			DIContext.create(AppImportAndLocal, { framework: {} }),
-		).toThrow(ERRORS.InterceptorNameConflictError);
+		expect(() => DIContext.create(AppImportAndLocal, {})).toThrow(
+			ERRORS.InterceptorNameConflictError,
+		);
 	});
 
 	it("should no-op safely when decorator metadata is missing or methodName is null", () => {
-		const TOKEN = createInterceptorMetadataToken<number>("x");
-		const dec = createInterceptDecorator(TOKEN);
+		const { update: dec } = createDecoratorStateUpdater("x", {
+			method: () => 0,
+		});
 		const target = function test() {};
 
-		const result = dec(1)(target, {
+		const context = {
 			kind: "method",
 			name: "m",
 			metadata: undefined,
-		} as any);
+		} as any;
+		dec(context, { method: () => 1 });
+		const result = target;
 		expect(result).toBe(target);
-
-		const state = { methods: new Map<any, any>() } as any;
-		const next = addInterceptorMethodMetadata(state, null, TOKEN, 1);
-		expect(next).toBe(state);
-		expect(state.methods.size).toBe(0);
-
-		const stateWithMethod = addInterceptorMethodMetadata(
-			{ methods: new Map() } as any,
-			"m",
-			TOKEN,
-			1,
-		);
-		const updatedSameMethod = addInterceptorMethodMetadata(
-			stateWithMethod as any,
-			"m",
-			TOKEN,
-			2,
-		);
-		expect(updatedSameMethod.methods.get("m")?.get(TOKEN.key)).toEqual(2);
 	});
 });

@@ -1,7 +1,4 @@
-import {
-	createInitializerDecorator,
-	createControllerMetadataToken,
-} from "awilixify";
+import { createDecoratorStateUpdater } from "awilixify";
 import { SimpleIntervalSchedule } from "toad-scheduler";
 import { JobOptions } from "toad-scheduler/dist/lib/engines/simple-interval/SimpleIntervalJob.js";
 
@@ -20,9 +17,16 @@ export function getCronTaskId(task: CronTaskConstructor): string {
 	return task.name;
 }
 
-export const CRON_METADATA_TOKEN =
-	createControllerMetadataToken<CronTaskConstructor>("cron");
+const updater = createDecoratorStateUpdater("cron", {
+	method: (): CronTaskConstructor => undefined as never,
+});
+
+export const CRON_METADATA_TOKEN = updater.token;
 
 export function cron(task: CronTaskConstructor) {
-	return createInitializerDecorator(CRON_METADATA_TOKEN)(task);
+	return (target: any, context: ClassMethodDecoratorContext) => {
+		updater.update(context, { method: () => task });
+
+		return target;
+	};
 }

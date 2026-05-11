@@ -1,9 +1,9 @@
 import * as Awilix from "awilix";
-import { getClassInterceptorState } from "../decorators/interceptor-state.js";
+import { resolveDecoratorState } from "../decorators/decorator-state.js";
+import type { DecoratorState } from "../decorators/decorator-state.types.js";
 import type { DiContextOptions } from "./di-context.js";
 import * as ERRORS from "./errors.js";
-import type { Interceptor } from "./interceptor.types.js";
-import type { AnyInterceptor } from "./provider.types.js";
+import type { AnyInterceptor, Interceptor } from "./provider.types.js";
 import { getOrCreateRequestScope } from "./request-scope-context.js";
 import type { InternalModuleLike as M } from "./runtime-module.types.js";
 import { isClassInterceptor } from "./type-guards.js";
@@ -11,6 +11,11 @@ import { isClassInterceptor } from "./type-guards.js";
 type ModuleWithScope = {
 	module: M;
 	scope: Awilix.AwilixContainer;
+};
+
+type InterceptorMetadata = {
+	state: DecoratorState<any, any>;
+	method: unknown;
 };
 
 export class InterceptorProcessor {
@@ -31,6 +36,7 @@ export class InterceptorProcessor {
 		const resolvers: Array<() => Interceptor> = [];
 		const ownerByKey = new Map<string, string>();
 
+		//TODO: do it with shared functionality for all module members
 		for (const {
 			module: importedModule,
 			scope: importedScope,
@@ -108,10 +114,7 @@ export class InterceptorProcessor {
 		const baseResolver = resolver || Awilix.asClass(useClass, options);
 		const interceptors = this.resolversByModule.get(module) ?? [];
 
-		if (
-			interceptors.length === 0 ||
-			!this.hasMethodInterceptorMetadata(useClass)
-		) {
+		if (interceptors.length === 0) {
 			return baseResolver;
 		}
 
@@ -144,26 +147,34 @@ export class InterceptorProcessor {
 
 				if (existing) return existing;
 
-				const interceptorState = self.resolveMethodInterceptorsState(
-					metadataTarget,
-					propertyKey,
-				);
-
-				if (!interceptorState) {
-					const fallback = (...args: unknown[]) => value.apply(target, args);
-					wrappers.set(propertyKey, fallback);
-
-					return fallback;
-				}
-
 				const wrapped = (...args: unknown[]) => {
 					const interceptors = resolveInterceptors.map((resolve) => resolve());
+					const metadataByToken = new Map<symbol, InterceptorMetadata>();
+					for (const interceptor of interceptors) {
+						const state = resolveDecoratorState(
+							metadataTarget,
+							interceptor.token,
+						);
+
+						if (state === null) continue;
+
+						const method = state.methods.get(propertyKey);
+
+						if (method !== undefined) {
+							metadataByToken.set(interceptor.token.stateSymbol, {
+								state,
+								method,
+							});
+						}
+					}
+
+					if (metadataByToken.size === 0) return value.apply(target, args);
 
 					return self.callWithInterceptorChain({
 						target,
 						methodName: propertyKey,
 						args,
-						metadataByToken: interceptorState,
+						metadataByToken,
 						interceptors,
 						proceed: () => value.apply(target, args),
 					});
@@ -187,7 +198,7 @@ export class InterceptorProcessor {
 		target: object;
 		methodName: string | symbol;
 		args: unknown[];
-		metadataByToken: Map<symbol, unknown>;
+		metadataByToken: Map<symbol, InterceptorMetadata>;
 		interceptors: Interceptor[];
 		proceed: () => unknown | Promise<unknown>;
 	}): unknown | Promise<unknown> {
@@ -200,7 +211,7 @@ export class InterceptorProcessor {
 			const current = interceptors[index];
 
 			if (!current) return next();
-			const metadata = metadataByToken.get(current.token.key);
+			const metadata = metadataByToken.get(current.token.stateSymbol);
 
 			if (metadata === undefined) {
 				return invoke(index + 1, next);
@@ -210,7 +221,8 @@ export class InterceptorProcessor {
 				target,
 				methodName,
 				args,
-				metadata,
+				metadata: metadata.method,
+				decoratorState: metadata.state,
 				proceed: () => invoke(index + 1, next),
 			});
 		};
@@ -251,22 +263,5 @@ export class InterceptorProcessor {
 				),
 			resolverOptions,
 		);
-	}
-
-	private resolveMethodInterceptorsState(
-		target: any,
-		methodName: string | symbol,
-	) {
-		const state = getClassInterceptorState(target);
-
-		if (!state) return null;
-
-		return state.methods.get(methodName) || null;
-	}
-
-	private hasMethodInterceptorMetadata(target: any) {
-		const state = getClassInterceptorState(target);
-
-		return state && state.methods.size > 0;
 	}
 }

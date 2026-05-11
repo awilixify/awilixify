@@ -2,6 +2,8 @@ import type { AnyContract } from "./contract.types.js";
 import type { EmptyContext } from "./middleware.types.js";
 
 export interface Handler<C extends AnyContract, K extends C["key"] = C["key"]> {
+	// TODO: similar like state bound by token in decorator world it's possible
+	// to have readonly contract = createContract<Payload, Response>(key)
 	readonly contract: C;
 	executor: Executor<
 		ExtractPayload<C, K>,

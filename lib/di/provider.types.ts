@@ -5,8 +5,12 @@ import type {
 	AnyMiddlewareContract,
 	Middleware,
 } from "lib/mediator/middleware.types.js";
-import type { Interceptor } from "./interceptor.types.js";
-import type { ControllerMetadataToken } from "../decorators/controller-initializer-state.js";
+import type {
+	DecoratorMethodState,
+	DecoratorState,
+	DecoratorToken,
+	MethodName,
+} from "../decorators/decorator-state.types.js";
 
 export type DefProviderMap = Record<string, object | string | boolean | number>;
 
@@ -15,10 +19,7 @@ export type DefProviderMap = Record<string, object | string | boolean | number>;
  */
 export type DefPreHandlerMap = Record<string, object>;
 export type DefInterceptorMap = Record<string, object>;
-export type DefInitializerMap = Record<
-	string,
-	ConstructorInitializer
->;
+export type DefInitializerMap = Record<string, ConstructorInitializer>;
 // ============================================================================
 // Provider Types
 // ============================================================================
@@ -129,26 +130,54 @@ export type AnyInterceptor = ClassInterceptor | ConstructorInterceptor;
 // Controller Initializer Types
 // ============================================================================
 
-export type InitializerContext<M = unknown> = {
+type AnyDecoratorToken = DecoratorToken<DecoratorState<any, any>>;
+
+export type InitializerContext<
+	TToken extends AnyDecoratorToken = AnyDecoratorToken,
+> = {
 	moduleName: string;
 	controllerClass: Constructor<any>;
-	methodName: string | symbol;
-	metadata: M;
+	methodName: MethodName;
+	metadata: DecoratorMethodState<TToken["state"]>;
+	decoratorState: TToken["state"];
 	invoke: (...args: unknown[]) => unknown | Promise<unknown>;
 };
 
-export interface Initializer<M = unknown> {
-	token: ControllerMetadataToken<M>;
-	initialize: (
-		context: InitializerContext<M>,
-	) => void | Promise<void>;
+export interface Initializer<
+	TToken extends AnyDecoratorToken = AnyDecoratorToken,
+> {
+	token: TToken;
+	initialize: (context: InitializerContext<TToken>) => void | Promise<void>;
 }
 
 export interface ConstructorInitializer {
-	new (...args: any[]): Initializer<any>;
+	new (...args: any[]): Initializer;
 }
 
 export type AnyInitializer = ConstructorInitializer;
+
+// ============================================================================
+// Interceptor Types
+// ============================================================================
+
+// TODO: same type for interceptor and initializer
+export type InterceptContext<
+	TToken extends AnyDecoratorToken = AnyDecoratorToken,
+> = {
+	target: object;
+	methodName: MethodName;
+	args: unknown[];
+	proceed: () => unknown | Promise<unknown>;
+	metadata: DecoratorMethodState<TToken["state"]>;
+	decoratorState: TToken["state"];
+};
+
+export interface Interceptor<
+	TToken extends AnyDecoratorToken = AnyDecoratorToken,
+> {
+	token: TToken;
+	intercept(context: InterceptContext<TToken>): unknown | Promise<unknown>;
+}
 
 // ============================================================================
 // Provider Mapping Helper

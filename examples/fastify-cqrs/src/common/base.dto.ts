@@ -1,5 +1,5 @@
 import { Type } from "@sinclair/typebox";
-import { HttpStatus } from "awilixify";
+import { HttpStatus } from "awilixify/http";
 
 import { BaseError } from "./base.error.js";
 import {

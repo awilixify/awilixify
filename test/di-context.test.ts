@@ -17,7 +17,7 @@ import {
 	createStaticModule,
 	forwardRef,
 } from "../lib/di/module-factories.js";
-import type { ModuleRef } from "../lib/di/module-ref.types.js";
+import type { ForwardRef, ModuleRef } from "../lib/di/module-ref.types.js";
 
 // Test-only type: Override resolve to return 'any' for convenience
 type TestContainer = Omit<AwilixContainer, "resolve"> & {
@@ -52,12 +52,6 @@ describe("DIContext", () => {
 		}
 	}
 
-	const mockedExpress = {
-		get: vi.fn(),
-		post: vi.fn(),
-		put: vi.fn(),
-	};
-
 	function registerModule(
 		module: Partial<AnyModule>,
 		options?: Partial<DiContextOptions>,
@@ -68,7 +62,6 @@ describe("DIContext", () => {
 				...module,
 			},
 			{
-				framework: mockedExpress,
 				containerOptions: {
 					injectionMode: "PROXY",
 				},
@@ -509,7 +502,7 @@ describe("DIContext", () => {
 				exports: ["consumerB"],
 			};
 
-			const { scope, importedScopes } = registerModule({
+			const { importedScopes } = registerModule({
 				name: "RootModule",
 				imports: [ModuleA, ModuleB],
 			});

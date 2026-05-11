@@ -1,9 +1,29 @@
-import type { RouteSchema } from "../decorators/http-state.js";
-
 export interface RouteRegistration {
 	method: string;
 	path: string;
 	schema: RouteSchema;
+}
+
+export interface RouteSchema {
+	body?: unknown;
+	querystring?: unknown;
+	params?: unknown;
+	headers?: unknown;
+	response?: unknown;
+	description?: string;
+	summary?: string;
+	tags?: string[];
+	operationId?: string;
+	deprecated?: boolean;
+}
+
+export function hasValidationSchema(schema: RouteSchema): boolean {
+	return !!(
+		schema?.body ||
+		schema?.querystring ||
+		schema?.params ||
+		schema?.headers
+	);
 }
 
 export class OpenAPIBuilder {

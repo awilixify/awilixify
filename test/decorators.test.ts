@@ -1,36 +1,19 @@
 import { describe, expect, it } from "vitest";
-
+import { resolveDecoratorState } from "../lib/decorators/decorator-state.js";
 import {
 	after as AFTER,
 	before as BEFORE,
 	controller,
 	DELETE,
 	GET,
+	HTTP_DECORATOR_STATE_TOKEN,
 	PATCH,
 	POST,
 	PUT,
 	schema,
-} from "../lib/decorators/http-decorators.js";
+} from "../lib/http/decorators.js";
 import { HttpVerbs } from "../lib/http/http-verbs.js";
-import {
-	HTTP_DECORATOR_STATE,
-	hasValidationSchema,
-	type IHttpDecoratorState,
-} from "../lib/decorators/http-state.js";
-
-/**
- * Helper function to get decorator state from a class
- * Mirrors the approach used in controller-processor.ts
- */
-function getDecoratorState(target: any): IHttpDecoratorState | null {
-	const symbol = Object.getOwnPropertySymbols(target).find(
-		(s) => s.toString() === "Symbol(Symbol.metadata)",
-	);
-
-	if (!symbol) return null;
-
-	return target[symbol][HTTP_DECORATOR_STATE] || null;
-}
+import { hasValidationSchema } from "../lib/http/openapi-builder.js";
 
 describe("Decorators", () => {
 	describe("Route Decorators", () => {
@@ -40,7 +23,10 @@ describe("Decorators", () => {
 				root() {}
 			}
 
-			const state = getDecoratorState(TestController);
+			const state = resolveDecoratorState(
+				TestController,
+				HTTP_DECORATOR_STATE_TOKEN,
+			);
 
 			const routeState = state?.methods.get("root");
 			expect(routeState?.paths).toEqual(["/"]);
@@ -51,7 +37,10 @@ describe("Decorators", () => {
 				regularMethod() {}
 			}
 
-			const state = getDecoratorState(TestController);
+			const state = resolveDecoratorState(
+				TestController,
+				HTTP_DECORATOR_STATE_TOKEN,
+			);
 
 			expect(state).toBeNull();
 		});
@@ -76,7 +65,10 @@ describe("Decorators", () => {
 				patchUser() {}
 			}
 
-			const state = getDecoratorState(TestController);
+			const state = resolveDecoratorState(
+				TestController,
+				HTTP_DECORATOR_STATE_TOKEN,
+			);
 
 			expect(state).not.toBeNull();
 
@@ -113,7 +105,10 @@ describe("Decorators", () => {
 			@controller(["/api", "/api"])
 			class TestController {}
 
-			const state = getDecoratorState(TestController);
+			const state = resolveDecoratorState(
+				TestController,
+				HTTP_DECORATOR_STATE_TOKEN,
+			);
 
 			expect(state?.root.paths).toEqual(["/api"]);
 		});
@@ -122,7 +117,10 @@ describe("Decorators", () => {
 			@controller(["/api", "/v1/api"])
 			class TestController {}
 
-			const state = getDecoratorState(TestController);
+			const state = resolveDecoratorState(
+				TestController,
+				HTTP_DECORATOR_STATE_TOKEN,
+			);
 
 			expect(state?.root.paths).toEqual(["/api", "/v1/api"]);
 		});
@@ -131,7 +129,10 @@ describe("Decorators", () => {
 			@controller({ path: "/api" })
 			class TestController {}
 
-			const state = getDecoratorState(TestController);
+			const state = resolveDecoratorState(
+				TestController,
+				HTTP_DECORATOR_STATE_TOKEN,
+			);
 
 			expect(state?.root.paths).toEqual(["/api"]);
 		});
@@ -140,7 +141,10 @@ describe("Decorators", () => {
 			@controller({ path: ["/api", "/v1/api"] })
 			class TestController {}
 
-			const state = getDecoratorState(TestController);
+			const state = resolveDecoratorState(
+				TestController,
+				HTTP_DECORATOR_STATE_TOKEN,
+			);
 
 			expect(state?.root.paths).toEqual(["/api", "/v1/api"]);
 		});
@@ -149,7 +153,10 @@ describe("Decorators", () => {
 			@controller()
 			class TestController {}
 
-			const state = getDecoratorState(TestController);
+			const state = resolveDecoratorState(
+				TestController,
+				HTTP_DECORATOR_STATE_TOKEN,
+			);
 
 			expect(state).toBeNull();
 		});
@@ -169,7 +176,10 @@ describe("Decorators", () => {
 				getUsers() {}
 			}
 
-			const state = getDecoratorState(TestController);
+			const state = resolveDecoratorState(
+				TestController,
+				HTTP_DECORATOR_STATE_TOKEN,
+			);
 
 			const routeState = state?.methods.get("getUsers");
 			expect(routeState?.beforeMiddleware).toEqual([
@@ -199,7 +209,10 @@ describe("Decorators", () => {
 				createUser() {}
 			}
 
-			const state = getDecoratorState(TestController);
+			const state = resolveDecoratorState(
+				TestController,
+				HTTP_DECORATOR_STATE_TOKEN,
+			);
 
 			const routeState = state?.methods.get("createUser");
 
@@ -233,7 +246,10 @@ describe("Decorators", () => {
 				getUsers() {}
 			}
 
-			const state = getDecoratorState(TestController);
+			const state = resolveDecoratorState(
+				TestController,
+				HTTP_DECORATOR_STATE_TOKEN,
+			);
 			const routeState = state?.methods.get("getUsers");
 
 			expect(routeState?.schema).toEqual(testSchema);

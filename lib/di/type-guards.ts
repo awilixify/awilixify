@@ -17,6 +17,7 @@ export function isClassHandler(handler: unknown): handler is ClassHandler {
 	);
 }
 
+// TODO: better guard!!
 export function isClassController(
 	controller: unknown,
 ): controller is ClassController {

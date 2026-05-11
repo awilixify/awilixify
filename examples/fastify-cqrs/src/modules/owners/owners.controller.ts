@@ -1,4 +1,4 @@
-import { GET, schema, HttpStatus } from "awilixify";
+import { GET, schema } from "awilixify/http";
 import type { Request, Reply } from "@/types.js";
 import { CronTask, cron } from "@/modules/scheduler/cron.decorator.js";
 
@@ -32,7 +32,7 @@ export class OwnersController {
 		);
 
 		if (result.ok) {
-			res.status(HttpStatus.OK).send({
+			res.status(200).send({
 				handlerId: result.value.handlerId,
 			});
 		}

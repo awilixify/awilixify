@@ -1,9 +1,9 @@
 import * as Awilix from "awilix";
 import type { RouteRegistration } from "../http/openapi-builder.js";
-import { InitializerProcessor } from "./initializer-processor.js";
 import { ControllerProcessor } from "./controller-processor.js";
 import * as ERRORS from "./errors.js";
 import { HandlerProcessor, HandlerType } from "./handler-processor.js";
+import { InitializerProcessor } from "./initializer-processor.js";
 import { InterceptorProcessor } from "./interceptor-processor.js";
 import type { AnyProvider } from "./provider.types.js";
 import { ProviderDependencySorter } from "./provider-dependency-sorter.js";

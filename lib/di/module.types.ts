@@ -1,7 +1,6 @@
 import type { BuildResolverOptions, Constructor } from "awilix";
 import type { EmptyObject } from "./common.types.js";
 import type { ForwardRef, ModuleRef } from "./module-ref.types.js";
-import type { InternalModuleLike } from "./runtime-module.types.js";
 import type {
 	AnyController,
 	AnyInterceptor,
@@ -13,6 +12,7 @@ import type {
 	DefProviderMap,
 	Provider,
 } from "./provider.types.js";
+import type { InternalModuleLike } from "./runtime-module.types.js";
 
 // ============================================================================
 // Module Definition Types
@@ -249,11 +249,10 @@ type WithCommandPreHandlerExports<TKeys extends readonly string[]> =
 		? { commandPreHandlerExports?: readonly [] }
 		: { commandPreHandlerExports: TKeys };
 
-type WithInitializers<
-	TInitializers extends DefInitializerMap | EmptyObject,
-> = TInitializers extends EmptyObject
-	? { initializers?: EmptyObject }
-	: { initializers: TInitializers };
+type WithInitializers<TInitializers extends DefInitializerMap | EmptyObject> =
+	TInitializers extends EmptyObject
+		? { initializers?: EmptyObject }
+		: { initializers: TInitializers };
 
 type WithInitializerExports<TKeys extends readonly string[]> =
 	TKeys extends readonly []

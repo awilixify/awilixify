@@ -1,13 +1,10 @@
 import * as Awilix from "awilix";
-import {
-	resolveControllerMethodMetadata,
-	type ControllerMetadataToken,
-} from "../decorators/controller-initializer-state.js";
+import { resolveDecoratorState } from "../decorators/decorator-state.js";
 import * as ERRORS from "./errors.js";
 import type {
 	AnyInitializer,
-	Initializer,
 	ConstructorController,
+	Initializer,
 } from "./provider.types.js";
 import type { InternalModuleLike as M } from "./runtime-module.types.js";
 
@@ -24,7 +21,7 @@ type ModuleWithScope = {
 export class InitializerProcessor {
 	private readonly resolversByModule = new WeakMap<
 		M,
-		Array<() => Initializer<any>>
+		Array<() => Initializer>
 	>();
 
 	public processInitializers(
@@ -47,23 +44,27 @@ export class InitializerProcessor {
 
 				for (const resolveInitializer of initializers) {
 					const initializer = resolveInitializer();
-					const metadata = resolveControllerMethodMetadata(
+					const decoratorState = resolveDecoratorState(
 						controller.controllerClass,
-						methodName,
-						initializer.token as ControllerMetadataToken<unknown>,
+						initializer.token,
 					);
 
-					for (const value of metadata) {
-						void Promise.resolve(
-							initializer.initialize({
-								moduleName: m.name,
-								controllerClass: controller.controllerClass,
-								methodName,
-								metadata: value,
-								invoke,
-							}),
-						);
-					}
+					if (decoratorState === null) continue;
+
+					const metadata = decoratorState.methods.get(methodName);
+
+					if (metadata === undefined) continue;
+
+					void Promise.resolve(
+						initializer.initialize({
+							moduleName: m.name,
+							controllerClass: controller.controllerClass,
+							methodName,
+							metadata,
+							decoratorState,
+							invoke,
+						}),
+					);
 				}
 			}
 		}
@@ -74,7 +75,7 @@ export class InitializerProcessor {
 		scope: Awilix.AwilixContainer,
 		importedModulesWithScope: ModuleWithScope[],
 	): void {
-		const resolvers: Array<() => Initializer<any>> = [];
+		const resolvers: Array<() => Initializer> = [];
 		const seen = new Set<AnyInitializer>();
 
 		for (const {
@@ -129,7 +130,7 @@ export class InitializerProcessor {
 		initializer: AnyInitializer;
 		resolutionScope: Awilix.AwilixContainer;
 		wrapForExport?: boolean;
-	}): Awilix.Resolver<Initializer<any>> {
+	}): Awilix.Resolver<Initializer> {
 		const resolverOptions = {
 			lifetime: Awilix.Lifetime.SINGLETON,
 		};
@@ -150,20 +151,20 @@ export class InitializerProcessor {
 		const collected = new Set<string | symbol>();
 		let proto = controllerClass.prototype;
 
-			while (proto && proto !== Object.prototype) {
-				Object.getOwnPropertyNames(proto)
-					.filter(
-						(name) => name !== "constructor" && typeof proto[name] === "function",
-					)
-					.forEach((name) => {
-						collected.add(name);
-					});
+		while (proto && proto !== Object.prototype) {
+			Object.getOwnPropertyNames(proto)
+				.filter(
+					(name) => name !== "constructor" && typeof proto[name] === "function",
+				)
+				.forEach((name) => {
+					collected.add(name);
+				});
 
-				Object.getOwnPropertySymbols(proto)
-					.filter((symbol) => typeof proto[symbol] === "function")
-					.forEach((symbol) => {
-						collected.add(symbol);
-					});
+			Object.getOwnPropertySymbols(proto)
+				.filter((symbol) => typeof proto[symbol] === "function")
+				.forEach((symbol) => {
+					collected.add(symbol);
+				});
 
 			proto = Object.getPrototypeOf(proto);
 		}

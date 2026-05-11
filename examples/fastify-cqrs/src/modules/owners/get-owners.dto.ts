@@ -1,5 +1,5 @@
 import { type Static, Type } from "@sinclair/typebox";
-import { HttpStatus } from "awilixify";
+import { HttpStatus } from "awilixify/http";
 
 export const GetOwnersQuerySchema = Type.Object({
 	name: Type.String(),

@@ -4,12 +4,7 @@ import { DIContext, type DiContextOptions } from "../lib/di/di-context.js";
 import * as ERRORS from "../lib/di/errors.js";
 import type { AnyModule } from "../lib/di/module.types.js";
 import type { Controller } from "../lib/di/provider.types.js";
-import {
-	controller,
-	GET,
-	POST,
-	schema,
-} from "../lib/decorators/http-decorators.js";
+import { controller, GET, POST, schema } from "../lib/http/decorators.js";
 import { createHttpTestModule } from "./http-test-module.js";
 
 describe("ControllerProcessor", () => {

@@ -95,9 +95,7 @@ export type ModuleDef<
 	commandHandlers: ExtractHandlers<D["commandHandlers"]>;
 	queryPreHandlers: ExtractPreHandlers<D["queryPreHandlers"]>;
 	commandPreHandlers: ExtractPreHandlers<D["commandPreHandlers"]>;
-	initializers: ExtractInitializers<
-		D["initializers"]
-	>;
+	initializers: ExtractInitializers<D["initializers"]>;
 
 	exportKeys: ExtractExportKeys<
 		ExtractProviders<D["providers"]>,
@@ -176,9 +174,7 @@ type ExtractInterceptorExportKeys<TInterceptors, TKeys> =
 		: readonly [];
 
 type ExtractInitializers<TInitializers> =
-	TInitializers extends DefInitializerMap
-		? TInitializers
-		: EmptyObject;
+	TInitializers extends DefInitializerMap ? TInitializers : EmptyObject;
 
 type ExtractInitializerExportKeys<TInitializers, TKeys> =
 	TInitializers extends DefInitializerMap

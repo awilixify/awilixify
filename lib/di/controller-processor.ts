@@ -1,10 +1,10 @@
 import * as Awilix from "awilix";
 import * as ERRORS from "./errors.js";
+import type { ControllerRuntimeEntry } from "./initializer-processor.js";
 import type { ConstructorController, Controller } from "./provider.types.js";
 import { resolveFromRequestScope } from "./request-scope-context.js";
 import type { InternalModuleLike as M } from "./runtime-module.types.js";
 import { isClassController } from "./type-guards.js";
-import type { ControllerRuntimeEntry } from "./initializer-processor.js";
 
 export class ControllerProcessor {
 	private readonly registeredControllers = new WeakMap<

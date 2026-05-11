@@ -1,9 +1,11 @@
 import type { Interceptor, InterceptContext } from "awilixify";
 
-import { CACHE_METADATA_TOKEN, type CacheMetadata } from "./cache.decorator.js";
+import { CACHE_METADATA_TOKEN } from "./cache.decorator.js";
 import { Deps } from "./cache.module.js";
 
-export class CacheInterceptor implements Interceptor<CacheMetadata> {
+type CacheToken = typeof CACHE_METADATA_TOKEN;
+
+export class CacheInterceptor implements Interceptor<CacheToken> {
 	public readonly token = CACHE_METADATA_TOKEN;
 
 	constructor(
@@ -11,7 +13,7 @@ export class CacheInterceptor implements Interceptor<CacheMetadata> {
 		private readonly namespace: Deps["namespace"],
 	) {}
 
-	async intercept(context: InterceptContext<CacheMetadata>) {
+	async intercept(context: InterceptContext<CacheToken>) {
 		const namespace = this.bentoCache.namespace(this.namespace);
 		const args = context.args;
 		const { cache, evict } = context.metadata;

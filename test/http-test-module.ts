@@ -1,17 +1,21 @@
-import { HTTP_INITIALIZER_TOKEN } from "../lib/decorators/http-initializer.js";
-import {
-	getClassHttpDecoratorState,
-	type IHttpDecoratorState,
-} from "../lib/decorators/http-state.js";
 import * as ERRORS from "../lib/di/errors.js";
-import { createStaticModule } from "../lib/di/module-factories.js";
-import { runInRequestScopeContext } from "../lib/di/request-scope-context.js";
 import type { AnyModule } from "../lib/di/module.types.js";
-import type { Initializer, InitializerContext } from "../lib/di/provider.types.js";
+import { createStaticModule } from "../lib/di/module-factories.js";
+import type {
+	Initializer,
+	InitializerContext,
+} from "../lib/di/provider.types.js";
+import { runInRequestScopeContext } from "../lib/di/request-scope-context.js";
+import {
+	HTTP_DECORATOR_STATE_TOKEN,
+	rollUpHttpDecoratorState,
+} from "../lib/http/decorators.js";
 import type { RouteRegistration } from "../lib/http/openapi-builder.js";
 
-class TestHttpInitializer implements Initializer<true> {
-	public readonly token = HTTP_INITIALIZER_TOKEN;
+type HttpToken = typeof HTTP_DECORATOR_STATE_TOKEN;
+
+class TestHttpInitializer implements Initializer<HttpToken> {
+	public readonly token = HTTP_DECORATOR_STATE_TOKEN;
 	private readonly app: unknown;
 	private readonly beforeRouteRegistered?: (params: RouteRegistration) => any[];
 
@@ -28,12 +32,11 @@ class TestHttpInitializer implements Initializer<true> {
 			deps?.beforeRouteRegistered ?? beforeRouteRegistered;
 	}
 
-	initialize(context: InitializerContext<true>) {
-		const state = getClassHttpDecoratorState(context.controllerClass);
-		if (!state) return;
-
-		const methodState = this.rollUpDecoratedState(state).get(context.methodName);
-		if (!methodState) return;
+	initialize(context: InitializerContext<HttpToken>) {
+		const methodState = rollUpHttpDecoratorState(
+			context.decoratorState.root,
+			context.metadata,
+		);
 
 		for (const verb of methodState.verbs) {
 			for (const path of methodState.paths) {
@@ -129,42 +132,6 @@ class TestHttpInitializer implements Initializer<true> {
 		}
 
 		return current;
-	}
-
-	private rollUpDecoratedState(
-		state: IHttpDecoratorState,
-	): IHttpDecoratorState["methods"] {
-		const result: IHttpDecoratorState["methods"] = new Map();
-
-		state.methods.forEach((method, key) => {
-			result.set(key, {
-				paths: this.concatPaths(state.root.paths, method.paths),
-				beforeMiddleware: [
-					...state.root.beforeMiddleware,
-					...method.beforeMiddleware,
-				],
-				afterMiddleware: [
-					...method.afterMiddleware,
-					...state.root.afterMiddleware,
-				],
-				verbs: method.verbs,
-				schema: method.schema,
-			});
-		});
-
-		return result;
-	}
-
-	private concatPaths(rootPaths: string[], methodPaths: string[]): string[] {
-		if (rootPaths.length === 0) return [...methodPaths];
-		const result: string[] = [];
-		rootPaths.forEach((rootPath) => {
-			methodPaths.forEach((methodPath) => {
-				result.push(rootPath + methodPath);
-			});
-		});
-
-		return result;
 	}
 }
 

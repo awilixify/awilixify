@@ -1,29 +1,25 @@
-import {
-	createInterceptDecorator,
-	createInterceptorMetadataToken,
-} from "awilixify";
+import { createDecoratorStateUpdater } from "awilixify";
 
-export type CacheOperationConfig<TArgs extends unknown[] = unknown[]> = {
+type CacheOperationConfig<TArgs extends unknown[] = unknown[]> = {
 	key: (...args: TArgs) => string;
 	tags?: string[];
 	ttl?: number;
 };
 
-export type CacheMetadata<TArgs extends unknown[] = unknown[]> = {
+type CacheMethodState<TArgs extends unknown[] = unknown[]> = {
 	cache?: CacheOperationConfig<TArgs>;
 	evict?: Omit<CacheOperationConfig<TArgs>, "ttl">;
 };
 
-export const CACHE_METADATA_TOKEN =
-	createInterceptorMetadataToken<CacheMetadata<unknown[]>>("cache");
+const updater = createDecoratorStateUpdater("cache", {
+	method: (): CacheMethodState<any[]> => ({}),
+});
+
+export const CACHE_METADATA_TOKEN = updater.token;
 
 export function Cachable<TArgs extends unknown[]>(
 	options: CacheOperationConfig<TArgs>,
 ) {
-	const decorate = createInterceptDecorator(CACHE_METADATA_TOKEN)({
-		cache: options,
-	});
-
 	return decorate as <TThis, TReturn>(
 		target: (this: TThis, ...args: TArgs) => TReturn,
 		context: ClassMethodDecoratorContext<
@@ -31,15 +27,26 @@ export function Cachable<TArgs extends unknown[]>(
 			(this: TThis, ...args: TArgs) => TReturn
 		>,
 	) => void;
+
+	function decorate<TThis, TReturn>(
+		_target: (this: TThis, ...args: TArgs) => TReturn,
+		context: ClassMethodDecoratorContext<
+			TThis,
+			(this: TThis, ...args: TArgs) => TReturn
+		>,
+	): void {
+		updater.update(context, {
+			method: (previous) => ({
+				...previous,
+				cache: options,
+			}),
+		});
+	}
 }
 
 export function CacheEvict<TArgs extends unknown[]>(
 	options: Omit<CacheOperationConfig<TArgs>, "ttl">,
 ) {
-	const decorate = createInterceptDecorator(CACHE_METADATA_TOKEN)({
-		evict: options,
-	});
-
 	return decorate as <TThis, TReturn>(
 		target: (this: TThis, ...args: TArgs) => TReturn,
 		context: ClassMethodDecoratorContext<
@@ -47,4 +54,18 @@ export function CacheEvict<TArgs extends unknown[]>(
 			(this: TThis, ...args: TArgs) => TReturn
 		>,
 	) => void;
+	function decorate<TThis, TReturn>(
+		_target: (this: TThis, ...args: TArgs) => TReturn,
+		context: ClassMethodDecoratorContext<
+			TThis,
+			(this: TThis, ...args: TArgs) => TReturn
+		>,
+	): void {
+		updater.update(context, {
+			method: (previous) => ({
+				...previous,
+				evict: options,
+			}),
+		});
+	}
 }
