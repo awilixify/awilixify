@@ -1,6 +1,6 @@
 import { Kysely, PostgresDialect } from "kysely";
 import pg from "pg";
-import { createStaticModule, type ModuleDef } from "awilixify";
+import { createModule, type ModuleDef } from "awilixify";
 
 import type { Database } from "./tables.types.js";
 
@@ -49,7 +49,7 @@ export function DbModule<const TConfig extends DbScopeConfig>(config: TConfig) {
 	const readQb = rootQb as unknown as ReadQb<TConfig["readTables"]>;
 	const writeQb = rootQb as unknown as WriteQb<TConfig["writeTables"]>;
 
-	return createStaticModule<DbModuleDef<TConfig>>({
+	return createModule<DbModuleDef<TConfig>>({
 		name: "DbModule",
 
 		providers: {

@@ -10,7 +10,7 @@ import type {
 
 // Internal lightweight module shape used by runtime processors.
 // It intentionally avoids importing the heavy public module generic graph
-// (StaticModule/ModuleDef helpers) to keep TS/LSP responsive in runtime files.
+// (Module/ModuleDef helpers) to keep TS/LSP responsive in runtime files.
 export interface InternalModuleLike {
 	name: string;
 	imports?: readonly (InternalModuleLike | ForwardRef<InternalModuleLike>)[];

@@ -1,14 +1,9 @@
 import { createHash } from "node:crypto";
-import type {
-	AnyModule,
-	StaticModule,
-	StaticModuleDef,
-} from "./module.types.js";
+import type { AnyModule, Module, ModuleDefinition } from "./module.types.js";
 import type { ForwardRef } from "./module-ref.types.js";
 import type { FactoryProvider } from "./provider.types.js";
 
-// TODO: StaticModule => Module rename
-export type StaticModuleOptions = {
+export type ModuleOptions = {
 	hashNameFrom?: unknown;
 	hashLength?: number;
 	registerControllers?: boolean;
@@ -31,14 +26,14 @@ export function createFactoryProvider<DepsMap extends Record<string, any>>() {
 	};
 }
 
-export function createStaticModule<TDef extends StaticModuleDef>(
-	module: StaticModule<TDef>,
-	options?: StaticModuleOptions,
-): StaticModule<TDef> {
+export function createModule<TDef extends ModuleDefinition>(
+	module: Module<TDef>,
+	options?: ModuleOptions,
+): Module<TDef> {
 	const withOptions = {
 		...module,
 		registerControllers: options?.registerControllers ?? true,
-	} as StaticModule<TDef>;
+	} as Module<TDef>;
 
 	if (options?.hashNameFrom === undefined) {
 		return withOptions;

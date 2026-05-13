@@ -1,4 +1,4 @@
-import { createStaticModule, type ModuleDef } from "awilixify";
+import { createModule, type ModuleDef } from "awilixify";
 import { Queue, Worker, type Processor } from "bullmq";
 
 class BullMqRegistry {
@@ -54,7 +54,7 @@ type BullMqCoreModuleDef = ModuleDef<{
 	exportKeys: ["bullMqRegistry"];
 }>;
 
-export const BullMqCoreModule = createStaticModule<BullMqCoreModuleDef>({
+export const BullMqCoreModule = createModule<BullMqCoreModuleDef>({
 	name: "BullMqCoreModule",
 	providers: {
 		bullMqRegistry: BullMqRegistry,

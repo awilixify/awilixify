@@ -1,5 +1,5 @@
 import Emittery from "emittery";
-import { createStaticModule, type ModuleDef } from "awilixify";
+import { createModule, type ModuleDef } from "awilixify";
 import { EventListenerInitializer } from "./event-listener.initializer.js";
 import { EventEmitter } from "./event-emitter.service.js";
 import type {
@@ -36,7 +36,7 @@ export type Deps = EventEmitterModuleDef<
 export function EventEmitterModule<const TConfig extends EventEmitterConfig>(
 	config: TConfig,
 ) {
-	return createStaticModule<EventEmitterModuleDef<TConfig["emittable"]>>(
+	return createModule<EventEmitterModuleDef<TConfig["emittable"]>>(
 		{
 			name: "EventEmitterModule",
 			providers: {

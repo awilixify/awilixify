@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { DIContext } from "../lib/di/di-context.js";
-import { createStaticModule } from "../lib/di/module-factories.js";
+import { createModule } from "../lib/di/module-factories.js";
 
 describe("DIContext Performance", () => {
 	const measure = (name: string, fn: () => void) => {
@@ -25,7 +25,7 @@ describe("DIContext Performance", () => {
 
 			const exports = [...Array(8)].map((_, j) => `${name}-provider-${j}`);
 
-			return createStaticModule<any>({
+			return createModule<any>({
 				name,
 				providers,
 				exports,
@@ -53,7 +53,7 @@ describe("DIContext Performance", () => {
 				return infrastructureModules[infraIndex];
 			});
 
-			return createStaticModule<any>({
+			return createModule<any>({
 				name,
 				providers,
 				exports,
@@ -80,7 +80,7 @@ describe("DIContext Performance", () => {
 				return domainModules[domainIndex];
 			});
 
-			return createStaticModule<any>({
+			return createModule<any>({
 				name,
 				providers,
 				exports,
@@ -112,7 +112,7 @@ describe("DIContext Performance", () => {
 				return domainModules[domainIndex];
 			});
 
-			return createStaticModule<any>({
+			return createModule<any>({
 				name,
 				providers,
 				imports: [

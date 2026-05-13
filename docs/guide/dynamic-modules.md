@@ -4,7 +4,7 @@ Configurable modules accept runtime configuration via a wrapper function.
 Each call returns a separate static module instance.
 
 ```typescript
-import { createStaticModule, type ModuleDef } from "awilixify";
+import { createModule, type ModuleDef } from "awilixify";
 
 type DatabaseModuleDef = ModuleDef<{
   providers: {
@@ -15,7 +15,7 @@ type DatabaseModuleDef = ModuleDef<{
 }>;
 
 export function DatabaseModule(config: { connectionString: string }) {
-  return createStaticModule<DatabaseModuleDef>(
+  return createModule<DatabaseModuleDef>(
     {
       name: "DatabaseModule",
       providers: {
@@ -30,7 +30,7 @@ export function DatabaseModule(config: { connectionString: string }) {
   );
 }
 
-export const UserModule = createStaticModule<UserModuleDef>({
+export const UserModule = createModule<UserModuleDef>({
   name: "UserModule",
   imports: [
     DatabaseModule({
@@ -41,11 +41,11 @@ export const UserModule = createStaticModule<UserModuleDef>({
 ```
 
 When the same configurable module is used multiple times, controllers are registered by default.
-If a secondary instance should provide services only, set `registerControllers: false` in `createStaticModule` options.
+If a secondary instance should provide services only, set `registerControllers: false` in `createModule` options.
 
 ```typescript
 export function AuthModule(config: { jwtSecret: string; audience: string }) {
-  return createStaticModule<AuthModuleDef>(
+  return createModule<AuthModuleDef>(
     {
       name: "AuthModule",
       controllers: [AuthController],
@@ -61,7 +61,7 @@ export function AuthModule(config: { jwtSecret: string; audience: string }) {
   );
 }
 
-export const AppModule = createStaticModule<AppModuleDef>({
+export const AppModule = createModule<AppModuleDef>({
   name: "AppModule",
   imports: [
     AuthModule({ jwtSecret: "user-secret", audience: "users" }),

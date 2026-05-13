@@ -8,7 +8,7 @@ import {
 import * as ERRORS from "../lib/di/errors.js";
 import type { AnyModule } from "../lib/di/module.types.js";
 import type { ModuleDef } from "../lib/di/module-def.types.js";
-import { createStaticModule, forwardRef } from "../lib/di/module-factories.js";
+import { createModule, forwardRef } from "../lib/di/module-factories.js";
 import type { ForwardRef, ModuleRef } from "../lib/di/module-ref.types.js";
 
 // Test-only type: Override resolve to return 'any' for convenience
@@ -118,7 +118,7 @@ describe("DIContext - CLASSIC Injection Mode - Circular Dependencies", () => {
 				exportKeys: ["serviceA"];
 			}>;
 
-			const ModuleA = createStaticModule<ModuleADef>({
+			const ModuleA = createModule<ModuleADef>({
 				name: "ModuleA",
 				imports: [] as unknown as [ForwardRef<any>],
 				providers: {
@@ -135,7 +135,7 @@ describe("DIContext - CLASSIC Injection Mode - Circular Dependencies", () => {
 				imports: [typeof ModuleA];
 			}>;
 
-			const ModuleB = createStaticModule<ModuleBDef>({
+			const ModuleB = createModule<ModuleBDef>({
 				name: "ModuleB",
 				imports: [ModuleA],
 				providers: {
@@ -210,7 +210,7 @@ describe("DIContext - CLASSIC Injection Mode - Circular Dependencies", () => {
 				exportKeys: ["serviceA"];
 			}>;
 
-			const ModuleA = createStaticModule<ModuleADef>({
+			const ModuleA = createModule<ModuleADef>({
 				name: "ModuleA",
 				imports: [] as unknown as [ForwardRef<any>],
 				providers: {
@@ -227,7 +227,7 @@ describe("DIContext - CLASSIC Injection Mode - Circular Dependencies", () => {
 				imports: [typeof ModuleA];
 			}>;
 
-			const ModuleB = createStaticModule<ModuleBDef>({
+			const ModuleB = createModule<ModuleBDef>({
 				name: "ModuleB",
 				imports: [ModuleA],
 				providers: {
@@ -285,7 +285,7 @@ describe("DIContext - CLASSIC Injection Mode - Circular Dependencies", () => {
 				exportKeys: ["serviceA"];
 			}>;
 
-			const ModuleA = createStaticModule<ModuleADef>({
+			const ModuleA = createModule<ModuleADef>({
 				name: "ModuleA",
 				imports: [] as unknown as [ForwardRef<any>],
 				providers: {
@@ -303,7 +303,7 @@ describe("DIContext - CLASSIC Injection Mode - Circular Dependencies", () => {
 				imports: [typeof ModuleA];
 			}>;
 
-			const ModuleB = createStaticModule<ModuleBDef>({
+			const ModuleB = createModule<ModuleBDef>({
 				name: "ModuleB",
 				imports: [ModuleA],
 				providers: {
@@ -363,7 +363,7 @@ describe("DIContext - CLASSIC Injection Mode - Circular Dependencies", () => {
 				exportKeys: ["serviceA"];
 			}>;
 
-			const ModuleA = createStaticModule<ModuleADef>({
+			const ModuleA = createModule<ModuleADef>({
 				name: "ModuleA",
 				imports: [] as unknown as [ForwardRef<any>],
 				providers: {
@@ -381,7 +381,7 @@ describe("DIContext - CLASSIC Injection Mode - Circular Dependencies", () => {
 				imports: [typeof ModuleA];
 			}>;
 
-			const ModuleB = createStaticModule<ModuleBDef>({
+			const ModuleB = createModule<ModuleBDef>({
 				name: "ModuleB",
 				imports: [ModuleA],
 				providers: {

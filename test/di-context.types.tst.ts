@@ -1,13 +1,13 @@
 import { describe, expect, it } from "tstyche";
 import type { EmptyObject } from "../lib/di/common.types.js";
-import type { StaticModule as M } from "../lib/di/module.types.js";
+import type { Module as M } from "../lib/di/module.types.js";
 import type {
 	ModuleDef as D,
 	GlobalDependencies,
 } from "../lib/di/module-def.types.js";
 import {
 	createFactoryProvider,
-	createStaticModule,
+	createModule,
 } from "../lib/di/module-factories.js";
 
 describe("Module", () => {
@@ -284,7 +284,7 @@ describe("Module", () => {
 	});
 });
 
-describe("createStaticModule", () => {
+describe("createModule", () => {
 	class Service1 {
 		private declare readonly __brand: never;
 	}
@@ -301,7 +301,7 @@ describe("createStaticModule", () => {
 		}>;
 
 		expect(
-			createStaticModule<D1>({
+			createModule<D1>({
 				name: "TestModule",
 				providers: { p1: Service1 },
 			}),
@@ -313,7 +313,7 @@ describe("createStaticModule", () => {
 			providers: { service3: Service3 };
 			exportKeys: ["service3"];
 		}>;
-		const Mod = createStaticModule<D2>({
+		const Mod = createModule<D2>({
 			name: "Mod",
 			providers: { service3: Service3 },
 			exports: ["service3"],
@@ -326,7 +326,7 @@ describe("createStaticModule", () => {
 		}>;
 
 		expect(
-			createStaticModule<D1>({
+			createModule<D1>({
 				name: "TestModule",
 				imports: [Mod, Mod],
 				providers: {
@@ -344,7 +344,7 @@ describe("createStaticModule", () => {
 
 		// Negative: Should reject extra properties in exports
 		expect(
-			createStaticModule<D1>({
+			createModule<D1>({
 				name: "TestModule",
 				providers: { service1: Service1, service2: Service2 },
 				exports: ["service1", "service2"], // ❌ Extra export not in exportKeys

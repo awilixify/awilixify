@@ -96,7 +96,7 @@ export default defineConfig({
 						"/node_modules/awilixify/index.d.ts": `
 declare module "awilixify" {
 	export type ModuleDef<T> = T & { deps: Record<string, any> };
-	export function createStaticModule<T>(def: any): any;
+	export function createModule<T>(def: any): any;
 	export const DIContext: {
 		create: (module: unknown, options: { framework: unknown; globalModules?: unknown[] }) => void;
 	};

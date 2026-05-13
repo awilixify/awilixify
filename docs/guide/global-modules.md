@@ -5,7 +5,7 @@ Augment global types to make them shared.
 
 ```typescript
 import {
-  createStaticModule,
+  createModule,
   type ModuleDef,
   type InferGlobalCommandPreHandlers,
   type InferGlobalDependencies,
@@ -30,7 +30,7 @@ export type GlobalModuleDef = ModuleDef<{
   exportCommandPreHandlerKeys: ["audit"];
 }>;
 
-export const GlobalModule = createStaticModule<GlobalModuleDef>({
+export const GlobalModule = createModule<GlobalModuleDef>({
   name: "GlobalModule",
   providers: {
     logger: Logger,

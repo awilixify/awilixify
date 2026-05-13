@@ -21,9 +21,9 @@ import type { InternalModuleLike } from "./runtime-module.types.js";
 declare const importModuleDefMarker: unique symbol;
 
 // Lightweight structural carrier for module definition inference.
-// We use it to extract imported module defs without forcing full StaticModule<any>
+// We use it to extract imported module defs without forcing full Module<any>
 // expansion in every type path.
-export type ImportModule<TDef extends StaticModuleDef = StaticModuleDef> = {
+export type ImportModule<TDef extends ModuleDefinition = ModuleDefinition> = {
 	name: string;
 	imports?: readonly unknown[];
 	exports?: readonly string[];
@@ -34,7 +34,7 @@ export type AnyModule = InternalModuleLike & ImportModule<any>;
 
 export type ModuleImport = AnyModule | ModuleRef<any>;
 
-export type StaticModuleDef = {
+export type ModuleDefinition = {
 	providers?: DefProviderMap;
 	exports?: DefProviderMap;
 	imports?: ModuleImport[];
@@ -52,7 +52,7 @@ export type StaticModuleDef = {
 	initializerExportKeys?: readonly string[];
 };
 
-type NormalizeModuleDef<Def extends StaticModuleDef> = {
+type NormalizeModuleDef<Def extends ModuleDefinition> = {
 	deps: Def extends {
 		deps: infer D extends Record<string, unknown>;
 	}
@@ -114,14 +114,14 @@ type NormalizeModuleDef<Def extends StaticModuleDef> = {
 		: readonly [];
 };
 
-export type StaticModule<Def extends StaticModuleDef> = {
+export type Module<Def extends ModuleDefinition> = {
 	name: string;
 	controllers?: AnyController[];
 	providerOptions?: Partial<BuildResolverOptions<any>>;
 	[importModuleDefMarker]?: Def;
-} & StaticModuleFromNormalized<NormalizeModuleDef<Def>>;
+} & ModuleFromNormalized<NormalizeModuleDef<Def>>;
 
-type StaticModuleFromNormalized<
+type ModuleFromNormalized<
 	Def extends {
 		deps: Record<string, unknown>;
 		providers: DefProviderMap | EmptyObject;

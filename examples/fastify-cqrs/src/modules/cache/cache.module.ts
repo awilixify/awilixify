@@ -1,4 +1,4 @@
-import { createStaticModule, type ModuleDef } from "awilixify";
+import { createModule, type ModuleDef } from "awilixify";
 import { BentoCache, BentoStore, bentostore } from "bentocache";
 import { redisDriver } from "bentocache/drivers/redis";
 
@@ -18,7 +18,7 @@ type CacheModuleDef = ModuleDef<{
 export type Deps = CacheModuleDef["deps"];
 
 export const CacheModule = (namespace: string) =>
-	createStaticModule<CacheModuleDef>({
+	createModule<CacheModuleDef>({
 		name: "CacheModule",
 		imports: [BentoCacheModule],
 		providers: {
@@ -37,7 +37,7 @@ type BentoCacheModuleDef = ModuleDef<{
 	exportKeys: ["bentoCache"];
 }>;
 
-const BentoCacheModule = createStaticModule<BentoCacheModuleDef>({
+const BentoCacheModule = createModule<BentoCacheModuleDef>({
 	name: "BentoCacheModule",
 	exports: ["bentoCache"],
 	providers: {

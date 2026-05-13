@@ -1,4 +1,4 @@
-import { createStaticModule, type ModuleDef } from "awilixify";
+import { createModule, type ModuleDef } from "awilixify";
 import { ToadScheduler } from "toad-scheduler";
 
 import { type CronTaskConstructor } from "./cron.decorator.js";
@@ -25,7 +25,7 @@ export type Deps = SchedulerModuleDef["deps"];
 export function ScheduleModule(
 	allowedCronTasks: readonly CronTaskConstructor[],
 ) {
-	return createStaticModule<SchedulerModuleDef>(
+	return createModule<SchedulerModuleDef>(
 		{
 			name: "SchedulerModule",
 			providers: {

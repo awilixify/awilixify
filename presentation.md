@@ -133,7 +133,7 @@ Key principles I tried to follow:
 ## Basic Example: Define Module
 
 ```typescript
-import { createStaticModule, type ModuleDef } from "awilixify";
+import { createModule, type ModuleDef } from "awilixify";
 
 type UserModuleDef = ModuleDef<{
   providers: {
@@ -146,7 +146,7 @@ type UserModuleDef = ModuleDef<{
 // Export deps type - single source of truth
 export type UserModuleDeps = UserModuleDef["deps"];
 
-export const UserModule = createStaticModule<UserModuleDef>({
+export const UserModule = createModule<UserModuleDef>({
   name: "UserModule",
   imports: [OrderModule],
   providers: {

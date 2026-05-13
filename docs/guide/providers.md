@@ -21,7 +21,7 @@ type UserModuleDef = ModuleDef<{
   };
 }>;
 
-export const UserModule = createStaticModule<UserModuleDef>({
+export const UserModule = createModule<UserModuleDef>({
   name: "UserModule",
   providers: {
     userService: UserService,
@@ -43,7 +43,7 @@ type EmailModuleDef = ModuleDef<{
   };
 }>;
 
-export const EmailModule = createStaticModule<EmailModuleDef>({
+export const EmailModule = createModule<EmailModuleDef>({
   name: "EmailModule",
   providers: {
     apiKey: "sendgrid_key_123",
@@ -74,7 +74,7 @@ type NotificationModuleDef = ModuleDef<{
 // Create typed factory for this module's dependencies
 const factory = createFactoryProvider<NotificationModuleDef["deps"]>();
 
-export const NotificationModule = createStaticModule<NotificationModuleDef>({
+export const NotificationModule = createModule<NotificationModuleDef>({
   name: "NotificationModule",
   providers: {
     apiKey: "sendgrid_api_key_123",
@@ -104,7 +104,7 @@ type ConfigModuleDef = ModuleDef<{
   };
 }>;
 
-export const ConfigModule = createStaticModule<ConfigModuleDef>({
+export const ConfigModule = createModule<ConfigModuleDef>({
   name: "ConfigModule",
   providers: {
     apiUrl: "https://api.example.com",
@@ -127,7 +127,7 @@ type OrderModuleDef = ModuleDef<{
   };
 }>;
 
-export const OrderModule = createStaticModule<OrderModuleDef>({
+export const OrderModule = createModule<OrderModuleDef>({
   name: "OrderModule",
   providers: {
     orderService: {
@@ -159,7 +159,7 @@ DIContext.create(AppModule, {
 });
 
 // 2. Module level - overrides DiContext defaults
-export const OrderModule = createStaticModule<OrderModuleDef>({
+export const OrderModule = createModule<OrderModuleDef>({
   name: "OrderModule",
   providerOptions: { lifetime: Lifetime.SCOPED }, // overrides DiContext
   providers: {
@@ -213,7 +213,7 @@ export class UserController {
 }
 
 // Configure scoped lifetime in module
-export const UserModule = createStaticModule<UserModuleDef>({
+export const UserModule = createModule<UserModuleDef>({
   name: "UserModule",
   providers: { userService: UserService },
   controllers: [

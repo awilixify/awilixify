@@ -1,4 +1,4 @@
-import { createStaticModule, type ModuleDef } from "awilixify";
+import { createModule, type ModuleDef } from "awilixify";
 import { BullMqCoreModule } from "./bullmq-core.module.js";
 import { QueueJobInitializer } from "./queue-job.initializer.js";
 import { QueueService } from "./queue.service.js";
@@ -34,7 +34,7 @@ export type Deps = QueueModuleDef<
 export function QueueModule<const TConfig extends QueueModuleConfig>(
 	config: TConfig,
 ) {
-	return createStaticModule<QueueModuleDef<TConfig["enqueueable"]>>(
+	return createModule<QueueModuleDef<TConfig["enqueueable"]>>(
 		{
 			name: "QueueModule",
 			imports: [BullMqCoreModule],

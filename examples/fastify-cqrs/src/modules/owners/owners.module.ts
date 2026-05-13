@@ -1,9 +1,9 @@
 import {
-	createStaticModule,
+	createModule,
 	forwardRef,
 	type ModuleDef,
 	type ModuleRef,
-	type StaticModule,
+	type Module,
 } from "awilixify";
 import { CatsModule, type CatsModuleDef } from "../cats/cats.module.js";
 import { DbModule } from "@/modules/db/db.module.js";
@@ -39,8 +39,8 @@ export type OwnersModuleDef = ModuleDef<{
 
 export type Deps = OwnersModuleDef["deps"];
 
-export const OwnersModule: StaticModule<OwnersModuleDef> =
-	createStaticModule<OwnersModuleDef>({
+export const OwnersModule: Module<OwnersModuleDef> =
+	createModule<OwnersModuleDef>({
 		name: "OwnersModule",
 
 		imports: [

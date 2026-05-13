@@ -8,7 +8,7 @@ Define `OrderModule` with typed providers and export `orderService` for other mo
 
 ```typescript
 // order.module.ts
-import { createStaticModule, type ModuleDef } from "awilixify";
+import { createModule, type ModuleDef } from "awilixify";
 
 import { OrderService } from "./order.service";
 
@@ -20,7 +20,7 @@ type OrderModuleDef = ModuleDef<{
   exportKeys: ["orderService"];
 }>;
 
-export const OrderModule = createStaticModule<OrderModuleDef>({
+export const OrderModule = createModule<OrderModuleDef>({
   name: "OrderModule",
   providers: {
     orderService: OrderService,
@@ -37,7 +37,7 @@ Define `UserModule` and import `OrderModule`:
 
 ```typescript
 // user.module.ts
-import { createStaticModule, type ModuleDef } from "awilixify";
+import { createModule, type ModuleDef } from "awilixify";
 
 import { OrderModule } from "../order/order.module";
 import { UserService } from "./user.service";
@@ -54,7 +54,7 @@ type UserModuleDef = ModuleDef<{
 // Available deps within module
 export type UserModuleDeps = UserModuleDef["deps"];
 
-export const UserModule = createStaticModule<UserModuleDef>({
+export const UserModule = createModule<UserModuleDef>({
   name: "UserModule",
   imports: [OrderModule],
   providers: {
@@ -73,7 +73,7 @@ Use `declare module` to make global dependencies available to all modules:
 ```typescript
 // global.module.ts
 import {
-  createStaticModule,
+  createModule,
   type ModuleDef,
   type InferGlobalDependencies,
 } from "awilixify";
@@ -87,7 +87,7 @@ export type GlobalModuleDef = ModuleDef<{
 }>;
 
 export function GlobalModule(app: Express) {
-  return createStaticModule<GlobalModuleDef>({
+  return createModule<GlobalModuleDef>({
     name: "GlobalModule",
     providers: {
       app,
@@ -117,7 +117,7 @@ type AppModuleDef = ModuleDef<{
   imports: [typeof UserModule];
 }>;
 
-export const AppModule = createStaticModule<AppModuleDef>({
+export const AppModule = createModule<AppModuleDef>({
   name: "AppModule",
   imports: [UserModule],
 });
@@ -206,7 +206,7 @@ class UserController implements Controller {
 }
 
 // user.module.ts - Add controller to module
-export const UserModule = createStaticModule<UserModuleDef>({
+export const UserModule = createModule<UserModuleDef>({
   name: "UserModule",
   imports: [OrderModule],
   providers: {

@@ -122,11 +122,11 @@ describe("ControllerProcessor", () => {
 					name: "AppModule",
 					imports: [
 						{
-							name: "StaticModule1",
+							name: "Module1",
 							controllers: [TestController],
 						},
 						{
-							name: "StaticModule2",
+							name: "Module2",
 							controllers: [TestController],
 						},
 					],

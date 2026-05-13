@@ -22,7 +22,7 @@ Interceptors let you add cross-cutting behavior (caching, logging, metrics, retr
 ```ts
 import {
   createInterceptDecorator,
-  createStaticModule,
+  createModule,
   type ModuleDef,
   type Interceptor,
 } from "awilixify";
@@ -72,7 +72,7 @@ type AppDef = ModuleDef<{
   interceptors: { cache: CacheInterceptor };
 }>;
 
-export const AppModule = createStaticModule<AppDef>({
+export const AppModule = createModule<AppDef>({
   name: "AppModule",
   providers: { usersService: UsersService },
   interceptors: { cache: CacheInterceptor },

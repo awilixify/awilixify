@@ -3,7 +3,7 @@ import { createDecoratorStateUpdater } from "../lib/decorators/decorator-state.j
 import { DIContext } from "../lib/di/di-context.js";
 import * as ERRORS from "../lib/di/errors.js";
 import type { ModuleDef } from "../lib/di/module-def.types.js";
-import { createStaticModule } from "../lib/di/module-factories.js";
+import { createModule } from "../lib/di/module-factories.js";
 import type {
 	InterceptContext,
 	Interceptor,
@@ -50,7 +50,7 @@ describe("Interceptors", () => {
 			interceptors: { track: TrackInterceptor };
 		}>;
 
-		const AppModule = createStaticModule<AppDef>({
+		const AppModule = createModule<AppDef>({
 			name: "AppModule",
 			providers: { service: Service },
 			interceptors: { track: TrackInterceptor },
@@ -99,12 +99,12 @@ describe("Interceptors", () => {
 			interceptors: { async: AsyncInterceptor };
 		}>;
 
-		const SyncModule = createStaticModule<SyncDef>({
+		const SyncModule = createModule<SyncDef>({
 			name: "SyncModule",
 			providers: { service: Service },
 			interceptors: { sync: SyncInterceptor },
 		});
-		const AsyncModule = createStaticModule<AsyncDef>({
+		const AsyncModule = createModule<AsyncDef>({
 			name: "AsyncModule",
 			providers: { service: Service },
 			interceptors: { async: AsyncInterceptor },
@@ -149,12 +149,12 @@ describe("Interceptors", () => {
 			interceptors: { shared: ImportedInterceptor };
 			exportInterceptorKeys: ["shared"];
 		}>;
-		const ImportedA = createStaticModule<ImportedDef>({
+		const ImportedA = createModule<ImportedDef>({
 			name: "ImportedA",
 			interceptors: { shared: ImportedInterceptor },
 			interceptorExports: ["shared"],
 		});
-		const ImportedB = createStaticModule<ImportedDef>({
+		const ImportedB = createModule<ImportedDef>({
 			name: "ImportedB",
 			interceptors: { shared: ImportedInterceptor },
 			interceptorExports: ["shared"],
@@ -164,7 +164,7 @@ describe("Interceptors", () => {
 			providers: { service: Service };
 			imports: [typeof ImportedA];
 		}>;
-		const AppOk = createStaticModule<AppOkDef>({
+		const AppOk = createModule<AppOkDef>({
 			name: "AppOk",
 			providers: { service: Service },
 			imports: [ImportedA],
@@ -179,7 +179,7 @@ describe("Interceptors", () => {
 			providers: { service: Service };
 			imports: [typeof ImportedA, typeof ImportedB];
 		}>;
-		const AppDupImports = createStaticModule<AppDupImportsDef>({
+		const AppDupImports = createModule<AppDupImportsDef>({
 			name: "AppDupImports",
 			providers: { service: Service },
 			imports: [ImportedA, ImportedB],
@@ -193,7 +193,7 @@ describe("Interceptors", () => {
 			imports: [typeof ImportedA];
 			interceptors: { shared: ImportedInterceptor };
 		}>;
-		const AppImportAndLocal = createStaticModule<AppImportAndLocalDef>({
+		const AppImportAndLocal = createModule<AppImportAndLocalDef>({
 			name: "AppImportAndLocal",
 			providers: { service: Service },
 			imports: [ImportedA],

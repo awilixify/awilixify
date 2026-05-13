@@ -1,8 +1,8 @@
 import type { EmptyObject, UnionToIntersection } from "../di/common.types.js";
 import type {
 	ModuleImport,
-	StaticModule,
-	StaticModuleDef,
+	Module,
+	ModuleDefinition,
 } from "../di/module.types.js";
 import type { DefPreHandlerMap } from "../di/provider.types.js";
 import type {
@@ -43,7 +43,7 @@ type PreHandlerExportKey =
 	| "commandPreHandlerExports";
 
 type ExtractModuleDef<T> =
-	T extends StaticModule<infer TDef extends StaticModuleDef>
+	T extends Module<infer TDef extends ModuleDefinition>
 		? TDef
 		: T extends Record<string, unknown>
 			? T

@@ -1,4 +1,4 @@
-import { createStaticModule, type ModuleDef } from "awilixify";
+import { createModule, type ModuleDef } from "awilixify";
 
 import { DbModule } from "@/modules/db/db.module.js";
 import { ScheduleModule } from "@/modules/scheduler/scheduler.module.js";
@@ -55,7 +55,7 @@ export type CatsModuleDef = ModuleDef<{
 
 export type Deps = CatsModuleDef["deps"];
 
-export const CatsModule = createStaticModule<CatsModuleDef>({
+export const CatsModule = createModule<CatsModuleDef>({
 	name: "CatsModule",
 
 	imports: [

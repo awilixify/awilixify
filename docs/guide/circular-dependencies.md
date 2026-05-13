@@ -18,7 +18,7 @@ export class CatsService {
 }
 
 // module.ts
-export const AnimalModule = createStaticModule<AnimalModuleDef>({
+export const AnimalModule = createModule<AnimalModuleDef>({
   name: "AnimalModule",
   providers: {
     dogsService: DogsService,
@@ -50,7 +50,7 @@ export type CatsModuleDef = ModuleDef<{
   exportKeys: ["catsService"];
 }>;
 
-export const CatsModule = createStaticModule<CatsModuleDef>({
+export const CatsModule = createModule<CatsModuleDef>({
   name: "CatsModule",
   imports: [OwnersModule],
   providers: { catsService: CatsService },
@@ -66,8 +66,8 @@ export type OwnersModuleDef = ModuleDef<{
   imports: [ModuleRef<CatsModuleDef>];
 }>;
 
-export const OwnersModule: StaticModule<OwnersModuleDef> =
-  createStaticModule<OwnersModuleDef>({
+export const OwnersModule: Module<OwnersModuleDef> =
+  createModule<OwnersModuleDef>({
     name: "OwnersModule",
     imports: [forwardRef(() => CatsModule)],
     providers: { ownersService: OwnersService },
@@ -81,7 +81,7 @@ When providers from circularly dependent modules also depend on each other, comb
 
 ```typescript
 // cats.module.ts
-export const CatsModule = createStaticModule<CatsModuleDef>({
+export const CatsModule = createModule<CatsModuleDef>({
   name: "CatsModule",
   imports: [OwnersModule],
   providers: {
@@ -99,8 +99,8 @@ export const CatsModule = createStaticModule<CatsModuleDef>({
 });
 
 // owners.module.ts
-export const OwnersModule: StaticModule<OwnersModuleDef> =
-  createStaticModule<OwnersModuleDef>({
+export const OwnersModule: Module<OwnersModuleDef> =
+  createModule<OwnersModuleDef>({
     name: "OwnersModule",
     imports: [forwardRef(() => CatsModule)],
     providers: {

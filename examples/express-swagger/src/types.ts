@@ -26,14 +26,10 @@ export type Response<S extends RouteSchema> = Omit<
 		send(body: ResponseBodyForStatus<S, Code>): ExpressResponse;
 	};
 	json(
-		body: 200 extends keyof S["response"]
-			? ResponseBodyForStatus<S, 200>
-			: any,
+		body: 200 extends keyof S["response"] ? ResponseBodyForStatus<S, 200> : any,
 	): ExpressResponse;
 	send(
-		body: 200 extends keyof S["response"]
-			? ResponseBodyForStatus<S, 200>
-			: any,
+		body: 200 extends keyof S["response"] ? ResponseBodyForStatus<S, 200> : any,
 	): ExpressResponse;
 };
 

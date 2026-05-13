@@ -38,7 +38,7 @@ export class GetUserQueryHandler implements Handler<
 Add query handlers to the module's `queryHandlers` array. Include them in the `ModuleDef` type for full mediator type safety:
 
 ```typescript
-import { createStaticModule, type ModuleDef } from "awilixify";
+import { createModule, type ModuleDef } from "awilixify";
 
 type UserModuleDef = ModuleDef<{
   providers: {
@@ -49,7 +49,7 @@ type UserModuleDef = ModuleDef<{
 
 export type Deps = UserModuleDef["deps"];
 
-export const UserModule = createStaticModule<UserModuleDef>({
+export const UserModule = createModule<UserModuleDef>({
   name: "UserModule",
   providers: {
     userService: UserService,
@@ -66,7 +66,7 @@ That means DI options (like `lifetime`) are also valid for handlers:
 ```typescript
 import { Lifetime } from "awilix";
 
-export const UserModule = createStaticModule<UserModuleDef>({
+export const UserModule = createModule<UserModuleDef>({
   name: "UserModule",
   providers: {
     userService: UserService,

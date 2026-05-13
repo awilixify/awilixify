@@ -3,7 +3,7 @@ import type { EmptyObject } from "./common.types.js";
 import type {
 	ImportModule,
 	ModuleImport,
-	StaticModuleDef,
+	ModuleDefinition,
 } from "./module.types.js";
 import type {
 	ClassHandler,
@@ -206,7 +206,7 @@ type ExtractImportsExports<D extends { imports?: readonly ModuleImport[] }> =
 		: DefProviderMap;
 
 type ExtractModuleDefFromModule<T> =
-	T extends ImportModule<infer TDef extends StaticModuleDef>
+	T extends ImportModule<infer TDef extends ModuleDefinition>
 		? TDef
 		: T extends { exports: infer E }
 			? { exports: E }

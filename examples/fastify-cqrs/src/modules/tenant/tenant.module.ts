@@ -1,5 +1,5 @@
 import {
-	createStaticModule,
+	createModule,
 	type InferGlobalDependencies,
 	type InferGlobalQueryPreHandlers,
 	type ModuleDef,
@@ -19,7 +19,7 @@ export type TenantModuleDef = ModuleDef<{
 }>;
 
 export function TenantModule(app: FastifyInstance) {
-	return createStaticModule<TenantModuleDef>({
+	return createModule<TenantModuleDef>({
 		name: "TenantModule",
 
 		providers: {

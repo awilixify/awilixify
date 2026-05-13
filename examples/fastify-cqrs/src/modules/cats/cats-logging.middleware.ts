@@ -1,8 +1,4 @@
-import {
-	type Middleware,
-	type MiddlewareContract,
-	Result,
-} from "awilixify";
+import { type Middleware, type MiddlewareContract, Result } from "awilixify";
 import { LoggerError } from "@/common/error-to-http-error.mapper.js";
 import type { CatsAuthMiddleware } from "./cats-auth.middleware.js";
 

@@ -1,4 +1,4 @@
-import { createStaticModule, type ModuleDef } from "awilixify";
+import { createModule, type ModuleDef } from "awilixify";
 
 import type { FastifyInstance } from "@/types.js";
 import { FastifyHttpInitializer } from "./fastify-http.initializer.js";
@@ -16,7 +16,7 @@ export type HttpModuleDef = ModuleDef<{
 export type Deps = HttpModuleDef["deps"];
 
 export function HttpModule(app: FastifyInstance) {
-	return createStaticModule<HttpModuleDef>({
+	return createModule<HttpModuleDef>({
 		name: "HttpModule",
 		providers: {
 			app,

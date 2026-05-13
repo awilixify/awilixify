@@ -1,6 +1,6 @@
 import * as ERRORS from "../lib/di/errors.js";
 import type { AnyModule } from "../lib/di/module.types.js";
-import { createStaticModule } from "../lib/di/module-factories.js";
+import { createModule } from "../lib/di/module-factories.js";
 import type {
 	Initializer,
 	InitializerContext,
@@ -144,7 +144,7 @@ export function createHttpTestModule(
 		beforeRouteRegistered: beforeRouteRegistered || (() => undefined),
 	};
 
-	return createStaticModule({
+	return createModule({
 		name: "HttpTestModule",
 		providers,
 		initializers: {

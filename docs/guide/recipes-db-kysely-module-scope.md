@@ -50,7 +50,7 @@ export interface Database {
 ```ts
 import { Kysely, PostgresDialect } from "kysely";
 import pg from "pg";
-import { createStaticModule, type ModuleDef } from "awilixify";
+import { createModule, type ModuleDef } from "awilixify";
 import type { Database } from "./tables.types.js";
 
 type TableName = keyof Database;
@@ -98,7 +98,7 @@ export function DbModule<const TConfig extends DbScopeConfig>(config: TConfig) {
   const readQb = rootQb as unknown as ReadQb<TConfig["readTables"]>;
   const writeQb = rootQb as unknown as WriteQb<TConfig["writeTables"]>;
 
-  return createStaticModule<DbModuleDef<TConfig>>({
+  return createModule<DbModuleDef<TConfig>>({
     name: "DbModule",
     providers: { readQb, writeQb },
     exports: { readQb, writeQb },
@@ -123,7 +123,7 @@ export type CatsModuleDef = ModuleDef<{
   };
 }>;
 
-export const CatsModule = createStaticModule<CatsModuleDef>({
+export const CatsModule = createModule<CatsModuleDef>({
   name: "CatsModule",
   imports: [OwnersModule, DbModule(dbScope)],
   providers: {

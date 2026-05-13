@@ -1,4 +1,4 @@
-import { createStaticModule, type ModuleDef } from "awilixify";
+import { createModule, type ModuleDef } from "awilixify";
 
 import { CatsModule } from "@/modules/cats/cats.module.js";
 
@@ -6,7 +6,7 @@ export type AppModuleDef = ModuleDef<{
 	imports: [typeof CatsModule];
 }>;
 
-export const AppModule = createStaticModule<AppModuleDef>({
+export const AppModule = createModule<AppModuleDef>({
 	name: "AppModule",
 	// TODO: registerControllers for handlers.
 	imports: [CatsModule],
