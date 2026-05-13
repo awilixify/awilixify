@@ -70,6 +70,17 @@ describe("Module", () => {
 				p2: P2,
 			},
 		}).type.toBeAssignableTo<M1>();
+		// Positive: Should accept async factory provider with provide and useFactory
+		expect({
+			name: "Module",
+			providers: {
+				p1: {
+					provide: P1,
+					useFactory: async () => new P1(),
+				},
+				p2: P2,
+			},
+		}).type.toBeAssignableTo<M1>();
 		// Negative: Should NOT accept factory that returns wrong type
 		expect({
 			name: "Module",

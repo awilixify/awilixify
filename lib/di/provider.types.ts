@@ -37,8 +37,8 @@ export type FactoryProvider<
 	provide: Omit<ClassProvider<T>, "allowCircular"> | ConstructorProvider<T>;
 	inject?: Keys;
 	useFactory: Strict extends true
-		? (...args: MapKeysToValues<DepsMap, Keys>) => T
-		: (...args: any[]) => T;
+		? (...args: MapKeysToValues<DepsMap, Keys>) => T | Promise<T>
+		: (...args: any[]) => T | Promise<T>;
 };
 
 export type ClassProvider<T extends object> = {

@@ -58,6 +58,13 @@ export function isFactoryProvider<T extends object>(
 	);
 }
 
+export function isAsyncFactoryProvider(provider: unknown): boolean {
+	return (
+		isFactoryProvider(provider) &&
+		provider.useFactory.constructor.name === "AsyncFunction"
+	);
+}
+
 export function isClassProvider<T extends object>(
 	provider: unknown,
 ): provider is ClassProvider<T> {

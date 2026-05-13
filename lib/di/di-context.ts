@@ -78,6 +78,20 @@ export class DIContext {
 		);
 	}
 
+	static async createAsync(
+		module: M,
+		options: DiContextOptions,
+	): Promise<ModuleScopeTree> {
+		const context = new DIContext(options);
+		await context.initializeGlobalModulesAsync();
+
+		return context.registerModuleWithScopeAsync(
+			module,
+			context.createContainer(),
+			[],
+		);
+	}
+
 	private createContainer(): Awilix.AwilixContainer {
 		return Awilix.createContainer(this.options.containerOptions);
 	}
@@ -177,6 +191,7 @@ export class DIContext {
 			([key, provider]) => {
 				scope.register({
 					[key]: this.resolveProvider({
+						key,
 						provider,
 						resolutionScope: scope,
 						module: m,
@@ -184,6 +199,138 @@ export class DIContext {
 				});
 			},
 		);
+
+		this.handlerProcessor.processHandlers(
+			m,
+			scope,
+			importedModulesWithScope,
+			HandlerType.Query,
+		);
+		this.handlerProcessor.processHandlers(
+			m,
+			scope,
+			importedModulesWithScope,
+			HandlerType.Command,
+		);
+		const controllers = this.controllerProcessor.processControllers(m, scope);
+		this.initializerProcessor.processInitializers(
+			m,
+			scope,
+			importedModulesWithScope,
+			controllers,
+		);
+
+		const moduleTree = {
+			scope,
+			importedScopes: this.buildImportedScopesMap(importedModulesWithScope),
+			name: m.name,
+		};
+		this.moduleTreeMap.set(m, moduleTree);
+
+		return moduleTree;
+	}
+
+	private async registerModuleWithScopeAsync(
+		m: M,
+		scope: Awilix.AwilixContainer,
+		moduleChain: M[],
+		includeGlobalModules = true,
+	): Promise<ModuleScopeTree> {
+		const existingTree = this.moduleTreeMap.get(m);
+
+		if (existingTree) {
+			return existingTree;
+		}
+
+		this.ensureImportedModulesUniqueness(m, includeGlobalModules);
+		this.ensureNoProviderNameConflicts(m, includeGlobalModules);
+		this.markModuleIfImportsUseForwardRef(m);
+
+		const isCircular = moduleChain.includes(m);
+
+		if (isCircular) {
+			this.ensureCircularDependencyHasForwardRef(m, moduleChain);
+
+			return {
+				name: m.name,
+				// biome-ignore lint/style/noNonNullAssertion: circular module was already registered
+				scope: this.moduleScopeMap.get(m)!,
+				importedScopes: new Map(),
+			};
+		}
+
+		this.moduleScopeMap.set(m, scope);
+
+		const importedModulesWithScope = [
+			...(includeGlobalModules ? this.globalModulesWithScope : []),
+			...(await Promise.all(
+				this.resolveImports(m).map(async (module) => ({
+					...(await this.registerModuleWithScopeAsync(
+						module,
+						this.createContainer(),
+						[...moduleChain, m],
+						includeGlobalModules,
+					)),
+					module,
+				})),
+			)),
+		];
+
+		importedModulesWithScope.forEach(
+			({ module: importedModule, scope: importedScope }) => {
+				this.getExportedProviderKeys(importedModule).forEach((key) => {
+					if (!importedModule.providers?.[key]) {
+						throw new ERRORS.InvalidProviderDefinitionError(
+							importedModule.name,
+							key,
+						);
+					}
+
+					scope.register({
+						[key]: Awilix.asFunction(
+							() => {
+								// biome-ignore lint/style/noNonNullAssertion: provider must be registered
+								const registration = importedScope.registrations[key]!;
+
+								return registration.lifetime === Awilix.Lifetime.SINGLETON
+									? importedScope.resolve(key)
+									: hasRequestScopeContext()
+										? resolveFromRequestScope(importedScope, key)
+										: importedScope.resolve(key);
+							},
+							{
+								lifetime: Awilix.Lifetime.TRANSIENT,
+								isLeakSafe: true,
+							},
+						),
+					});
+				});
+			},
+		);
+
+		const moduleForSorting: M = {
+			...m,
+			imports: importedModulesWithScope.map((el) => el.module),
+		};
+
+		this.interceptorProcessor.processInterceptors(
+			m,
+			scope,
+			importedModulesWithScope,
+		);
+
+		for (const [key, provider] of Object.entries(
+			this.sorter.sortByDependencies(moduleForSorting),
+		)) {
+			scope.register({
+				[key]: await this.resolveProviderAsync({
+					key,
+					provider,
+					resolutionScope: scope,
+					module: m,
+				}),
+			});
+		}
 
 		this.handlerProcessor.processHandlers(
 			m,
@@ -251,11 +398,51 @@ export class DIContext {
 		}));
 	}
 
+	private async initializeGlobalModulesAsync(): Promise<void> {
+		const globalModules = this.options.globalModules || [];
+		const globalModuleNames = new Set<string>();
+
+		for (const globalModule of globalModules) {
+			if (globalModuleNames.has(globalModule.name)) {
+				throw new ERRORS.DuplicateModuleImportError(
+					"globalModules",
+					globalModule.name,
+				);
+			}
+			globalModuleNames.add(globalModule.name);
+		}
+
+		for (const globalModule of globalModules) {
+			for (const importedModule of this.resolveImports(globalModule)) {
+				if (globalModuleNames.has(importedModule.name)) {
+					throw new ERRORS.GlobalModuleImportsGlobalModuleError(
+						globalModule.name,
+						importedModule.name,
+					);
+				}
+			}
+		}
+
+		this.globalModulesWithScope = await Promise.all(
+			globalModules.map(async (module) => ({
+				...(await this.registerModuleWithScopeAsync(
+					module,
+					this.createContainer(),
+					[],
+					false,
+				)),
+				module,
+			})),
+		);
+	}
+
 	private resolveProvider({
+		key,
 		provider,
 		resolutionScope,
 		module,
 	}: {
+		key?: string;
 		provider: AnyProvider;
 		resolutionScope: Awilix.AwilixContainer;
 		module: M;
@@ -292,6 +479,13 @@ export class DIContext {
 		}
 
 		if (GUARGS.isFactoryProvider(provider)) {
+			if (GUARGS.isAsyncFactoryProvider(provider)) {
+				throw new ERRORS.AsyncFactoryRequiresAsyncCreateError(
+					module.name,
+					key ?? "unknown",
+				);
+			}
+
 			const factoryDeps = (provider.inject || []).map((k) =>
 				// biome-ignore lint/style/noNonNullAssertion: dependencies are validated by ProviderDependencySorter
 				resolutionScope.registrations[k]!.resolve(resolutionScope),
@@ -314,6 +508,42 @@ export class DIContext {
 			options: resolverOptions,
 			resolver: classResolver,
 		});
+	}
+
+	private async resolveProviderAsync({
+		key,
+		provider,
+		resolutionScope,
+		module,
+	}: {
+		key: string;
+		provider: AnyProvider;
+		resolutionScope: Awilix.AwilixContainer;
+		module: M;
+	}): Promise<Awilix.Resolver<any>> {
+		if (
+			!GUARGS.isFactoryProvider(provider) ||
+			!GUARGS.isAsyncFactoryProvider(provider)
+		) {
+			return this.resolveProvider({ provider, resolutionScope, module });
+		}
+
+		const resolverOptions = this.extractResolverOptions(module, provider);
+		if (resolverOptions.lifetime !== Awilix.Lifetime.SINGLETON) {
+			throw new ERRORS.AsyncFactoryRequiresSingletonLifetimeError(
+				module.name,
+				key,
+			);
+		}
+
+		const factoryDeps = await Promise.all(
+			(provider.inject || []).map((k) =>
+				// biome-ignore lint/style/noNonNullAssertion: dependencies are validated by ProviderDependencySorter
+				resolutionScope.registrations[k]!.resolve(resolutionScope),
+			),
+		);
+
+		return Awilix.asValue(await provider.useFactory(...factoryDeps));
 	}
 
 	private extractResolverOptions(

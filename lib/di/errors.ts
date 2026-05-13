@@ -139,3 +139,23 @@ export class InvalidProviderDefinitionError extends Error {
 		this.name = "InvalidProviderDefinitionError";
 	}
 }
+
+export class AsyncFactoryRequiresAsyncCreateError extends Error {
+	constructor(moduleName: string, providerKey: string) {
+		super(
+			`Provider "${providerKey}" in module "${moduleName}" uses async useFactory. ` +
+				`Use DIContext.createAsync() to bootstrap modules with async factory providers.`,
+		);
+		this.name = "AsyncFactoryRequiresAsyncCreateError";
+	}
+}
+
+export class AsyncFactoryRequiresSingletonLifetimeError extends Error {
+	constructor(moduleName: string, providerKey: string) {
+		super(
+			`Provider "${providerKey}" in module "${moduleName}" uses async useFactory with a non-singleton lifetime. ` +
+				`Async factory providers are resolved during DIContext.createAsync(), so they must use SINGLETON lifetime.`,
+		);
+		this.name = "AsyncFactoryRequiresSingletonLifetimeError";
+	}
+}

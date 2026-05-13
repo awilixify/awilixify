@@ -2,8 +2,8 @@ import type { Mediator } from "../mediator/mediator.js";
 import type { EmptyObject } from "./common.types.js";
 import type {
 	ImportModule,
-	ModuleImport,
 	ModuleDefinition,
+	ModuleImport,
 } from "./module.types.js";
 import type {
 	ClassHandler,

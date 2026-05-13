@@ -70,6 +70,24 @@ describe("DIContext", () => {
 		);
 	}
 
+	async function registerModuleAsync(
+		module: Partial<AnyModule>,
+		options?: Partial<DiContextOptions>,
+	): Promise<TestModuleScopeTree> {
+		return DIContext.createAsync(
+			{
+				name: "AnyModule",
+				...module,
+			},
+			{
+				containerOptions: {
+					injectionMode: "PROXY",
+				},
+				...options,
+			},
+		);
+	}
+
 	describe("Ensure that module interactions/declarations are correct", () => {
 		it("should throw an error when a module has duplicate imports", () => {
 			const importedModule: AnyModule = {
@@ -382,6 +400,117 @@ describe("DIContext", () => {
 
 			expect(factoryServiceB.getDepKeys().length).toBe(1);
 			expect(factoryServiceB.getDepKeys()).toContain("serviceA");
+		});
+
+		it("should resolve async factory provider before constructor injection with createAsync", async () => {
+			class ConsumerService extends TestableBase {}
+
+			const { scope } = await registerModuleAsync({
+				providers: {
+					asyncService: {
+						provide: TestableBase,
+						inject: [],
+						useFactory: async () => new TestableBase(),
+					},
+					consumerService: ConsumerService,
+				},
+			});
+
+			const consumerService = scope.resolve<ConsumerService>("consumerService");
+
+			expect(consumerService.getDeps().asyncService).toBeInstanceOf(
+				TestableBase,
+			);
+			expect(consumerService.getDeps().asyncService).not.toBeInstanceOf(
+				Promise,
+			);
+		});
+
+		it("should resolve async factory dependencies in provider order with createAsync", async () => {
+			class ConsumerService extends TestableBase {}
+
+			const { scope } = await registerModuleAsync({
+				providers: {
+					consumerService: ConsumerService,
+					composedService: {
+						provide: TestableBase,
+						inject: ["asyncService"],
+						useFactory: (asyncService: TestableBase) =>
+							new TestableBase({ asyncService }),
+					},
+					asyncService: {
+						provide: TestableBase,
+						inject: [],
+						useFactory: async () => new TestableBase(),
+					},
+				},
+			});
+
+			const composedService = scope.resolve<TestableBase>("composedService");
+			const consumerService = scope.resolve<ConsumerService>("consumerService");
+
+			expect(composedService.getDeps().asyncService).toBeInstanceOf(
+				TestableBase,
+			);
+			expect(consumerService.getDeps().composedService).toBe(composedService);
+		});
+
+		it("should resolve async factory provider that depends on another async factory provider", async () => {
+			const { scope } = await registerModuleAsync({
+				providers: {
+					secondAsyncService: {
+						provide: TestableBase,
+						inject: ["firstAsyncService"],
+						useFactory: async (firstAsyncService: TestableBase) =>
+							new TestableBase({ firstAsyncService }),
+					},
+					firstAsyncService: {
+						provide: TestableBase,
+						inject: [],
+						useFactory: async () => new TestableBase(),
+					},
+				},
+			});
+
+			const firstAsyncService =
+				scope.resolve<TestableBase>("firstAsyncService");
+			const secondAsyncService =
+				scope.resolve<TestableBase>("secondAsyncService");
+
+			expect(secondAsyncService.getDeps().firstAsyncService).toBe(
+				firstAsyncService,
+			);
+		});
+
+		it("should throw when async factory provider is used with sync create", () => {
+			expect(() =>
+				registerModule({
+					providers: {
+						asyncService: {
+							provide: TestableBase,
+							inject: [],
+							useFactory: async () => new TestableBase(),
+						},
+					},
+				}),
+			).toThrow(ERRORS.AsyncFactoryRequiresAsyncCreateError);
+		});
+
+		it("should throw when async factory provider uses non-singleton lifetime", async () => {
+			await expect(
+				registerModuleAsync({
+					providers: {
+						asyncService: {
+							provide: {
+								useClass: TestableBase,
+								lifetime: Lifetime.TRANSIENT,
+							},
+							inject: [],
+							useFactory: async () => new TestableBase(),
+						},
+					},
+				}),
+			).rejects.toThrow(ERRORS.AsyncFactoryRequiresSingletonLifetimeError);
 		});
 	});
 

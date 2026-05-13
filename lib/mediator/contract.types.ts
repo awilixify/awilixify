@@ -1,8 +1,8 @@
 import type { EmptyObject, UnionToIntersection } from "../di/common.types.js";
 import type {
-	ModuleImport,
 	Module,
 	ModuleDefinition,
+	ModuleImport,
 } from "../di/module.types.js";
 import type { DefPreHandlerMap } from "../di/provider.types.js";
 import type {
