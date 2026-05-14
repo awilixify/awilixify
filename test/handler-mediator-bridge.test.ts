@@ -1,8 +1,11 @@
 import { Lifetime } from "awilix";
 import { describe, expect, it } from "vitest";
-import { DIContext, type DiContextOptions } from "../lib/di/di-context.js";
+import {
+	DIContext,
+	type DiContextOptions,
+} from "../lib/di/contexts/di-context.js";
 import * as DI_ERRORS from "../lib/di/errors.js";
-import type { AnyModule } from "../lib/di/module.types.js";
+import type { AnyModule } from "../lib/di/modules/module.types.js";
 import * as MEDIATOR_ERRORS from "../lib/mediator/errors.js";
 
 function registerModule(
@@ -144,5 +147,37 @@ describe("HandlerProcessor + Mediator bridge", () => {
 
 		expect(firstResult).toBe(secondResult);
 		expect(GetUsersQueryHandler.instances).toBe(1);
+	});
+
+	it("should create handler instance per call", async () => {
+		class GetUsersQueryHandler {
+			static instances = 0;
+			static readonly key = "get-users";
+			readonly instanceId = Math.random();
+
+			constructor() {
+				GetUsersQueryHandler.instances += 1;
+			}
+
+			async executor() {
+				return this.instanceId;
+			}
+		}
+
+		const { scope } = registerModule({
+			queryHandlers: [
+				{
+					useClass: GetUsersQueryHandler,
+					lifetime: Lifetime.SCOPED,
+				},
+			],
+		});
+
+		const queryMediator = scope.resolve<any>("queryMediator");
+		const firstResult = await queryMediator.execute("get-users", {});
+		const secondResult = await queryMediator.execute("get-users", {});
+
+		expect(firstResult).not.toBe(secondResult);
+		expect(GetUsersQueryHandler.instances).toBe(2);
 	});
 });

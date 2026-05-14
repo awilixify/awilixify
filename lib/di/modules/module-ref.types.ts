@@ -1,6 +1,6 @@
 export type ForwardRef<T = any> = {
 	__forward_ref__: true;
-	resolve: () => T;
+	resolve: () => T | Promise<T>;
 };
 
 declare const moduleRefMarker: unique symbol;

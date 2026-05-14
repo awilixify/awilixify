@@ -1,51 +1,18 @@
-import type { Constructor } from "awilix";
-import type { ForwardRef } from "./module-ref.types.js";
+import type { BuildResolverOptions, Constructor } from "awilix";
+import type { ForwardRef } from "./modules/module-ref.types.js";
 import type {
-	ClassController,
-	ClassHandler,
-	ClassInterceptor,
-	ClassMiddleware,
-	ClassProvider,
 	FactoryProvider,
 	FunctionProvider,
 	PrimitiveProvider,
-} from "./provider.types.js";
+} from "./providers/provider.types.js";
 
-export function isClassHandler(handler: unknown): handler is ClassHandler {
-	return (
-		typeof handler === "object" && handler !== null && "useClass" in handler
-	);
-}
-
-// TODO: better guard!!
-export function isClassController(
-	controller: unknown,
-): controller is ClassController {
-	return (
-		typeof controller === "object" &&
-		controller !== null &&
-		"useClass" in controller
-	);
-}
-
-export function isClassMiddleware(
-	middleware: unknown,
-): middleware is ClassMiddleware {
-	return (
-		typeof middleware === "object" &&
-		middleware !== null &&
-		"useClass" in middleware
-	);
-}
-
-export function isClassInterceptor(
-	interceptor: unknown,
-): interceptor is ClassInterceptor {
-	return (
-		typeof interceptor === "object" &&
-		interceptor !== null &&
-		"useClass" in interceptor
-	);
+export function hasUseClass<T extends object = object>(
+	value: unknown,
+): value is {
+	useClass: Constructor<T>;
+	allowCircular?: boolean;
+} & Partial<BuildResolverOptions<any>> {
+	return typeof value === "object" && value !== null && "useClass" in value;
 }
 
 export function isFactoryProvider<T extends object>(
@@ -62,14 +29,6 @@ export function isAsyncFactoryProvider(provider: unknown): boolean {
 	return (
 		isFactoryProvider(provider) &&
 		provider.useFactory.constructor.name === "AsyncFunction"
-	);
-}
-
-export function isClassProvider<T extends object>(
-	provider: unknown,
-): provider is ClassProvider<T> {
-	return (
-		typeof provider === "object" && provider !== null && "useClass" in provider
 	);
 }
 
@@ -125,5 +84,16 @@ export function isForwardRef(value: unknown): value is ForwardRef {
 		value.__forward_ref__ === true &&
 		"resolve" in value &&
 		typeof value.resolve === "function"
+	);
+}
+
+export function isPromiseLike<T = unknown>(
+	value: unknown,
+): value is Promise<T> {
+	return (
+		typeof value === "object" &&
+		value !== null &&
+		"then" in value &&
+		typeof value.then === "function"
 	);
 }

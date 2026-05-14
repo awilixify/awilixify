@@ -1,14 +1,14 @@
 import { describe, expect, it } from "tstyche";
 import type { EmptyObject } from "../lib/di/common.types.js";
-import type { Module as M } from "../lib/di/module.types.js";
+import type { Module as M } from "../lib/di/modules/module.types.js";
 import type {
 	ModuleDef as D,
 	GlobalDependencies,
-} from "../lib/di/module-def.types.js";
+} from "../lib/di/modules/module-def.types.js";
 import {
 	createFactoryProvider,
 	createModule,
-} from "../lib/di/module-factories.js";
+} from "../lib/di/modules/module-factories.js";
 
 describe("Module", () => {
 	class P1 {
@@ -59,23 +59,21 @@ describe("Module", () => {
 	it("ensures FactoryProvider can be passed as provider", () => {
 		type M1 = M<D<{ providers: { p1: P1; p2: P2 } }>>;
 
-		// Positive: Should accept factory provider with provide and useFactory
+		// Positive: Should accept factory provider with useFactory
 		expect({
 			name: "Module",
 			providers: {
 				p1: {
-					provide: P1,
 					useFactory: () => new P1(),
 				},
 				p2: P2,
 			},
 		}).type.toBeAssignableTo<M1>();
-		// Positive: Should accept async factory provider with provide and useFactory
+		// Positive: Should accept async factory provider with useFactory
 		expect({
 			name: "Module",
 			providers: {
 				p1: {
-					provide: P1,
 					useFactory: async () => new P1(),
 				},
 				p2: P2,
@@ -86,7 +84,6 @@ describe("Module", () => {
 			name: "Module",
 			providers: {
 				p1: {
-					provide: P1,
 					useFactory: () => new P2(),
 				},
 				p2: P2,
@@ -103,7 +100,6 @@ describe("Module", () => {
 		const factory = createFactoryProvider<Deps>();
 
 		factory({
-			provide: P4,
 			inject: ["p1", "p2"] as const,
 			useFactory: (_p1, _p2) => {
 				expect<typeof _p1>().type.toBe<P1>();
@@ -115,7 +111,6 @@ describe("Module", () => {
 
 		expect(
 			factory({
-				provide: P4,
 				inject: ["p1", "p2"] as const,
 				useFactory: (_p1, _p2, _p3) => {
 					return new P4();
@@ -213,6 +208,36 @@ describe("Module", () => {
 		>();
 		// Negative: Should NOT be assignable with no imports property
 		expect<M2>().type.not.toBeAssignableTo<M<D<{ providers: EmptyObject }>>>();
+	});
+
+	it("ensures promised imports expose exported dependencies", () => {
+		type ImportedDef = D<{
+			providers: { p1: P1 };
+			exportKeys: ["p1"];
+		}>;
+
+		const ImportedModule = createModule<ImportedDef>({
+			name: "ImportedModule",
+			providers: { p1: P1 },
+			exports: ["p1"],
+		});
+
+		type AppDef = D<{
+			imports: [Promise<typeof ImportedModule>];
+			providers: { p2: P2 };
+		}>;
+		type Deps = AppDef["deps"];
+
+		const factory = createFactoryProvider<Deps>();
+
+		factory({
+			inject: ["p1"] as const,
+			useFactory: (_p1) => {
+				expect<typeof _p1>().type.toBe<P1>();
+
+				return new P2();
+			},
+		});
 	});
 
 	it("ensures exports in definition and declaration are the same", () => {

@@ -71,15 +71,6 @@ export class GlobalModuleImportsGlobalModuleError extends Error {
 	}
 }
 
-export class UnsupportedFrameworkError extends Error {
-	constructor() {
-		super(
-			"Unsupported framework detected. Only Fastify and Express are currently supported for decorator-based routing.",
-		);
-		this.name = "UnsupportedFrameworkError";
-	}
-}
-
 export class HandlerMissingStaticKeyError extends Error {
 	constructor(handlerName: string) {
 		super(
@@ -90,43 +81,19 @@ export class HandlerMissingStaticKeyError extends Error {
 	}
 }
 
-export class MiddlewareNameConflictError extends Error {
+export class FeatureNameConflictError extends Error {
 	constructor(
 		moduleName: string,
-		middlewareKey: string,
-		existingModuleName: string,
-		handlerType: "query" | "command",
-	) {
-		super(
-			`Module "${moduleName}" has a ${handlerType} pre-handler named "${middlewareKey}" ` +
-				`that conflicts with a pre-handler already registered from module "${existingModuleName}". ` +
-				`Pre-handler names must be unique within a module scope.`,
-		);
-		this.name = "MiddlewareNameConflictError";
-	}
-}
-
-export class InterceptorNameConflictError extends Error {
-	constructor(
-		moduleName: string,
-		interceptorKey: string,
+		featureName: string,
+		featureKey: string,
 		existingModuleName: string,
 	) {
 		super(
-			`Module "${moduleName}" has an interceptor named "${interceptorKey}" ` +
-				`that conflicts with an interceptor already registered from module "${existingModuleName}". ` +
-				`Interceptor names must be unique within a module scope.`,
+			`Module "${moduleName}" has a ${featureName} named "${featureKey}" ` +
+				`that conflicts with a ${featureName} already registered from module "${existingModuleName}". ` +
+				`${featureName} names must be unique within a module scope.`,
 		);
-		this.name = "InterceptorNameConflictError";
-	}
-}
-
-export class InitializerConflictError extends Error {
-	constructor(moduleName: string) {
-		super(
-			`Module "${moduleName}" has duplicate initializers across imports/local initializers.`,
-		);
-		this.name = "InitializerConflictError";
+		this.name = "FeatureNameConflictError";
 	}
 }
 
@@ -144,7 +111,7 @@ export class AsyncFactoryRequiresAsyncCreateError extends Error {
 	constructor(moduleName: string, providerKey: string) {
 		super(
 			`Provider "${providerKey}" in module "${moduleName}" uses async useFactory. ` +
-				`Use DIContext.createAsync() to bootstrap modules with async factory providers.`,
+				`Use AsyncDIContext to bootstrap modules with async factory providers.`,
 		);
 		this.name = "AsyncFactoryRequiresAsyncCreateError";
 	}
@@ -154,8 +121,18 @@ export class AsyncFactoryRequiresSingletonLifetimeError extends Error {
 	constructor(moduleName: string, providerKey: string) {
 		super(
 			`Provider "${providerKey}" in module "${moduleName}" uses async useFactory with a non-singleton lifetime. ` +
-				`Async factory providers are resolved during DIContext.createAsync(), so they must use SINGLETON lifetime.`,
+				`Async factory providers are resolved during AsyncDIContext bootstrap, so they must use SINGLETON lifetime.`,
 		);
 		this.name = "AsyncFactoryRequiresSingletonLifetimeError";
+	}
+}
+
+export class AsyncModuleRequiresAsyncCreateError extends Error {
+	constructor(moduleName: string) {
+		super(
+			`Module "${moduleName}" imports an async module. ` +
+				`Use AsyncDIContext to bootstrap modules with async imports.`,
+		);
+		this.name = "AsyncModuleRequiresAsyncCreateError";
 	}
 }

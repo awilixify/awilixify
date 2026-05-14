@@ -1,6 +1,10 @@
-import * as ERRORS from "./errors.js";
-import type { InternalModuleLike as M } from "./runtime-module.types.js";
-import { isFactoryProvider, isForwardRef } from "./type-guards.js";
+import * as ERRORS from "../errors.js";
+import type { InternalModuleLike as M } from "../modules/runtime-module.types.js";
+import {
+	isFactoryProvider,
+	isForwardRef,
+	isPromiseLike,
+} from "../type-guards.js";
 
 type ProviderDepsGraph = {
 	graph: Map<string, string[]>;
@@ -46,6 +50,12 @@ export class ProviderDependencySorter {
 				const importedModule = isForwardRef(importItem)
 					? importItem.resolve()
 					: importItem;
+				if (isPromiseLike(importedModule)) {
+					throw new Error(
+						`Async module import in "${m.name}" was not resolved before provider dependency sorting.`,
+					);
+				}
+
 				return importedModule.exports ? [...importedModule.exports] : [];
 			}),
 		);

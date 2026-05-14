@@ -1,6 +1,5 @@
 import type { BuildResolverOptions, Constructor } from "awilix";
-import type { EmptyObject } from "./common.types.js";
-import type { ForwardRef, ModuleRef } from "./module-ref.types.js";
+import type { EmptyObject } from "../common.types.js";
 import type {
 	AnyController,
 	AnyInterceptor,
@@ -11,7 +10,8 @@ import type {
 	DefPreHandlerMap,
 	DefProviderMap,
 	Provider,
-} from "./provider.types.js";
+} from "../providers/provider.types.js";
+import type { ForwardRef, ModuleRef } from "./module-ref.types.js";
 import type { InternalModuleLike } from "./runtime-module.types.js";
 
 // ============================================================================
@@ -32,7 +32,7 @@ export type ImportModule<TDef extends ModuleDefinition = ModuleDefinition> = {
 
 export type AnyModule = InternalModuleLike & ImportModule<any>;
 
-export type ModuleImport = AnyModule | ModuleRef<any>;
+export type ModuleImport = AnyModule | Promise<AnyModule> | ModuleRef<any>;
 
 export type ModuleDefinition = {
 	providers?: DefProviderMap;
@@ -189,7 +189,6 @@ type ToModuleProviderMap<
 type RawValueObject<T> = T & {
 	useClass?: never;
 	useFactory?: never;
-	provide?: never;
 	lifetime?: never;
 	allowCircular?: never;
 };
@@ -286,7 +285,7 @@ type WithInterceptorExports<TKeys extends readonly string[]> =
 // ============================================================================
 
 type WithImports<TImports extends readonly unknown[]> = 0 extends 1 & TImports
-	? { imports?: (AnyModule | ForwardRef)[] }
+	? { imports?: (AnyModule | Promise<AnyModule> | ForwardRef)[] }
 	: TImports extends readonly []
 		? { imports?: [] }
 		: { imports: WithForwardRefImports<TImports> };
@@ -294,7 +293,7 @@ type WithImports<TImports extends readonly unknown[]> = 0 extends 1 & TImports
 type WithForwardRefImports<T extends readonly unknown[]> = {
 	[K in keyof T]: T[K] extends ModuleRef<infer MDef>
 		? ForwardRef<ForwardRefModule<MDef>>
-		: T[K] extends ImportModule<any>
+		: Awaited<T[K]> extends ImportModule<any>
 			? T[K]
 			: T[K];
 };

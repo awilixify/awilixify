@@ -1,6 +1,6 @@
 import { describe, expect, it } from "tstyche";
-import type { Module as M } from "../lib/di/module.types.js";
-import type { ModuleDef as D } from "../lib/di/module-def.types.js";
+import type { Module as M } from "../lib/di/modules/module.types.js";
+import type { ModuleDef as D } from "../lib/di/modules/module-def.types.js";
 import type {
 	CommandContract,
 	QueryContract,

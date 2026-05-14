@@ -1,5 +1,5 @@
 import type { EmptyObject } from "../di/common.types.js";
-import type { DefPreHandlerMap } from "../di/provider.types.js";
+import type { DefPreHandlerMap } from "../di/providers/provider.types.js";
 
 // biome-ignore lint/suspicious/noEmptyInterface: Intentionally empty for declaration merging
 export interface GlobalQueryPreHandlers {}

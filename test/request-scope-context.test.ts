@@ -1,26 +1,11 @@
 import { Lifetime } from "awilix";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { DIContext } from "../lib/di/di-context.js";
-import type { AnyModule } from "../lib/di/module.types.js";
+import { DIContext } from "../lib/di/contexts/di-context.js";
+import type { AnyModule } from "../lib/di/modules/module.types.js";
 import { GET } from "../lib/http/decorators.js";
-import { createHttpTestModule } from "./http-test-module.js";
+import { createHttpTestModule, createMockExpress } from "./http-test-module.js";
 
 describe("Request scope context (AsyncLocalStorage)", () => {
-	const createMockExpress = () => {
-		const app: any = () => {};
-		app.get = vi.fn();
-		app.post = vi.fn();
-		app.put = vi.fn();
-		app.delete = vi.fn();
-		app.patch = vi.fn();
-		app.options = vi.fn();
-		app.head = vi.fn();
-		app.use = vi.fn();
-		app.set = vi.fn();
-
-		return app;
-	};
-
 	let mockExpress: ReturnType<typeof createMockExpress>;
 
 	beforeEach(() => {
@@ -62,7 +47,6 @@ describe("Request scope context (AsyncLocalStorage)", () => {
 			{
 				name: "ScopeModule",
 				providers: {
-					app: mockExpress,
 					sharedScopedState: {
 						useClass: SharedScopedState,
 						lifetime: Lifetime.SCOPED,
@@ -172,9 +156,6 @@ describe("Request scope context (AsyncLocalStorage)", () => {
 			{
 				name: "AppModuleTwoExports",
 				imports: [sharedModule],
-				providers: {
-					app: mockExpress,
-				},
 				controllers: [
 					{
 						useClass: MultiExportScopeController,

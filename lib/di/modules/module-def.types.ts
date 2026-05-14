@@ -1,17 +1,17 @@
-import type { Mediator } from "../mediator/mediator.js";
-import type { EmptyObject } from "./common.types.js";
-import type {
-	ImportModule,
-	ModuleDefinition,
-	ModuleImport,
-} from "./module.types.js";
+import type { Mediator } from "../../mediator/mediator.js";
+import type { EmptyObject } from "../common.types.js";
 import type {
 	ClassHandler,
 	DefInitializerMap,
 	DefInterceptorMap,
 	DefPreHandlerMap,
 	DefProviderMap,
-} from "./provider.types.js";
+} from "../providers/provider.types.js";
+import type {
+	ImportModule,
+	ModuleDefinition,
+	ModuleImport,
+} from "./module.types.js";
 
 // biome-ignore lint/suspicious/noEmptyInterface: Intentionally empty for declaration merging
 export interface GlobalDependencies {}
@@ -206,9 +206,9 @@ type ExtractImportsExports<D extends { imports?: readonly ModuleImport[] }> =
 		: DefProviderMap;
 
 type ExtractModuleDefFromModule<T> =
-	T extends ImportModule<infer TDef extends ModuleDefinition>
+	Awaited<T> extends ImportModule<infer TDef extends ModuleDefinition>
 		? TDef
-		: T extends { exports: infer E }
+		: Awaited<T> extends { exports: infer E }
 			? { exports: E }
 			: never;
 

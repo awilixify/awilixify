@@ -1,10 +1,13 @@
 import * as Awilix from "awilix";
-import * as ERRORS from "./errors.js";
+import * as ERRORS from "../errors.js";
+import type { InternalModuleLike as M } from "../modules/runtime-module.types.js";
+import type {
+	ConstructorController,
+	Controller,
+} from "../providers/provider.types.js";
+import { resolveFromRequestScope } from "../request-scope-context.js";
+import { hasUseClass } from "../type-guards.js";
 import type { ControllerRuntimeEntry } from "./initializer-processor.js";
-import type { ConstructorController, Controller } from "./provider.types.js";
-import { resolveFromRequestScope } from "./request-scope-context.js";
-import type { InternalModuleLike as M } from "./runtime-module.types.js";
-import { isClassController } from "./type-guards.js";
 
 export class ControllerProcessor {
 	private readonly registeredControllers = new WeakMap<
@@ -22,6 +25,7 @@ export class ControllerProcessor {
 	): ControllerRuntimeEntry[] {
 		if (!m.controllers?.length) return [];
 		if (m.registerControllers === false) return [];
+
 		const runtimeEntries: ControllerRuntimeEntry[] = [];
 
 		if (new Set(m.controllers).size !== m.controllers.length) {
@@ -29,9 +33,9 @@ export class ControllerProcessor {
 		}
 
 		for (const c of m.controllers) {
-			const { useClass, ...awilixOptions } = isClassController(c)
+			const { useClass, ...awilixOptions } = hasUseClass<Controller>(c)
 				? c
-				: { useClass: c };
+				: { useClass: c as ConstructorController };
 			const existingModule = this.registeredControllers.get(useClass);
 
 			if (!existingModule) {
@@ -71,12 +75,10 @@ export class ControllerProcessor {
 					controllerInstance.registerRoutes();
 				}
 
-				const resolveController = () =>
-					this.resolveBySymbol(controllerSymbol, diScope, isWithNewScope);
-
 				runtimeEntries.push({
 					controllerClass: useClass,
-					resolve: resolveController,
+					resolve: () =>
+						this.resolveBySymbol(controllerSymbol, diScope, isWithNewScope),
 				});
 
 				continue;

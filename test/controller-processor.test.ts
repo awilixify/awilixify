@@ -1,56 +1,23 @@
 import { AwilixResolutionError, Lifetime } from "awilix";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { DIContext, type DiContextOptions } from "../lib/di/di-context.js";
+
+import { DIContext } from "../lib/di/contexts/di-context.js";
 import * as ERRORS from "../lib/di/errors.js";
-import type { AnyModule } from "../lib/di/module.types.js";
-import type { Controller } from "../lib/di/provider.types.js";
-import { controller, GET, POST, schema } from "../lib/http/decorators.js";
-import { createHttpTestModule } from "./http-test-module.js";
+import type { AnyModule } from "../lib/di/modules/module.types.js";
+import type { Controller } from "../lib/di/providers/provider.types.js";
+import { GET } from "../lib/http/decorators.js";
+import { createHttpTestModule, createMockExpress } from "./http-test-module.js";
 
 describe("ControllerProcessor", () => {
-	const createMockExpress = () => {
-		const app: any = () => {};
-		app.use = vi.fn();
-		app.get = vi.fn();
-		app.post = vi.fn();
-		app.set = vi.fn();
-
-		return app;
-	};
-
-	const createMockFastify = () => {
-		const app: any = {};
-		app.route = vi.fn();
-		const fastifySymbol = Symbol.for("fastify.instance");
-		app[fastifySymbol] = true;
-
-		return app;
-	};
-
 	let mockExpress: ReturnType<typeof createMockExpress>;
 
 	beforeEach(() => {
 		mockExpress = createMockExpress();
 	});
 
-	const registerModule = (
-		module: AnyModule,
-		options?: Partial<DiContextOptions> & { framework?: any },
-	) => {
-		const framework = options?.framework || mockExpress;
-		const moduleWithAppProvider: AnyModule = {
-			...module,
-			providers: {
-				app: framework,
-				...(module.providers || {}),
-			},
-		};
-
-		return DIContext.create(moduleWithAppProvider, {
-			globalModules: [
-				createHttpTestModule(framework, options?.beforeRouteRegistered),
-			],
-			...options,
+	const registerModule = (module: AnyModule) => {
+		return DIContext.create(module, {
+			globalModules: [createHttpTestModule(mockExpress)],
 		});
 	};
 
@@ -89,18 +56,6 @@ describe("ControllerProcessor", () => {
 			);
 			expect(mockExpress.post).toHaveBeenCalledWith(
 				"/api/users",
-				expect.any(Function),
-			);
-		});
-
-		it("should register decorated controllers with Express framework", () => {
-			registerModule({
-				name: "TestModule",
-				controllers: [DecoratedController],
-			});
-
-			expect(mockExpress.get).toHaveBeenCalledWith(
-				"/test",
 				expect.any(Function),
 			);
 		});
@@ -220,61 +175,6 @@ describe("ControllerProcessor", () => {
 		});
 	});
 
-	describe("Path Concatenation", () => {
-		it("should use controller path when no method path is specified", () => {
-			@controller("/api")
-			class ControllerPathOnlyController {
-				@GET()
-				getDefault() {}
-			}
-
-			registerModule({
-				name: "TestModule",
-				controllers: [ControllerPathOnlyController],
-			});
-
-			expect(mockExpress.get).toHaveBeenCalledWith(
-				"/api/",
-				expect.any(Function),
-			);
-		});
-
-		it("should concatenate controller path with method path", () => {
-			@controller("/api")
-			class CombinedPathController extends DecoratedController {}
-
-			registerModule({
-				name: "TestModule",
-				controllers: [CombinedPathController],
-			});
-
-			expect(mockExpress.get).toHaveBeenCalledWith(
-				"/api/test",
-				expect.any(Function),
-			);
-		});
-
-		it("should handle multiple controller paths with multiple method paths", () => {
-			@controller(["/api/v1", "/api/v2"])
-			class MultiPathController extends DecoratedController {}
-
-			registerModule({
-				name: "TestModule",
-				controllers: [MultiPathController],
-			});
-
-			// Should create all combinations of controller paths and method paths
-			expect(mockExpress.get).toHaveBeenCalledWith(
-				"/api/v1/test",
-				expect.any(Function),
-			);
-			expect(mockExpress.get).toHaveBeenCalledWith(
-				"/api/v2/test",
-				expect.any(Function),
-			);
-		});
-	});
-
 	describe("Handler Method Invocation", () => {
 		it("should resolve controller and call method with request and reply", async () => {
 			const mockReply = { send: vi.fn() };
@@ -334,7 +234,6 @@ describe("ControllerProcessor", () => {
 			const mockReply1 = { send: vi.fn(), headersSent: false };
 			const mockReply2 = { send: vi.fn(), headersSent: false };
 
-			// Call the handler (tests line 88-94: resolveSelf injector)
 			await handler({}, mockReply1, vi.fn());
 			await handler({}, mockReply2, vi.fn());
 
@@ -364,193 +263,6 @@ describe("ControllerProcessor", () => {
 					controllers: [SingletonController],
 				});
 			}).toThrow(AwilixResolutionError);
-		});
-	});
-
-	describe("Express Error Handling", () => {
-		it("should pass errors to Express next() middleware when controller throws", async () => {
-			const testError = new Error("Test error from controller");
-
-			class ErrorThrowingController {
-				@GET("/error")
-				async throwError() {
-					throw testError;
-				}
-			}
-
-			registerModule({
-				name: "TestModule",
-				controllers: [ErrorThrowingController],
-			});
-
-			// Get the registered handler
-			const handlerCall = mockExpress.get.mock.calls.find(
-				(call) => call[0] === "/error",
-			);
-
-			const handler = handlerCall[1];
-			const mockReply = { send: vi.fn(), headersSent: false };
-			const mockNext = vi.fn();
-
-			// Call the handler (tests line 227: next(error))
-			await handler({}, mockReply, mockNext);
-
-			// Verify the error was passed to next()
-			expect(mockNext).toHaveBeenCalledWith(testError);
-			expect(mockNext).toHaveBeenCalledTimes(1);
-			// Result should not be sent since an error was thrown
-			expect(mockReply.send).not.toHaveBeenCalled();
-		});
-	});
-
-	describe("Schema Decorator with Fastify", () => {
-		it("should register schema with Fastify route", () => {
-			const mockFastify = createMockFastify();
-
-			const testSchema = {
-				body: {
-					type: "object",
-					properties: {
-						name: { type: "string" },
-					},
-				},
-				response: {
-					200: {
-						type: "object",
-						properties: {
-							id: { type: "number" },
-						},
-					},
-				},
-			};
-
-			class SchemaController {
-				@GET("/users")
-				@schema(testSchema)
-				getUsers() {
-					return { id: 1 };
-				}
-			}
-
-			registerModule(
-				{
-					name: "SchemaModule",
-					controllers: [SchemaController],
-				},
-				{ framework: mockFastify },
-			);
-
-			expect(mockFastify.route).toHaveBeenCalledWith(
-				expect.objectContaining({
-					method: "GET",
-					url: "/users",
-					schema: testSchema,
-				}),
-			);
-		});
-
-		it("should register route with empty schema when schema decorator is not used", () => {
-			const mockFastify = createMockFastify();
-
-			class NoSchemaController {
-				@GET("/users")
-				getUsers() {
-					return { id: 1 };
-				}
-			}
-
-			registerModule(
-				{
-					name: "NoSchemaModule",
-					controllers: [NoSchemaController],
-				},
-				{ framework: mockFastify },
-			);
-
-			const routeCall = mockFastify.route.mock.calls[0][0];
-			expect(routeCall.schema).toEqual({});
-		});
-	});
-
-	describe("beforeRouteRegistered Callback", () => {
-		it("should call beforeRouteRegistered with route registration params", () => {
-			const beforeRouteRegistered = vi.fn();
-
-			const testSchema = {
-				querystring: { type: "object" },
-				response: { 200: { type: "object" } },
-			};
-
-			class TestController {
-				@GET("/api/users")
-				@schema(testSchema)
-				getUsers() {}
-
-				@POST("/api/user")
-				@schema(testSchema)
-				createUser() {}
-			}
-
-			registerModule(
-				{
-					name: "TestModule",
-					controllers: [TestController],
-				},
-				{ beforeRouteRegistered },
-			);
-
-			expect(beforeRouteRegistered).toHaveBeenCalledTimes(2);
-			expect(beforeRouteRegistered).toHaveBeenCalledWith({
-				method: "GET",
-				path: "/api/users",
-				schema: testSchema,
-			});
-			expect(beforeRouteRegistered).toHaveBeenCalledWith({
-				method: "POST",
-				path: "/api/user",
-				schema: testSchema,
-			});
-		});
-
-		it("should inject middleware returned from beforeRouteRegistered into Express route", () => {
-			const validationMiddleware = vi.fn((_, __, next) => next());
-			const loggingMiddleware = vi.fn((_, __, next) => next());
-
-			const beforeRouteRegistered = vi.fn(() => [
-				validationMiddleware,
-				loggingMiddleware,
-			]);
-
-			class TestController {
-				@GET("/test")
-				getTest() {
-					return "test";
-				}
-			}
-
-			registerModule(
-				{
-					name: "TestModule",
-					controllers: [TestController],
-				},
-				{ beforeRouteRegistered },
-			);
-
-			// Get the registered handler
-			const handlerCall = mockExpress.get.mock.calls.find(
-				(call: any) => call[0] === "/test",
-			);
-
-			// Express registers: [validationMiddleware, loggingMiddleware, wrappedHandler]
-			// The handler at position 1 should be our first middleware
-			const registeredHandler = handlerCall[1];
-
-			// Call the first registered handler (should be validation middleware)
-			const mockNext = vi.fn();
-			registeredHandler({}, {}, mockNext);
-
-			expect(validationMiddleware).toHaveBeenCalledTimes(1);
-			expect(mockNext).toHaveBeenCalledTimes(1);
 		});
 	});
 });

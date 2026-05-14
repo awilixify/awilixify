@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { createDecoratorStateUpdater } from "../lib/decorators/decorator-state.js";
-import { DIContext } from "../lib/di/di-context.js";
+import { DIContext } from "../lib/di/contexts/di-context.js";
 import * as ERRORS from "../lib/di/errors.js";
-import type { ModuleDef } from "../lib/di/module-def.types.js";
-import { createModule } from "../lib/di/module-factories.js";
+import type { ModuleDef } from "../lib/di/modules/module-def.types.js";
+import { createModule } from "../lib/di/modules/module-factories.js";
 import type {
 	InterceptContext,
 	Interceptor,
-} from "../lib/di/provider.types.js";
+} from "../lib/di/providers/provider.types.js";
 
 const { token: MARK_TOKEN, update: mark } = createDecoratorStateUpdater(
 	"mark",
@@ -45,18 +45,13 @@ describe("Interceptors", () => {
 			}
 		}
 
-		type AppDef = ModuleDef<{
-			providers: { service: Service };
-			interceptors: { track: TrackInterceptor };
-		}>;
-
-		const AppModule = createModule<AppDef>({
+		const AppModule = createModule<any>({
 			name: "AppModule",
 			providers: { service: Service },
 			interceptors: { track: TrackInterceptor },
 		});
 
-		const root = DIContext.create(AppModule, {});
+		const root = DIContext.create(AppModule);
 		const service = root.scope.resolve<any>("service");
 
 		expect(service.decorated()).toBe(42);
@@ -90,21 +85,12 @@ describe("Interceptors", () => {
 			}
 		}
 
-		type SyncDef = ModuleDef<{
-			providers: { service: Service };
-			interceptors: { sync: SyncInterceptor };
-		}>;
-		type AsyncDef = ModuleDef<{
-			providers: { service: Service };
-			interceptors: { async: AsyncInterceptor };
-		}>;
-
-		const SyncModule = createModule<SyncDef>({
+		const SyncModule = createModule<any>({
 			name: "SyncModule",
 			providers: { service: Service },
 			interceptors: { sync: SyncInterceptor },
 		});
-		const AsyncModule = createModule<AsyncDef>({
+		const AsyncModule = createModule<any>({
 			name: "AsyncModule",
 			providers: { service: Service },
 			interceptors: { async: AsyncInterceptor },
@@ -145,32 +131,24 @@ describe("Interceptors", () => {
 			}
 		}
 
-		type ImportedDef = ModuleDef<{
-			interceptors: { shared: ImportedInterceptor };
-			exportInterceptorKeys: ["shared"];
-		}>;
-		const ImportedA = createModule<ImportedDef>({
+		const ImportedA = createModule<any>({
 			name: "ImportedA",
 			interceptors: { shared: ImportedInterceptor },
 			interceptorExports: ["shared"],
 		});
-		const ImportedB = createModule<ImportedDef>({
+		const ImportedB = createModule<any>({
 			name: "ImportedB",
 			interceptors: { shared: ImportedInterceptor },
 			interceptorExports: ["shared"],
 		});
 
-		type AppOkDef = ModuleDef<{
-			providers: { service: Service };
-			imports: [typeof ImportedA];
-		}>;
-		const AppOk = createModule<AppOkDef>({
+		const AppOk = createModule<any>({
 			name: "AppOk",
 			providers: { service: Service },
 			imports: [ImportedA],
 		});
 
-		const appRoot = DIContext.create(AppOk, {});
+		const appRoot = DIContext.create(AppOk);
 		const service = appRoot.scope.resolve<any>("service");
 		expect(service.getValue()).toBe(5);
 		expect(calls).toEqual(["getValue"]);
@@ -185,7 +163,7 @@ describe("Interceptors", () => {
 			imports: [ImportedA, ImportedB],
 		});
 		expect(() => DIContext.create(AppDupImports, {})).toThrow(
-			ERRORS.InterceptorNameConflictError,
+			ERRORS.FeatureNameConflictError,
 		);
 
 		type AppImportAndLocalDef = ModuleDef<{
@@ -199,8 +177,8 @@ describe("Interceptors", () => {
 			imports: [ImportedA],
 			interceptors: { shared: ImportedInterceptor },
 		});
-		expect(() => DIContext.create(AppImportAndLocal, {})).toThrow(
-			ERRORS.InterceptorNameConflictError,
+		expect(() => DIContext.create(AppImportAndLocal)).toThrow(
+			ERRORS.FeatureNameConflictError,
 		);
 	});
 

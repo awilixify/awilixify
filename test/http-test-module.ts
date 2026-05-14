@@ -1,35 +1,28 @@
+import { vi } from "vitest";
 import * as ERRORS from "../lib/di/errors.js";
-import type { AnyModule } from "../lib/di/module.types.js";
-import { createModule } from "../lib/di/module-factories.js";
+import type { AnyModule } from "../lib/di/modules/module.types.js";
+import { createModule } from "../lib/di/modules/module-factories.js";
 import type {
 	Initializer,
 	InitializerContext,
-} from "../lib/di/provider.types.js";
+} from "../lib/di/providers/provider.types.js";
 import { runInRequestScopeContext } from "../lib/di/request-scope-context.js";
 import {
 	HTTP_DECORATOR_STATE_TOKEN,
 	rollUpHttpDecoratorState,
 } from "../lib/http/decorators.js";
-import type { RouteRegistration } from "../lib/http/openapi-builder.js";
 
 type HttpToken = typeof HTTP_DECORATOR_STATE_TOKEN;
 
 class TestHttpInitializer implements Initializer<HttpToken> {
 	public readonly token = HTTP_DECORATOR_STATE_TOKEN;
 	private readonly app: unknown;
-	private readonly beforeRouteRegistered?: (params: RouteRegistration) => any[];
 
-	constructor(
-		app: unknown,
-		beforeRouteRegistered?: (params: RouteRegistration) => any[],
-	) {
+	constructor(app: unknown) {
 		const deps = app as {
 			app?: unknown;
-			beforeRouteRegistered?: (params: RouteRegistration) => any[];
 		};
 		this.app = deps?.app ?? app;
-		this.beforeRouteRegistered =
-			deps?.beforeRouteRegistered ?? beforeRouteRegistered;
 	}
 
 	initialize(context: InitializerContext<HttpToken>) {
@@ -43,20 +36,11 @@ class TestHttpInitializer implements Initializer<HttpToken> {
 				const handler = async (request: unknown, reply: unknown) =>
 					runInRequestScopeContext(() => context.invoke(request, reply));
 
-				const beforeMiddleware = this.beforeRouteRegistered?.({
-					method: verb,
-					path,
-					schema: methodState.schema,
-				});
-
 				this.registerRoute({
 					verb,
 					path,
 					handler,
-					preHandler: [
-						...(beforeMiddleware ?? []),
-						...methodState.beforeMiddleware,
-					],
+					preHandler: [...methodState.beforeMiddleware],
 					schema: methodState.schema,
 				});
 			}
@@ -135,18 +119,23 @@ class TestHttpInitializer implements Initializer<HttpToken> {
 	}
 }
 
-export function createHttpTestModule(
-	app: unknown,
-	beforeRouteRegistered?: (params: RouteRegistration) => any[],
-): AnyModule {
-	const providers: Record<string, unknown> = {
-		app,
-		beforeRouteRegistered: beforeRouteRegistered || (() => undefined),
-	};
+export const createMockExpress = () => {
+	const app: any = () => {};
+	app.use = vi.fn();
+	app.get = vi.fn();
+	app.post = vi.fn();
+	app.set = vi.fn();
 
+	return app;
+};
+
+export function createHttpTestModule(app: unknown): AnyModule {
 	return createModule({
 		name: "HttpTestModule",
-		providers,
+		providers: {
+			app,
+		},
+		exports: ["app"],
 		initializers: {
 			http: TestHttpInitializer,
 		},

@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
+import type { FactoryProvider } from "../providers/provider.types.js";
 import type { AnyModule, Module, ModuleDefinition } from "./module.types.js";
 import type { ForwardRef } from "./module-ref.types.js";
-import type { FactoryProvider } from "./provider.types.js";
 
 export type ModuleOptions = {
 	hashNameFrom?: unknown;
@@ -10,7 +10,7 @@ export type ModuleOptions = {
 };
 
 export function forwardRef<T extends AnyModule>(
-	getter: () => T,
+	getter: () => T | Promise<T>,
 ): ForwardRef<T> {
 	return {
 		__forward_ref__: true,

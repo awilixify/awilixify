@@ -42,7 +42,6 @@ const BentoCacheModule = createModule<BentoCacheModuleDef>({
 	exports: ["bentoCache"],
 	providers: {
 		bentoCache: {
-			provide: BentoCache,
 			useFactory: () =>
 				new BentoCache({
 					default: "redis",

@@ -1,10 +1,10 @@
-import type { EmptyObject, UnionToIntersection } from "../di/common.types.js";
+import type { EmptyObject } from "../di/common.types.js";
 import type {
 	Module,
 	ModuleDefinition,
 	ModuleImport,
-} from "../di/module.types.js";
-import type { DefPreHandlerMap } from "../di/provider.types.js";
+} from "../di/modules/module.types.js";
+import type { DefPreHandlerMap } from "../di/providers/provider.types.js";
 import type {
 	GlobalCommandPreHandlers,
 	GlobalQueryPreHandlers,
@@ -502,3 +502,9 @@ type MergeResponseWithPreHandlerErrors<TResponse, TPreHandlerError> = [
 					]
 				? Result<V, E | TPreHandlerError>
 				: Result<TResponse, TPreHandlerError>;
+
+type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends (
+	k: infer I,
+) => void
+	? I
+	: never;

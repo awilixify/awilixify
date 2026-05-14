@@ -8,16 +8,20 @@ import {
 	DIContext,
 	type DiContextOptions,
 	type ModuleScopeTree,
-} from "../lib/di/di-context.js";
+} from "../lib/di/contexts/di-context.js";
+import { AsyncDIContext } from "../lib/di/contexts/di-context-async.js";
 import * as ERRORS from "../lib/di/errors.js";
-import type { AnyModule } from "../lib/di/module.types.js";
-import type { ModuleDef } from "../lib/di/module-def.types.js";
+import type { AnyModule } from "../lib/di/modules/module.types.js";
+import type { ModuleDef } from "../lib/di/modules/module-def.types.js";
 import {
 	createFactoryProvider,
 	createModule,
 	forwardRef,
-} from "../lib/di/module-factories.js";
-import type { ForwardRef, ModuleRef } from "../lib/di/module-ref.types.js";
+} from "../lib/di/modules/module-factories.js";
+import type {
+	ForwardRef,
+	ModuleRef,
+} from "../lib/di/modules/module-ref.types.js";
 
 // Test-only type: Override resolve to return 'any' for convenience
 type TestContainer = Omit<AwilixContainer, "resolve"> & {
@@ -74,7 +78,7 @@ describe("DIContext", () => {
 		module: Partial<AnyModule>,
 		options?: Partial<DiContextOptions>,
 	): Promise<TestModuleScopeTree> {
-		return DIContext.createAsync(
+		return AsyncDIContext.create(
 			{
 				name: "AnyModule",
 				...module,
@@ -142,7 +146,7 @@ describe("DIContext", () => {
 						auth: LocalQueryMiddleware,
 					},
 				});
-			}).toThrow(ERRORS.MiddlewareNameConflictError);
+			}).toThrow(ERRORS.FeatureNameConflictError);
 		});
 
 		it("should throw an error when imported modules export conflicting query pre-handler names", () => {
@@ -169,7 +173,7 @@ describe("DIContext", () => {
 						},
 					],
 				});
-			}).toThrow(ERRORS.MiddlewareNameConflictError);
+			}).toThrow(ERRORS.FeatureNameConflictError);
 		});
 
 		it("should throw an error when factory provider depends on non-existent provider", () => {
@@ -178,7 +182,6 @@ describe("DIContext", () => {
 					name: "InvalidFactoryModule",
 					providers: {
 						factoryService: {
-							provide: TestableBase,
 							inject: ["nonExistentService"],
 							useFactory: () => new TestableBase(),
 						},
@@ -193,19 +196,16 @@ describe("DIContext", () => {
 					name: "CircularDependencyModule",
 					providers: {
 						serviceA: {
-							provide: TestableBase,
 							inject: ["serviceB"],
 							useFactory: (serviceB: TestableBase) =>
 								new TestableBase({ serviceB }),
 						},
 						serviceB: {
-							provide: TestableBase,
 							inject: ["serviceC"],
 							useFactory: (serviceC: TestableBase) =>
 								new TestableBase({ serviceC }),
 						},
 						serviceC: {
-							provide: TestableBase,
 							inject: ["serviceA"],
 							useFactory: (serviceA: TestableBase) =>
 								new TestableBase({ serviceA }),
@@ -308,6 +308,138 @@ describe("DIContext", () => {
 			expect(serviceA?.call()).toBe("Service B called");
 			expect(serviceB?.call()).toBe("Service A called");
 		});
+
+		it("should allow module forwardRef with async factory providers in AsyncDIContext", async () => {
+			class ServiceA extends TestableBase {}
+			class ServiceB extends TestableBase {}
+
+			const ModuleA: AnyModule = {
+				name: "ModuleA",
+				imports: [],
+				providers: {
+					serviceA: {
+						inject: ["serviceB"],
+						useFactory: async (serviceB: ServiceB) =>
+							new ServiceA({ serviceB }),
+					},
+				},
+				exports: ["serviceA"],
+			};
+
+			const ModuleB: AnyModule = {
+				name: "ModuleB",
+				imports: [ModuleA],
+				providers: {
+					serviceB: ServiceB,
+				},
+				exports: ["serviceB"],
+			};
+
+			ModuleA.imports = [forwardRef(() => ModuleB)];
+
+			const { scope, importedScopes } = await AsyncDIContext.create(ModuleA, {
+				containerOptions: {
+					injectionMode: "PROXY",
+				},
+			});
+
+			const serviceA = scope.resolve<ServiceA>("serviceA");
+			const serviceB = importedScopes
+				.get("ModuleB")
+				?.scope.resolve<ServiceB>("serviceB");
+
+			expect(serviceA.getDeps().serviceB).toBe(serviceB);
+		});
+
+		it("should resolve promised imports with AsyncDIContext", async () => {
+			class ImportedService extends TestableBase {}
+			class LocalService extends TestableBase {}
+
+			const ImportedModule: AnyModule = {
+				name: "ImportedModule",
+				providers: {
+					importedService: ImportedService,
+				},
+				exports: ["importedService"],
+			};
+
+			const { scope, importedScopes } = await registerModuleAsync({
+				imports: [Promise.resolve(ImportedModule)],
+				providers: {
+					localService: {
+						inject: ["importedService"],
+						useFactory: (importedService: ImportedService) =>
+							new LocalService({ importedService }),
+					},
+				},
+			});
+
+			const importedService = importedScopes
+				.get("ImportedModule")
+				?.scope.resolve<ImportedService>("importedService");
+			const localService = scope.resolve<LocalService>("localService");
+
+			expect(localService.getDeps().importedService).toBe(importedService);
+		});
+
+		it("should resolve promised root module with AsyncDIContext", async () => {
+			class RootService extends TestableBase {}
+
+			const { scope } = await AsyncDIContext.create(
+				Promise.resolve({
+					name: "AsyncRootModule",
+					providers: {
+						rootService: RootService,
+					},
+				}),
+				{
+					containerOptions: {
+						injectionMode: "PROXY",
+					},
+				},
+			);
+
+			expect(scope.resolve<RootService>("rootService")).toBeInstanceOf(
+				RootService,
+			);
+		});
+
+		it("should throw when promised import is used with sync create", () => {
+			expect(() =>
+				registerModule({
+					imports: [
+						Promise.resolve({
+							name: "ImportedModule",
+						}),
+					],
+				}),
+			).toThrow(ERRORS.AsyncModuleRequiresAsyncCreateError);
+		});
+
+		it("should resolve async forwardRef imports with AsyncDIContext", async () => {
+			const ImportedModule: AnyModule = {
+				name: "ImportedModule",
+				providers: {
+					importedService: TestableBase,
+				},
+				exports: ["importedService"],
+			};
+
+			const { scope } = await registerModuleAsync({
+				imports: [forwardRef(async () => ImportedModule)],
+				providers: {
+					localService: {
+						inject: ["importedService"],
+						useFactory: (importedService: TestableBase) =>
+							new TestableBase({ importedService }),
+					},
+				},
+			});
+
+			expect(
+				scope.resolve<TestableBase>("localService").getDepKeys(),
+			).toContain("importedService");
+		});
 	});
 
 	describe("Factory Provider Registration", () => {
@@ -315,7 +447,6 @@ describe("DIContext", () => {
 			const { scope } = registerModule({
 				providers: {
 					factoryService: {
-						provide: TestableBase,
 						inject: [],
 						useFactory: () => new TestableBase(),
 					},
@@ -331,7 +462,6 @@ describe("DIContext", () => {
 				providers: {
 					baseService: TestableBase,
 					factoryService: {
-						provide: TestableBase,
 						inject: ["baseService"],
 						useFactory: (baseService: TestableBase) =>
 							new TestableBase({ baseService }),
@@ -360,7 +490,6 @@ describe("DIContext", () => {
 				],
 				providers: {
 					factoryServiceA: {
-						provide: TestableBase,
 						inject: ["factoryServiceB", "serviceA", "innerService"],
 						useFactory: (
 							factoryServiceB: TestableBase,
@@ -369,7 +498,6 @@ describe("DIContext", () => {
 						) => new TestableBase({ factoryServiceB, serviceA, innerService }),
 					},
 					factoryServiceB: {
-						provide: TestableBase,
 						inject: ["serviceA"],
 						useFactory: (serviceA: TestableBase) =>
 							new TestableBase({ serviceA }),
@@ -402,13 +530,12 @@ describe("DIContext", () => {
 			expect(factoryServiceB.getDepKeys()).toContain("serviceA");
 		});
 
-		it("should resolve async factory provider before constructor injection with createAsync", async () => {
+		it("should resolve async factory provider before constructor injection with AsyncDIContext", async () => {
 			class ConsumerService extends TestableBase {}
 
 			const { scope } = await registerModuleAsync({
 				providers: {
 					asyncService: {
-						provide: TestableBase,
 						inject: [],
 						useFactory: async () => new TestableBase(),
 					},
@@ -426,20 +553,18 @@ describe("DIContext", () => {
 			);
 		});
 
-		it("should resolve async factory dependencies in provider order with createAsync", async () => {
+		it("should resolve async factory dependencies in provider order with AsyncDIContext", async () => {
 			class ConsumerService extends TestableBase {}
 
 			const { scope } = await registerModuleAsync({
 				providers: {
 					consumerService: ConsumerService,
 					composedService: {
-						provide: TestableBase,
 						inject: ["asyncService"],
 						useFactory: (asyncService: TestableBase) =>
 							new TestableBase({ asyncService }),
 					},
 					asyncService: {
-						provide: TestableBase,
 						inject: [],
 						useFactory: async () => new TestableBase(),
 					},
@@ -459,13 +584,11 @@ describe("DIContext", () => {
 			const { scope } = await registerModuleAsync({
 				providers: {
 					secondAsyncService: {
-						provide: TestableBase,
 						inject: ["firstAsyncService"],
 						useFactory: async (firstAsyncService: TestableBase) =>
 							new TestableBase({ firstAsyncService }),
 					},
 					firstAsyncService: {
-						provide: TestableBase,
 						inject: [],
 						useFactory: async () => new TestableBase(),
 					},
@@ -487,7 +610,6 @@ describe("DIContext", () => {
 				registerModule({
 					providers: {
 						asyncService: {
-							provide: TestableBase,
 							inject: [],
 							useFactory: async () => new TestableBase(),
 						},
@@ -501,10 +623,7 @@ describe("DIContext", () => {
 				registerModuleAsync({
 					providers: {
 						asyncService: {
-							provide: {
-								useClass: TestableBase,
-								lifetime: Lifetime.TRANSIENT,
-							},
+							lifetime: Lifetime.TRANSIENT,
 							inject: [],
 							useFactory: async () => new TestableBase(),
 						},
@@ -670,7 +789,6 @@ describe("DIContext", () => {
 				imports: [M1],
 				providers: {
 					p2: {
-						provide: P2,
 						inject: ["p1"],
 						useFactory: (p1: TestableBase) => new P2({ p1 }),
 					},
@@ -816,7 +934,6 @@ describe("DIContext", () => {
 					port: config.port,
 					service2: class Service2 extends TestableBase {},
 					service1: {
-						provide: class Service1 {},
 						inject: ["host", "port"],
 						useFactory: (host: string, port: number) =>
 							new Service1({ host, port }),
@@ -888,7 +1005,6 @@ describe("DIContext", () => {
 					service2: class Service2 extends TestableBase {},
 					appConfig: "test-config",
 					complexService: factory({
-						provide: ComplexService,
 						inject: ["service1", "service2", "appConfig"],
 						useFactory: (service1, service2, appConfig) =>
 							new ComplexService({ service1, service2, appConfig }),

@@ -1,19 +1,23 @@
 import type { BuildResolverOptions } from "awilix";
-import type { ForwardRef } from "./module-ref.types.js";
 import type {
 	AnyController,
 	AnyInitializer,
 	AnyInterceptor,
 	AnyMiddleware,
 	AnyProvider,
-} from "./provider.types.js";
+} from "../providers/provider.types.js";
+import type { ForwardRef } from "./module-ref.types.js";
 
 // Internal lightweight module shape used by runtime processors.
 // It intentionally avoids importing the heavy public module generic graph
 // (Module/ModuleDef helpers) to keep TS/LSP responsive in runtime files.
 export interface InternalModuleLike {
 	name: string;
-	imports?: readonly (InternalModuleLike | ForwardRef<InternalModuleLike>)[];
+	imports?: readonly (
+		| InternalModuleLike
+		| Promise<InternalModuleLike>
+		| ForwardRef<InternalModuleLike>
+	)[];
 	providers?: Record<string, AnyProvider>;
 	exports?: readonly string[];
 	controllers?: AnyController[];

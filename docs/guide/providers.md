@@ -48,7 +48,6 @@ export const EmailModule = createModule<EmailModuleDef>({
   providers: {
     apiKey: "sendgrid_key_123",
     emailService: {
-      provide: EmailService,
       // Declare name of dependencies you want to access in useFactory
       inject: ["apiKey"],
       useFactory: (apiKey) => {
@@ -80,7 +79,6 @@ export const NotificationModule = createModule<NotificationModuleDef>({
     apiKey: "sendgrid_api_key_123",
 
     emailService: factory({
-      provide: EmailService,
       inject: ["apiKey"],
       // each injected dep is fully typed
       useFactory: (apiKey) => {

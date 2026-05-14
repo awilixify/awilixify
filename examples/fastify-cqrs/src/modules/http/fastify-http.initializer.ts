@@ -15,7 +15,7 @@ export class FastifyHttpInitializer implements Initializer<HttpToken> {
 	constructor(private readonly app: Deps["app"]) {}
 
 	initialize(context: InitializerContext<HttpToken>) {
-		const methodKey = `${context.controllerClass.name}:${String(context.methodName)}`;
+		const methodKey = `${context.target.name}:${String(context.methodName)}`;
 
 		if (this.registeredMethods.has(methodKey)) return;
 

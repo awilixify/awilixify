@@ -1,7 +1,10 @@
 import { Lifetime } from "awilix";
 import { describe, expect, it } from "vitest";
-import { DIContext, type DiContextOptions } from "../lib/di/di-context.js";
-import type { AnyModule } from "../lib/di/module.types.js";
+import {
+	DIContext,
+	type DiContextOptions,
+} from "../lib/di/contexts/di-context.js";
+import type { AnyModule } from "../lib/di/modules/module.types.js";
 import * as MEDIATOR_ERRORS from "../lib/mediator/errors.js";
 import { Result } from "../lib/mediator/result.js";
 
