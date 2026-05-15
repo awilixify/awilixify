@@ -1,4 +1,8 @@
-import { createModule, type ModuleDef } from "awilixify";
+import {
+	createModule,
+	type ModuleDef,
+	type InferGlobalDependencies,
+} from "awilixify";
 
 import type { FastifyInstance } from "@/types.js";
 import { FastifyHttpInitializer } from "./fastify-http.initializer.js";
@@ -10,6 +14,7 @@ export type HttpModuleDef = ModuleDef<{
 	initializers: {
 		http: typeof FastifyHttpInitializer;
 	};
+	exportKeys: ["app"];
 	exportInitializerKeys: ["http"];
 }>;
 
@@ -21,9 +26,14 @@ export function HttpModule(app: FastifyInstance) {
 		providers: {
 			app,
 		},
+		exports: ["app"],
 		initializers: {
 			http: FastifyHttpInitializer,
 		},
 		initializerExports: ["http"],
 	});
+}
+
+declare module "awilixify" {
+	interface GlobalDependencies extends InferGlobalDependencies<HttpModuleDef> {}
 }

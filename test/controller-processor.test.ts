@@ -114,14 +114,16 @@ describe("ControllerProcessor", () => {
 	});
 
 	describe("Same Module Instance Imported Multiple Times", () => {
-		it("should skip register controller when same module instance is imported multiple times", () => {
+		it("should skip register controller when same module instance is imported multiple times", async () => {
 			const SharedModule = {
 				name: "SharedModule",
 				controllers: [DecoratedController],
 			};
 
+			let app: ReturnType<typeof registerModule> | undefined;
+
 			expect(() => {
-				registerModule({
+				app = registerModule({
 					name: "AppModule",
 					imports: [
 						{
@@ -135,6 +137,8 @@ describe("ControllerProcessor", () => {
 					],
 				});
 			}).not.toThrow();
+
+			await app?.init();
 
 			expect(mockExpress.get).toHaveBeenCalledTimes(1);
 		});
@@ -156,17 +160,18 @@ describe("ControllerProcessor", () => {
 			expect(mockExpress.get).not.toHaveBeenCalled();
 		});
 
-		it("should register controllers when registerControllers is true", () => {
+		it("should register controllers when registerControllers is true", async () => {
 			const DynamicModule = () => ({
 				name: "DynamicModule",
 				controllers: [DecoratedController],
 				registerControllers: true,
 			});
 
-			registerModule({
+			const app = registerModule({
 				name: "AppModule",
 				imports: [DynamicModule()],
 			});
+			await app.init();
 
 			expect(mockExpress.get).toHaveBeenCalledWith(
 				"/test",
@@ -179,10 +184,11 @@ describe("ControllerProcessor", () => {
 		it("should resolve controller and call method with request and reply", async () => {
 			const mockReply = { send: vi.fn() };
 
-			registerModule({
+			const app = registerModule({
 				name: "TestModule",
 				controllers: [DecoratedController],
 			});
+			await app.init();
 
 			// Get the registered handler (Express wraps it in middleware)
 			const handlerCall = mockExpress.get.mock.calls.find(
@@ -215,7 +221,7 @@ describe("ControllerProcessor", () => {
 				}
 			}
 
-			registerModule({
+			const app = registerModule({
 				name: "TestModule",
 				controllers: [
 					{
@@ -224,6 +230,7 @@ describe("ControllerProcessor", () => {
 					},
 				],
 			});
+			await app.init();
 
 			// Get the registered handler
 			const handlerCall = mockExpress.get.mock.calls.find(

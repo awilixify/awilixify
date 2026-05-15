@@ -17,6 +17,8 @@ type ModuleWithScope = {
 	scope: Awilix.AwilixContainer;
 };
 
+export type InitializerTask = () => Promise<void>;
+
 export class InitializerProcessor {
 	private readonly keyedFeatureRegistrar = new KeyedFeatureRegistrar({});
 
@@ -25,51 +27,53 @@ export class InitializerProcessor {
 		Map<string, () => Initializer>
 	>();
 
-	public processInitializers(
+	public collectInitializers(
 		m: M,
 		scope: Awilix.AwilixContainer,
 		importedModulesWithScope: ModuleWithScope[],
 		controllers: ControllerRuntimeEntry[],
-	): void {
+	): InitializerTask[] {
 		this.processInitializerResolvers(m, scope, importedModulesWithScope);
 
 		const initializers = this.resolversByModule.get(m) ?? new Map();
 
-		if (initializers.size === 0 || controllers.length === 0) return;
+		if (initializers.size === 0 || controllers.length === 0) return [];
 
-		for (const controller of controllers) {
-			for (const methodName of this.getControllerMethodNames(
-				controller.controllerClass,
-			)) {
-				const invoke = (...args: unknown[]) =>
-					controller.resolve()[methodName](...args);
-
-				for (const resolveInitializer of initializers.values()) {
-					const initializer = resolveInitializer();
-					const decoratorState = resolveDecoratorState(
+		return [
+			async () => {
+				for (const controller of controllers) {
+					for (const methodName of this.getControllerMethodNames(
 						controller.controllerClass,
-						initializer.token,
-					);
+					)) {
+						const invoke = (...args: unknown[]) =>
+							controller.resolve()[methodName](...args);
 
-					if (decoratorState === null) continue;
+						for (const resolveInitializer of initializers.values()) {
+							const initializer = resolveInitializer();
+							const decoratorState = resolveDecoratorState(
+								controller.controllerClass,
+								initializer.token,
+							);
 
-					const metadata = decoratorState.methods.get(methodName);
+							if (decoratorState === null) continue;
 
-					if (metadata === undefined) continue;
+							const metadata = decoratorState.methods.get(methodName);
 
-					void Promise.resolve(
-						initializer.initialize({
-							moduleName: m.name,
-							target: controller.controllerClass,
-							methodName,
-							metadata,
-							decoratorState,
-							invoke,
-						}),
-					);
+							if (metadata === undefined) continue;
+
+							await initializer.initialize({
+								moduleName: m.name,
+								target: controller.controllerClass,
+								methodName,
+								metadata,
+								decoratorState,
+								invoke,
+							});
+						}
+					}
 				}
-			}
-		}
+			},
+		];
 	}
 
 	private processInitializerResolvers(

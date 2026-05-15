@@ -43,7 +43,7 @@ describe("Request scope context (AsyncLocalStorage)", () => {
 			}
 		}
 
-		DIContext.create(
+		const app = DIContext.create(
 			{
 				name: "ScopeModule",
 				providers: {
@@ -72,6 +72,7 @@ describe("Request scope context (AsyncLocalStorage)", () => {
 				},
 			},
 		);
+		await app.init();
 
 		const getRouteRegistration = mockExpress.get.mock.calls.find(
 			([path]: [string]) => path === "/scope-test",
@@ -152,7 +153,7 @@ describe("Request scope context (AsyncLocalStorage)", () => {
 			exports: ["exportedServiceA", "exportedServiceB"],
 		};
 
-		DIContext.create(
+		const app = DIContext.create(
 			{
 				name: "AppModuleTwoExports",
 				imports: [sharedModule],
@@ -170,6 +171,7 @@ describe("Request scope context (AsyncLocalStorage)", () => {
 				},
 			},
 		);
+		await app.init();
 
 		const getRouteRegistration = mockExpress.get.mock.calls.find(
 			([path]: [string]) => path === "/multi-export-scope-test",

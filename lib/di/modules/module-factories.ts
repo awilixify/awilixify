@@ -1,6 +1,10 @@
 import { createHash } from "node:crypto";
 import type { FactoryProvider } from "../providers/provider.types.js";
 import type { AnyModule, Module, ModuleDefinition } from "./module.types.js";
+import type {
+	GlobalDependencies,
+	NormalizeGlobalDependencies,
+} from "./module-def.types.js";
 import type { ForwardRef } from "./module-ref.types.js";
 
 export type ModuleOptions = {
@@ -18,10 +22,16 @@ export function forwardRef<T extends AnyModule>(
 	};
 }
 
-export function createFactoryProvider<DepsMap extends Record<string, any>>() {
-	return <T extends object, const Keys extends readonly (keyof DepsMap)[]>(
-		provider: FactoryProvider<T, DepsMap, Keys>,
-	): FactoryProvider<T, DepsMap, Keys> => {
+type FactoryDeps<T> = (T extends { deps: infer Deps } ? Deps : T) &
+	NormalizeGlobalDependencies<GlobalDependencies>;
+
+export function createFactoryProvider<TDeps extends Record<string, any>>() {
+	return <
+		T extends object,
+		const Keys extends readonly Extract<keyof FactoryDeps<TDeps>, string>[],
+	>(
+		provider: FactoryProvider<T, FactoryDeps<TDeps>, Keys>,
+	): FactoryProvider<T, FactoryDeps<TDeps>, Keys> => {
 		return provider;
 	};
 }

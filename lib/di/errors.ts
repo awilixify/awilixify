@@ -117,6 +117,16 @@ export class AsyncFactoryRequiresAsyncCreateError extends Error {
 	}
 }
 
+export class AsyncEagerFactoryRequiresInitError extends Error {
+	constructor(moduleName: string, providerKey: string) {
+		super(
+			`Provider "${providerKey}" in module "${moduleName}" uses async useFactory with eager initialization. ` +
+				`Call app.init() before resolving this provider.`,
+		);
+		this.name = "AsyncEagerFactoryRequiresInitError";
+	}
+}
+
 export class AsyncFactoryRequiresSingletonLifetimeError extends Error {
 	constructor(moduleName: string, providerKey: string) {
 		super(
@@ -124,6 +134,35 @@ export class AsyncFactoryRequiresSingletonLifetimeError extends Error {
 				`Async factory providers are resolved during AsyncDIContext bootstrap, so they must use SINGLETON lifetime.`,
 		);
 		this.name = "AsyncFactoryRequiresSingletonLifetimeError";
+	}
+}
+
+export class EagerProviderRequiresSingletonLifetimeError extends Error {
+	constructor(moduleName: string, providerKey: string) {
+		super(
+			`Provider "${providerKey}" in module "${moduleName}" uses eager initialization with a non-singleton lifetime. ` +
+				`Eager providers must use SINGLETON lifetime.`,
+		);
+		this.name = "EagerProviderRequiresSingletonLifetimeError";
+	}
+}
+
+export class EagerProviderInitDependencyNotFoundError extends Error {
+	constructor(moduleName: string, providerKey: string, dependencyKey: string) {
+		super(
+			`Provider "${providerKey}" in module "${moduleName}" declares initAfter dependency "${dependencyKey}", ` +
+				`but that dependency is not an eager provider in the current application lifecycle.`,
+		);
+		this.name = "EagerProviderInitDependencyNotFoundError";
+	}
+}
+
+export class CircularProviderInitDependencyError extends Error {
+	constructor(providerKeys: string[]) {
+		super(
+			`Circular eager provider init dependency detected: ${providerKeys.join(", ")}`,
+		);
+		this.name = "CircularProviderInitDependencyError";
 	}
 }
 

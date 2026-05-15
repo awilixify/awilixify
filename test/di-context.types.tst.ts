@@ -10,6 +10,16 @@ import {
 	createModule,
 } from "../lib/di/modules/module-factories.js";
 
+class GlobalService {
+	private declare readonly __brand: never;
+}
+
+declare module "../lib/di/modules/module-def.types.js" {
+	interface GlobalDependencies {
+		globalService: GlobalService;
+	}
+}
+
 describe("Module", () => {
 	class P1 {
 		private declare readonly __brand: never;
@@ -117,6 +127,73 @@ describe("Module", () => {
 				},
 			}),
 		).type.toRaiseError();
+	});
+
+	it("ensures createFactoryProvider accepts ModuleDef and global dependencies", () => {
+		type M1Def = D<{
+			providers: { p1: P1 };
+		}>;
+
+		const factory = createFactoryProvider<M1Def>();
+
+		factory({
+			inject: ["p1", "globalService"],
+			useFactory: (_p1, _globalService) => {
+				expect<typeof _p1>().type.toBe<P1>();
+				expect<typeof _globalService>().type.toBe<GlobalService>();
+
+				return new P4();
+			},
+		});
+
+		factory({
+			inject: ["globalService"],
+			useFactory: (_globalService) => {
+				expect<typeof _globalService>().type.toBe<GlobalService>();
+
+				return new P4();
+			},
+		});
+	});
+
+	it("ensures initAfter accepts local, imported, and global dependency keys", () => {
+		type ImportedDef = D<{
+			providers: { p2: P2 };
+			exportKeys: ["p2"];
+		}>;
+		const ImportedModule = createModule<ImportedDef>({
+			name: "ImportedModule",
+			providers: { p2: P2 },
+			exports: ["p2"],
+		});
+
+		type M1 = M<
+			D<{
+				imports: [typeof ImportedModule];
+				providers: { p1: P1; p3: P3 };
+			}>
+		>;
+		type M1Def = D<{
+			imports: [typeof ImportedModule];
+			providers: { p1: P1; p3: P3 };
+		}>;
+
+		expect<"missing">().type.not.toBeAssignableTo<keyof M1Def["deps"]>();
+
+		expect({
+			name: "Module",
+			imports: [ImportedModule] as [typeof ImportedModule],
+			providers: {
+				p1: {
+					eager: true,
+					initAfter: ["p2", "p3", "globalService"] as const,
+					useClass: P1,
+				},
+				p3: P3,
+			},
+		}).type.toBeAssignableTo<M1>();
+
+		expect<"missing">().type.not.toBeAssignableTo<keyof M1Def["deps"]>();
 	});
 
 	it("ensures primitives can be passed as providers", () => {
@@ -312,8 +389,19 @@ describe("Module", () => {
 		expect<Deps>().type.toBeAssignableTo<ExpectedDeps>();
 		expect<ExpectedDeps>().type.toBeAssignableTo<Deps>();
 
-		expect<{ p1: P1; p2: P2; p4: P4 }>().type.toBeAssignableTo<Deps>();
-		expect<{ p1: P1; p2: P2; p4: P4; p5: P5 }>().type.toBeAssignableTo<Deps>();
+		expect<{
+			p1: P1;
+			p2: P2;
+			p4: P4;
+			globalService: GlobalService;
+		}>().type.toBeAssignableTo<Deps>();
+		expect<{
+			p1: P1;
+			p2: P2;
+			p4: P4;
+			p5: P5;
+			globalService: GlobalService;
+		}>().type.toBeAssignableTo<Deps>();
 		expect<{ p1: P1; p2: P2 }>().type.not.toBeAssignableTo<Deps>();
 		expect<Deps>().type.not.toHaveProperty("p5");
 		expect<Deps>().type.not.toHaveProperty("p3");

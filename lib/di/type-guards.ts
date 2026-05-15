@@ -11,6 +11,8 @@ export function hasUseClass<T extends object = object>(
 ): value is {
 	useClass: Constructor<T>;
 	allowCircular?: boolean;
+	eager?: boolean;
+	initAfter?: readonly string[];
 } & Partial<BuildResolverOptions<any>> {
 	return typeof value === "object" && value !== null && "useClass" in value;
 }
@@ -95,5 +97,38 @@ export function isPromiseLike<T = unknown>(
 		value !== null &&
 		"then" in value &&
 		typeof value.then === "function"
+	);
+}
+
+export function isEagerProvider(
+	provider: unknown,
+): provider is { eager: true } {
+	return (
+		typeof provider === "object" &&
+		provider !== null &&
+		"eager" in provider &&
+		provider.eager === true
+	);
+}
+
+export function hasProviderInit(
+	value: unknown,
+): value is { init: () => void | Promise<void> } {
+	return (
+		typeof value === "object" &&
+		value !== null &&
+		"init" in value &&
+		typeof value.init === "function"
+	);
+}
+
+export function hasInitAfter(
+	provider: unknown,
+): provider is { initAfter: readonly string[] } {
+	return (
+		typeof provider === "object" &&
+		provider !== null &&
+		"initAfter" in provider &&
+		Array.isArray(provider.initAfter)
 	);
 }

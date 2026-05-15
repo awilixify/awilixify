@@ -12,6 +12,7 @@ export class CatsCronListeners {
 	constructor(
 		private readonly eventEmitter: Deps["eventEmitter"],
 		private readonly scheduler: Deps["scheduler"],
+		private readonly config: Deps["config"],
 	) {}
 
 	// @cron(CatsHeartbeatCronTask)

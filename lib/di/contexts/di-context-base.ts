@@ -8,6 +8,7 @@ import {
 } from "../processors/handler-processor.js";
 import { InitializerProcessor } from "../processors/initializer-processor.js";
 import { InterceptorProcessor } from "../processors/interceptor-processor.js";
+import { LifecycleProcessor } from "../processors/lifecycle-processor.js";
 import { ProviderDependencySorter } from "../providers/provider-dependency-sorter.js";
 import { ProviderResolver } from "../providers/provider-resolver.js";
 import {
@@ -28,6 +29,7 @@ export interface ModuleScopeTree<
 	name: string;
 	scope: S;
 	importedScopes: Map<string, ModuleScopeTree>;
+	init(): Promise<void>;
 }
 
 export class DIContextBase {
@@ -39,6 +41,7 @@ export class DIContextBase {
 	protected readonly handlerProcessor: HandlerProcessor;
 	protected readonly interceptorProcessor: InterceptorProcessor;
 	protected readonly initializerProcessor = new InitializerProcessor();
+	protected readonly lifecycleProcessor = new LifecycleProcessor();
 	protected readonly providerResolver: ProviderResolver;
 	protected readonly options: DiContextOptions;
 	protected globalModulesWithScope: (ModuleScopeTree & { module: M })[] = [];
@@ -229,12 +232,27 @@ export class DIContextBase {
 			HandlerType.Command,
 		);
 		const controllers = this.controllerProcessor.processControllers(m, scope);
-		this.initializerProcessor.processInitializers(
-			m,
-			scope,
-			importedModulesWithScope,
-			controllers,
+		this.lifecycleProcessor.addInitializerTasks(
+			this.initializerProcessor.collectInitializers(
+				m,
+				scope,
+				importedModulesWithScope,
+				controllers,
+			),
 		);
+	}
+
+	protected createModuleScopeTree(
+		name: string,
+		scope: Awilix.AwilixContainer,
+		importedScopes: ModuleScopeTree["importedScopes"],
+	): ModuleScopeTree {
+		return {
+			name,
+			scope,
+			importedScopes,
+			init: () => this.lifecycleProcessor.init(),
+		};
 	}
 
 	protected buildImportedScopesMap(

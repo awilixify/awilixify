@@ -16,9 +16,11 @@ import type {
 // biome-ignore lint/suspicious/noEmptyInterface: Intentionally empty for declaration merging
 export interface GlobalDependencies {}
 
-export type NormalizeGlobalDependencies<T> = [T] extends [DefProviderMap]
-	? T
-	: EmptyObject;
+export type NormalizeGlobalDependencies<T> = [keyof T] extends [never]
+	? EmptyObject
+	: T extends object
+		? T
+		: EmptyObject;
 
 export type InferGlobalDependencies<TModuleDef> = TModuleDef extends {
 	exports: infer TExports;
@@ -203,7 +205,7 @@ type ExtractDeps<
 type ExtractImportsExports<D extends { imports?: readonly ModuleImport[] }> =
 	D["imports"] extends readonly ModuleImport[]
 		? ExtractExportsFromImports<D["imports"]>
-		: DefProviderMap;
+		: EmptyObject;
 
 type ExtractModuleDefFromModule<T> =
 	Awaited<T> extends ImportModule<infer TDef extends ModuleDefinition>

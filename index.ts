@@ -11,6 +11,7 @@ export type {
 	InitializerContext,
 	InterceptContext,
 	Interceptor,
+	ProviderInit,
 } from "./lib/di/providers/provider.types.js";
 export * from "./lib/mediator/contract.types.js";
 export * from "./lib/mediator/global-middlewares.types.js";

@@ -180,7 +180,11 @@ type ToModuleProviderMap<
 	? EmptyObject
 	: {
 			[K in keyof T]: T[K] extends object
-				? Provider<T[K], DepsMap> | RawValueObject<T[K]>
+				?
+						| (Provider<T[K], DepsMap> & {
+								initAfter?: readonly Extract<keyof DepsMap, string>[];
+						  })
+						| RawValueObject<T[K]>
 				: T[K];
 		};
 
@@ -191,6 +195,8 @@ type RawValueObject<T> = T & {
 	useFactory?: never;
 	lifetime?: never;
 	allowCircular?: never;
+	eager?: never;
+	initAfter?: never;
 };
 
 // ============================================================================

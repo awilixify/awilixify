@@ -108,6 +108,15 @@ export class ProviderResolver {
 
 		if (GUARGS.isFactoryProvider(provider)) {
 			if (GUARGS.isAsyncFactoryProvider(provider)) {
+				if (GUARGS.isEagerProvider(provider)) {
+					return Awilix.asFunction(() => {
+						throw new ERRORS.AsyncEagerFactoryRequiresInitError(
+							module.name,
+							key ?? "unknown",
+						);
+					}, resolverOptions);
+				}
+
 				throw new ERRORS.AsyncFactoryRequiresAsyncCreateError(
 					module.name,
 					key ?? "unknown",
@@ -173,7 +182,8 @@ export class ProviderResolver {
 		provider: AnyProvider,
 	): Awilix.BuildResolverOptions<any> {
 		if (GUARGS.hasUseClass(provider)) {
-			const { useClass, allowCircular, ...options } = provider;
+			const { useClass, allowCircular, eager, initAfter, ...options } =
+				provider;
 
 			return ProviderResolver.mergeResolverOptions(
 				module,
@@ -183,7 +193,7 @@ export class ProviderResolver {
 		}
 
 		if (GUARGS.isFactoryProvider(provider)) {
-			const { inject, useFactory, ...options } = provider;
+			const { eager, initAfter, inject, useFactory, ...options } = provider;
 
 			return ProviderResolver.mergeResolverOptions(
 				module,

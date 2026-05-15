@@ -1,4 +1,4 @@
-import { createModule, type ModuleDef } from "awilixify";
+import { createModule, type ModuleDef, createFactoryProvider } from "awilixify";
 import { BentoCache, BentoStore, bentostore } from "bentocache";
 import { redisDriver } from "bentocache/drivers/redis";
 
@@ -37,22 +37,28 @@ type BentoCacheModuleDef = ModuleDef<{
 	exportKeys: ["bentoCache"];
 }>;
 
+const factory = createFactoryProvider<BentoCacheModuleDef>();
+
 const BentoCacheModule = createModule<BentoCacheModuleDef>({
 	name: "BentoCacheModule",
 	exports: ["bentoCache"],
 	providers: {
-		bentoCache: {
-			useFactory: () =>
+		bentoCache: factory({
+			inject: ["config"],
+			useFactory: (c) =>
 				new BentoCache({
 					default: "redis",
 					stores: {
 						redis: bentostore().useL2Layer(
 							redisDriver({
-								connection: { host: "127.0.0.1", port: 6380 },
+								connection: {
+									host: c.get("redisHost"),
+									port: c.get("redisPort"),
+								},
 							}),
 						),
 					},
 				}),
-		},
+		}),
 	},
 });

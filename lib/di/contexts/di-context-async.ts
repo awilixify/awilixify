@@ -87,12 +87,12 @@ export class AsyncDIContext extends DIContextBase {
 		if (isCircular) {
 			this.ensureCircularDependencyHasForwardRef(m, moduleChain);
 
-			return {
-				name: m.name,
+			return this.createModuleScopeTree(
+				m.name,
 				// biome-ignore lint/style/noNonNullAssertion: circular module was already registered
-				scope: this.moduleScopeMap.get(m)!,
-				importedScopes: new Map(),
-			};
+				this.moduleScopeMap.get(m)!,
+				new Map(),
+			);
 		}
 
 		const pendingTree = this.moduleTreePromiseMap.get(m);
@@ -163,13 +163,15 @@ export class AsyncDIContext extends DIContextBase {
 			});
 		}
 
+		this.lifecycleProcessor.collectEagerProviders(m, scope);
+
 		this.processModuleFeatures(m, scope, importedModulesWithScope);
 
-		const moduleTree = {
+		const moduleTree = this.createModuleScopeTree(
+			m.name,
 			scope,
-			importedScopes: this.buildImportedScopesMap(importedModulesWithScope),
-			name: m.name,
-		};
+			this.buildImportedScopesMap(importedModulesWithScope),
+		);
 		this.moduleTreeMap.set(m, moduleTree);
 		this.moduleTreePromiseMap.delete(m);
 
