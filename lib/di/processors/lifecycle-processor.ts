@@ -20,6 +20,10 @@ export class LifecycleProcessor {
 	private readonly initializerTasks: InitializerTask[] = [];
 	private initPromise?: Promise<void>;
 
+	constructor(
+		private readonly providerOptions: Partial<Awilix.BuildResolverOptions<any>>,
+	) {}
+
 	collectEagerProviders(m: M, scope: Awilix.AwilixContainer): void {
 		for (const key of this.getEagerProviderKeys(m)) {
 			this.eagerProviderRefs.push({
@@ -92,12 +96,19 @@ export class LifecycleProcessor {
 			scope.registrations[dependencyKey]!.resolve(scope),
 		);
 		const resolvedValue = await provider.useFactory(...factoryDeps);
+		const { eager, initAfter, inject, useFactory, ...providerResolverOptions } =
+			provider;
+		const resolverOptions: Awilix.BuildResolverOptions<any> = {
+			...this.providerOptions,
+			...module.providerOptions,
+			...providerResolverOptions,
+		};
 
 		scope.register({
-			[key]: Awilix.asValue(resolvedValue),
+			[key]: Awilix.asFunction(() => resolvedValue, resolverOptions),
 		});
 
-		return resolvedValue;
+		return scope.resolve(key);
 	}
 
 	private async callProviderInitAsync(instance: unknown): Promise<void> {

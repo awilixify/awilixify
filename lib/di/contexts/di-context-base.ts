@@ -30,6 +30,7 @@ export interface ModuleScopeTree<
 	scope: S;
 	importedScopes: Map<string, ModuleScopeTree>;
 	init(): Promise<void>;
+	dispose(): Promise<void>;
 }
 
 export class DIContextBase {
@@ -41,10 +42,12 @@ export class DIContextBase {
 	protected readonly handlerProcessor: HandlerProcessor;
 	protected readonly interceptorProcessor: InterceptorProcessor;
 	protected readonly initializerProcessor = new InitializerProcessor();
-	protected readonly lifecycleProcessor = new LifecycleProcessor();
+	protected readonly lifecycleProcessor: LifecycleProcessor;
 	protected readonly providerResolver: ProviderResolver;
 	protected readonly options: DiContextOptions;
 	protected globalModulesWithScope: (ModuleScopeTree & { module: M })[] = [];
+	private readonly createdScopes: Awilix.AwilixContainer[] = [];
+	private disposePromise?: Promise<void>;
 
 	protected constructor(options: DiContextOptions) {
 		this.options = {
@@ -73,10 +76,16 @@ export class DIContextBase {
 			this.interceptorProcessor,
 			this.options.providerOptions || {},
 		);
+		this.lifecycleProcessor = new LifecycleProcessor(
+			this.options.providerOptions || {},
+		);
 	}
 
 	protected createContainer(): Awilix.AwilixContainer {
-		return Awilix.createContainer(this.options.containerOptions);
+		const scope = Awilix.createContainer(this.options.containerOptions);
+		this.createdScopes.push(scope);
+
+		return scope;
 	}
 
 	protected registerExportedProviders(
@@ -252,7 +261,22 @@ export class DIContextBase {
 			scope,
 			importedScopes,
 			init: () => this.lifecycleProcessor.init(),
+			dispose: () => this.dispose(),
 		};
+	}
+
+	private dispose(): Promise<void> {
+		this.disposePromise ??= this.executeDispose();
+
+		return this.disposePromise;
+	}
+
+	private async executeDispose(): Promise<void> {
+		const uniqueScopes = Array.from(new Set(this.createdScopes)).reverse();
+
+		for (const scope of uniqueScopes) {
+			await scope.dispose();
+		}
 	}
 
 	protected buildImportedScopesMap(

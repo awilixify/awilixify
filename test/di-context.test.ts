@@ -643,6 +643,26 @@ describe("DIContext", () => {
 			expect(app.scope.resolve("asyncService")).toBeInstanceOf(TestableBase);
 		});
 
+		it("should call async eager factory disposer on app.dispose", async () => {
+			const dispose = vi.fn(async () => {});
+
+			const app = registerModule({
+				providers: {
+					asyncService: {
+						eager: true,
+						inject: [],
+						useFactory: async () => new TestableBase(),
+						dispose,
+					},
+				},
+			});
+
+			await app.init();
+			await app.dispose();
+
+			expect(dispose).toHaveBeenCalledTimes(1);
+		});
+
 		it("should throw when async factory provider uses non-singleton lifetime", async () => {
 			await expect(
 				registerModuleAsync({
