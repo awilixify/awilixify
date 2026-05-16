@@ -52,24 +52,24 @@ export class AsyncDIContext extends DIContextBase {
 			globalModuleImports,
 		);
 
-		this.globalModulesWithScope = await Promise.all(
-			globalModules.map(async (module) => ({
+		this.globalModulesWithScope = [];
+
+		for (const module of globalModules) {
+			this.globalModulesWithScope.push({
 				...(await this.registerModuleWithScopeAsync(
 					module,
 					this.createContainer(),
 					[],
-					false,
 				)),
 				module,
-			})),
-		);
+			});
+		}
 	}
 
 	private async registerModuleWithScopeAsync(
 		m: M,
 		scope: Awilix.AwilixContainer,
 		moduleChain: M[],
-		includeGlobalModules = true,
 	): Promise<ModuleScopeTree> {
 		const existingTree = this.moduleTreeMap.get(m);
 
@@ -78,8 +78,8 @@ export class AsyncDIContext extends DIContextBase {
 		}
 
 		const imports = await this.resolveImportsAsync(m);
-		this.ensureImportedModulesUniqueness(m, imports, includeGlobalModules);
-		this.ensureNoProviderNameConflicts(m, imports, includeGlobalModules);
+		this.ensureImportedModulesUniqueness(m, imports);
+		this.ensureNoProviderNameConflicts(m, imports);
 		this.markModuleIfImportsUseForwardRef(m);
 
 		const isCircular = moduleChain.includes(m);
@@ -106,7 +106,6 @@ export class AsyncDIContext extends DIContextBase {
 			scope,
 			imports,
 			moduleChain,
-			includeGlobalModules,
 		);
 		this.moduleTreePromiseMap.set(m, moduleTreePromise);
 
@@ -118,19 +117,17 @@ export class AsyncDIContext extends DIContextBase {
 		scope: Awilix.AwilixContainer,
 		imports: M[],
 		moduleChain: M[],
-		includeGlobalModules: boolean,
 	): Promise<ModuleScopeTree> {
 		this.moduleScopeMap.set(m, scope);
 
 		const importedModulesWithScope = [
-			...(includeGlobalModules ? this.globalModulesWithScope : []),
+			...this.globalModulesWithScope,
 			...(await Promise.all(
 				imports.map(async (module) => ({
 					...(await this.registerModuleWithScopeAsync(
 						module,
 						this.createContainer(),
 						[...moduleChain, m],
-						includeGlobalModules,
 					)),
 					module,
 				})),

@@ -1,5 +1,5 @@
 import { GET, schema } from "awilixify/http";
-import type { Request, Reply } from "@/types.js";
+import type { Request, Reply } from "@/modules/http/types.js";
 
 import type { Deps } from "./cats.module.js";
 import { GetCatsSchema } from "./get-cats.dto.js";

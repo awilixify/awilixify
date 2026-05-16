@@ -4,7 +4,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DIContext } from "../lib/di/contexts/di-context.js";
 import * as ERRORS from "../lib/di/errors.js";
 import type { AnyModule } from "../lib/di/modules/module.types.js";
-import type { Controller } from "../lib/di/providers/provider.types.js";
+import type {
+	Controller
+} from "../lib/di/providers/provider.types.js";
+import * as RequestScopeContext from "../lib/di/request-scope-context.js";
 import { GET } from "../lib/http/decorators.js";
 import { createHttpTestModule, createMockExpress } from "./http-test-module.js";
 
@@ -201,6 +204,31 @@ describe("ControllerProcessor", () => {
 			await handler({}, mockReply, vi.fn());
 
 			expect(mockReply.send).toHaveBeenCalledWith("test");
+		});
+	});
+
+	describe("Initializers", () => {
+		it("should resolve initializers without request scope resolver", async () => {
+			const resolveFromRequestScopeSpy = vi.spyOn(
+				RequestScopeContext,
+				"resolveFromRequestScope",
+			);
+
+			class DecoratedAController {
+				@GET("/a")
+				a() {
+					return "a";
+				}
+			}
+
+			const app = registerModule({
+				name: "AppModule",
+				controllers: [DecoratedAController],
+			});
+
+			await app.init();
+
+			expect(resolveFromRequestScopeSpy).not.toHaveBeenCalled();
 		});
 	});
 

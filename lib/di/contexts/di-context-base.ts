@@ -125,17 +125,11 @@ export class DIContextBase {
 		);
 	}
 
-	protected ensureImportedModulesUniqueness(
-		m: M,
-		resolvedImports: M[],
-		includeGlobalModules = false,
-	) {
+	protected ensureImportedModulesUniqueness(m: M, resolvedImports: M[]) {
 		const importedNames = new Set<string>();
 
 		const imports = [
-			...(includeGlobalModules
-				? this.globalModulesWithScope.map((el) => el.module)
-				: []),
+			...this.globalModulesWithScope.map((el) => el.module),
 			...resolvedImports,
 		];
 
@@ -177,19 +171,13 @@ export class DIContextBase {
 		}
 	}
 
-	protected ensureNoProviderNameConflicts(
-		m: M,
-		resolvedImports: M[],
-		includeGlobalModules = false,
-	) {
+	protected ensureNoProviderNameConflicts(m: M, resolvedImports: M[]) {
 		const moduleProviderKeys = Object.keys(m.providers || {});
 
 		const importConflicts = [
-			...(includeGlobalModules
-				? this.globalModulesWithScope.flatMap(({ module: globalModule }) =>
-						this.getExportedProviderKeys(globalModule),
-					)
-				: []),
+			...this.globalModulesWithScope.flatMap(({ module: globalModule }) =>
+				this.getExportedProviderKeys(globalModule),
+			),
 			...resolvedImports.flatMap((importItem) =>
 				this.getExportedProviderKeys(importItem),
 			),

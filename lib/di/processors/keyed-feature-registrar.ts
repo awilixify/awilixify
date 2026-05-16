@@ -92,7 +92,12 @@ export class KeyedFeatureRegistrar {
 					}),
 				});
 
-				resolverMap.set(key, () => resolveFromRequestScope<T>(scope, symbol));
+				resolverMap.set(
+					key,
+					featureKind === "initializers"
+						? () => scope.resolve<T>(symbol)
+						: () => resolveFromRequestScope<T>(scope, symbol),
+				);
 				ownerByKey.set(key, importedModule.name);
 			}
 		}
@@ -117,7 +122,12 @@ export class KeyedFeatureRegistrar {
 				}),
 			});
 
-			resolverMap.set(key, () => resolveFromRequestScope<T>(scope, symbol));
+			resolverMap.set(
+				key,
+				featureKind === "initializers"
+					? () => scope.resolve<T>(symbol)
+					: () => resolveFromRequestScope<T>(scope, symbol),
+			);
 			ownerByKey.set(key, module.name);
 		}
 

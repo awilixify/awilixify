@@ -5,7 +5,7 @@ import type { FastifyInstance } from "./types.js";
 import { setupErrorHandler } from "./error-handler.js";
 import { extractReqContextMiddleware } from "./request-context.middleware.js";
 
-export function buildApp() {
+export function initializeFastify() {
 	const app: FastifyInstance = Fastify({
 		logger: true,
 	}).withTypeProvider<TypeBoxTypeProvider>();

@@ -404,6 +404,45 @@ describe("DIContext", () => {
 			);
 		});
 
+		it("should allow global module to depend on previously registered global module", () => {
+			class GlobalAService extends TestableBase {}
+			class GlobalBService extends TestableBase {}
+
+			const GlobalAModule: AnyModule = {
+				name: "GlobalAModule",
+				providers: {
+					globalA: GlobalAService,
+				},
+				exports: ["globalA"],
+			};
+
+			const GlobalBModule: AnyModule = {
+				name: "GlobalBModule",
+				providers: {
+					globalB: {
+						inject: ["globalA"],
+						useFactory: (globalA: GlobalAService) =>
+							new GlobalBService({ globalA }),
+					},
+				},
+				exports: ["globalB"],
+			};
+
+			const app = registerModule(
+				{
+					name: "AppModule",
+				},
+				{
+					globalModules: [GlobalAModule, GlobalBModule],
+				},
+			);
+
+			const globalA = app.scope.resolve<GlobalAService>("globalA");
+			const globalB = app.scope.resolve<GlobalBService>("globalB");
+
+			expect(globalB.getDeps().globalA).toBe(globalA);
+		});
+
 		it("should throw when promised import is used with sync create", () => {
 			expect(() =>
 				registerModule({
@@ -766,6 +805,33 @@ describe("DIContext", () => {
 
 			expect(calls).toEqual(["initialized"]);
 			expect(app.scope.resolve("eagerService")).toBeInstanceOf(EagerService);
+		});
+
+		it("should call postInit after init for eager providers", async () => {
+			const calls: string[] = [];
+
+			class EagerService {
+				init() {
+					calls.push("init");
+				}
+
+				postInit() {
+					calls.push("postInit");
+				}
+			}
+
+			const app = registerModule({
+				providers: {
+					eagerService: {
+						eager: true,
+						useClass: EagerService,
+					},
+				},
+			});
+
+			await app.init();
+
+			expect(calls).toEqual(["init", "postInit"]);
 		});
 
 		it("should only run init once", async () => {

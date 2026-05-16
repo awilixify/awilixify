@@ -122,6 +122,17 @@ export function hasProviderInit(
 	);
 }
 
+export function hasProviderPostInit(
+	value: unknown,
+): value is { postInit: () => void | Promise<void> } {
+	return (
+		typeof value === "object" &&
+		value !== null &&
+		"postInit" in value &&
+		typeof value.postInit === "function"
+	);
+}
+
 export function hasInitAfter(
 	provider: unknown,
 ): provider is { initAfter: readonly string[] } {

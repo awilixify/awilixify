@@ -45,6 +45,8 @@ export class LifecycleProcessor {
 	}
 
 	private async executeInit(): Promise<void> {
+		const initializedInstances: unknown[] = [];
+
 		for (const { module, scope, key } of this.sortEagerProviderRefs()) {
 			this.ensureEagerProviderUsesSingletonLifetime(module, scope, key);
 			const instance = await this.resolveEagerProvider({
@@ -52,11 +54,16 @@ export class LifecycleProcessor {
 				scope,
 				key,
 			});
+			initializedInstances.push(instance);
 			await this.callProviderInitAsync(instance);
 		}
 
 		for (const initialize of this.initializerTasks) {
 			await initialize();
+		}
+
+		for (const instance of initializedInstances) {
+			await this.callProviderPostInitAsync(instance);
 		}
 	}
 
@@ -115,6 +122,12 @@ export class LifecycleProcessor {
 		if (!GUARGS.hasProviderInit(instance)) return;
 
 		await instance.init();
+	}
+
+	private async callProviderPostInitAsync(instance: unknown): Promise<void> {
+		if (!GUARGS.hasProviderPostInit(instance)) return;
+
+		await instance.postInit();
 	}
 
 	private sortEagerProviderRefs(): EagerProviderRef[] {

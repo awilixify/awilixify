@@ -26,7 +26,6 @@ export class DIContext extends DIContextBase {
 		m: M,
 		scope: Awilix.AwilixContainer,
 		moduleChain: M[],
-		includeGlobalModules = true,
 	): ModuleScopeTree {
 		const existingTree = this.moduleTreeMap.get(m);
 
@@ -35,8 +34,8 @@ export class DIContext extends DIContextBase {
 		}
 
 		const imports = this.resolveImports(m);
-		this.ensureImportedModulesUniqueness(m, imports, includeGlobalModules);
-		this.ensureNoProviderNameConflicts(m, imports, includeGlobalModules);
+		this.ensureImportedModulesUniqueness(m, imports);
+		this.ensureNoProviderNameConflicts(m, imports);
 		this.markModuleIfImportsUseForwardRef(m);
 
 		const isCircular = moduleChain.includes(m);
@@ -56,14 +55,12 @@ export class DIContext extends DIContextBase {
 		this.moduleScopeMap.set(m, scope);
 
 		const importedModulesWithScope = [
-			...(includeGlobalModules ? this.globalModulesWithScope : []),
+			...this.globalModulesWithScope,
 			...imports.map((module) => ({
-				...this.registerModuleWithScope(
-					module,
-					this.createContainer(),
-					[...moduleChain, m],
-					includeGlobalModules,
-				),
+				...this.registerModuleWithScope(module, this.createContainer(), [
+					...moduleChain,
+					m,
+				]),
 				module,
 			})),
 		];
@@ -121,15 +118,14 @@ export class DIContext extends DIContextBase {
 			globalModuleImports,
 		);
 
-		this.globalModulesWithScope = globalModules.map((module) => ({
-			...this.registerModuleWithScope(
+		this.globalModulesWithScope = [];
+
+		for (const module of globalModules) {
+			this.globalModulesWithScope.push({
+				...this.registerModuleWithScope(module, this.createContainer(), []),
 				module,
-				this.createContainer(),
-				[],
-				false,
-			),
-			module,
-		}));
+			});
+		}
 	}
 
 	private resolveImports(m: M): M[] {
