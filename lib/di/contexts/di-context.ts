@@ -19,7 +19,7 @@ export class DIContext extends DIContextBase {
 	private bootstrap(module: M): ModuleScopeTree {
 		this.initializeGlobalModules();
 
-		return this.registerModuleWithScope(module, this.createContainer(), []);
+		return this.registerModuleWithScope(module, this.createContainer(module), []);
 	}
 
 	private registerModuleWithScope(
@@ -54,16 +54,17 @@ export class DIContext extends DIContextBase {
 		// Store the scope in the map before processing (for circular references)
 		this.moduleScopeMap.set(m, scope);
 
-		const importedModulesWithScope = [
-			...this.globalModulesWithScope,
-			...imports.map((module) => ({
-				...this.registerModuleWithScope(module, this.createContainer(), [
-					...moduleChain,
-					m,
-				]),
-				module,
-			})),
-		];
+			const importedModulesWithScope = [
+				...this.globalModulesWithScope,
+				...imports.map((module) => ({
+					...this.registerModuleWithScope(
+						module,
+						this.createContainer(module),
+						[...moduleChain, m],
+					),
+					module,
+				})),
+			];
 
 		this.registerExportedProviders(scope, importedModulesWithScope);
 
@@ -120,12 +121,16 @@ export class DIContext extends DIContextBase {
 
 		this.globalModulesWithScope = [];
 
-		for (const module of globalModules) {
-			this.globalModulesWithScope.push({
-				...this.registerModuleWithScope(module, this.createContainer(), []),
-				module,
-			});
-		}
+			for (const module of globalModules) {
+				this.globalModulesWithScope.push({
+					...this.registerModuleWithScope(
+						module,
+						this.createContainer(module),
+						[],
+					),
+					module,
+				});
+			}
 	}
 
 	private resolveImports(m: M): M[] {

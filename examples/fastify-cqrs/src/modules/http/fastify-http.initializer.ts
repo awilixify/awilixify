@@ -12,7 +12,7 @@ export class FastifyHttpInitializer implements Initializer<HttpToken> {
 	public readonly token = HTTP_DECORATOR_STATE_TOKEN;
 	private readonly registeredMethods = new Set<string>();
 
-	constructor(private readonly app: Deps["app"]) {}
+	constructor(private readonly deps: Deps) {}
 
 	initialize(context: InitializerContext<HttpToken>) {
 		const methodKey = `${context.target.name}:${String(context.methodName)}`;
@@ -28,7 +28,7 @@ export class FastifyHttpInitializer implements Initializer<HttpToken> {
 
 		for (const verb of methodState.verbs) {
 			for (const path of methodState.paths) {
-				this.app.route({
+				this.deps.app.route({
 					method: verb,
 					url: path,
 					handler: (req: unknown, res: unknown) => context.invoke(req, res),

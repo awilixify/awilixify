@@ -1,4 +1,4 @@
-import type { BuildResolverOptions } from "awilix";
+import type { BuildResolverOptions, ContainerOptions } from "awilix";
 import type {
 	AnyController,
 	AnyInitializer,
@@ -22,6 +22,7 @@ export interface InternalModuleLike {
 	exports?: readonly string[];
 	controllers?: AnyController[];
 	registerControllers?: boolean;
+	containerOptions?: ContainerOptions;
 	providerOptions?: Partial<BuildResolverOptions<any>>;
 	queryHandlers?: readonly any[];
 	commandHandlers?: readonly any[];

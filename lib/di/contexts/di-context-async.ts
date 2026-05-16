@@ -23,10 +23,11 @@ export class AsyncDIContext extends DIContextBase {
 
 	private async bootstrap(module: M | Promise<M>): Promise<ModuleScopeTree> {
 		await this.initializeGlobalModulesAsync();
+		const resolvedModule = await module;
 
 		return this.registerModuleWithScopeAsync(
-			await module,
-			this.createContainer(),
+			resolvedModule,
+			this.createContainer(resolvedModule),
 			[],
 		);
 	}
@@ -54,16 +55,16 @@ export class AsyncDIContext extends DIContextBase {
 
 		this.globalModulesWithScope = [];
 
-		for (const module of globalModules) {
-			this.globalModulesWithScope.push({
-				...(await this.registerModuleWithScopeAsync(
+			for (const module of globalModules) {
+				this.globalModulesWithScope.push({
+					...(await this.registerModuleWithScopeAsync(
+						module,
+						this.createContainer(module),
+						[],
+					)),
 					module,
-					this.createContainer(),
-					[],
-				)),
-				module,
-			});
-		}
+				});
+			}
 	}
 
 	private async registerModuleWithScopeAsync(
@@ -122,15 +123,15 @@ export class AsyncDIContext extends DIContextBase {
 
 		const importedModulesWithScope = [
 			...this.globalModulesWithScope,
-			...(await Promise.all(
-				imports.map(async (module) => ({
-					...(await this.registerModuleWithScopeAsync(
+				...(await Promise.all(
+					imports.map(async (module) => ({
+						...(await this.registerModuleWithScopeAsync(
+							module,
+							this.createContainer(module),
+							[...moduleChain, m],
+						)),
 						module,
-						this.createContainer(),
-						[...moduleChain, m],
-					)),
-					module,
-				})),
+					})),
 			)),
 		];
 

@@ -81,8 +81,11 @@ export class DIContextBase {
 		);
 	}
 
-	protected createContainer(): Awilix.AwilixContainer {
-		const scope = Awilix.createContainer(this.options.containerOptions);
+	protected createContainer(module?: M): Awilix.AwilixContainer {
+		const scope = Awilix.createContainer({
+			...this.options.containerOptions,
+			...module?.containerOptions,
+		});
 		this.createdScopes.push(scope);
 
 		return scope;

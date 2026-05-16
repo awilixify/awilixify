@@ -25,6 +25,9 @@ export type Deps = HttpModuleDef["deps"];
 
 export const HttpModule = createModule<HttpModuleDef>({
 	name: "HttpModule",
+	containerOptions: {
+		injectionMode: "PROXY",
+	},
 	providers: {
 		app: {
 			eager: true,

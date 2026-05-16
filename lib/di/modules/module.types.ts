@@ -1,4 +1,8 @@
-import type { BuildResolverOptions, Constructor } from "awilix";
+import type {
+	BuildResolverOptions,
+	Constructor,
+	ContainerOptions,
+} from "awilix";
 import type { EmptyObject } from "../common.types.js";
 import type {
 	AnyController,
@@ -117,6 +121,7 @@ type NormalizeModuleDef<Def extends ModuleDefinition> = {
 export type Module<Def extends ModuleDefinition> = {
 	name: string;
 	controllers?: AnyController[];
+	containerOptions?: ContainerOptions;
 	providerOptions?: Partial<BuildResolverOptions<any>>;
 	[importModuleDefMarker]?: Def;
 } & ModuleFromNormalized<NormalizeModuleDef<Def>>;

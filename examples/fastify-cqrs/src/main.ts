@@ -12,12 +12,13 @@ async function bootstrap() {
 
 	await app.init();
 
-	process.once("SIGINT", async () => {
-		await app.dispose();
-	});
-	process.once("SIGTERM", async () => {
-		await app.dispose();
-	});
+	// commented out due it slows down hot reload
+	// process.once("SIGINT", async () => {
+	// 	await app.dispose();
+	// });
+	// process.once("SIGTERM", async () => {
+	// 	await app.dispose();
+	// });
 }
 
 bootstrap();

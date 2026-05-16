@@ -3,13 +3,10 @@ import fastifySwaggerUi from "@fastify/swagger-ui";
 import { Deps } from "./http.module.js";
 
 export class FastifyService {
-	constructor(
-		private readonly app: Deps["app"],
-		private readonly config: Deps["config"],
-	) {}
+	constructor(private readonly deps: Deps) {}
 
 	async init() {
-		await this.app.register(fastifySwagger, {
+		await this.deps.app.register(fastifySwagger, {
 			openapi: {
 				info: {
 					title: "Fastify Example API",
@@ -24,7 +21,7 @@ export class FastifyService {
 			},
 		});
 
-		await this.app.register(fastifySwaggerUi, {
+		await this.deps.app.register(fastifySwaggerUi, {
 			routePrefix: "/api-docs",
 		});
 
@@ -32,21 +29,21 @@ export class FastifyService {
 		// in route
 		// https://github.com/fastify/help/issues/875
 		// fastify.addSchema(this.config.response[200]);
-		this.app.log.info(`Swagger documentation is available at /api-docs`);
+		this.deps.app.log.info(`Swagger documentation is available at /api-docs`);
 	}
 
 	async postInit() {
 		try {
-			await this.app.listen({
-				port: this.config.get("port"),
-				host: this.config.get("host"),
+			await this.deps.app.listen({
+				port: this.deps.config.get("port"),
+				host: this.deps.config.get("host"),
 			});
 
-			this.app.log.info(
-				`Server running on http://localhost:${this.config.get("port")}`,
+			this.deps.app.log.info(
+				`Server running on http://localhost:${this.deps.config.get("port")}`,
 			);
 		} catch (err) {
-			this.app.log.error(err);
+			this.deps.app.log.error(err);
 			process.exit(1);
 		}
 	}

@@ -93,6 +93,35 @@ describe("DIContext", () => {
 	}
 
 	describe("Ensure that module interactions/declarations are correct", () => {
+		it("should apply module containerOptions over global containerOptions", () => {
+			class ValueService {}
+
+			class ConsumerService {
+				constructor(public readonly valueService: ValueService) {}
+			}
+
+			const app = registerModule(
+				{
+					providers: {
+						valueService: ValueService,
+						consumerService: ConsumerService,
+					},
+					containerOptions: {
+						injectionMode: "CLASSIC",
+					},
+				},
+				{
+					containerOptions: {
+						injectionMode: "PROXY",
+					},
+				},
+			);
+
+			const consumer = app.scope.resolve<ConsumerService>("consumerService");
+
+			expect(consumer.valueService).toBeInstanceOf(ValueService);
+		});
+
 		it("should throw an error when a module has duplicate imports", () => {
 			const importedModule: AnyModule = {
 				name: "SharedModule",
