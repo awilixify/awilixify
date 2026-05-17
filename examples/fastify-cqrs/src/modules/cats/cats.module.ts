@@ -6,6 +6,7 @@ import { EventEmitterModule } from "@/modules/event-emitter/event-emitter.module
 import { QueueModule } from "@/modules/queue/queue.module.js";
 import { CacheModule } from "@/modules/cache/cache.module.js";
 import { TimeoutModule } from "@/modules/timeout/timeout.module.js";
+import { RabbitMqModule } from "@/modules/rabbitmq/rabbitmq.module.js";
 
 import { OwnersModule } from "@/modules/owners/owners.module.js";
 import { CatsController } from "./cats.controller.js";
@@ -23,6 +24,7 @@ import {
 } from "./cats.cron-listeners.js";
 import { CatsEventListeners } from "./cats.event-listeners.js";
 import { CatsQueueListeners } from "./cats.queue-listeners.js";
+import { CatsRabbitListeners } from "./cats.rabbit-listeners.js";
 
 const dbScope = {
 	readTables: ["cats"],
@@ -47,6 +49,9 @@ export type CatsModuleDef = ModuleDef<{
 		ReturnType<typeof QueueModule<(typeof CatsQueueListeners)["QueueScope"]>>,
 		ReturnType<typeof CacheModule>,
 		typeof TimeoutModule,
+		ReturnType<
+			typeof RabbitMqModule<(typeof CatsRabbitListeners)["RabbitScope"]>
+		>,
 	];
 	queryHandlers: [GetCatsQueryHandler];
 	queryPreHandlers: {
@@ -68,6 +73,7 @@ export const CatsModule = createModule<CatsModuleDef>({
 		QueueModule(CatsQueueListeners.QueueScope),
 		CacheModule("cats"),
 		TimeoutModule,
+		RabbitMqModule(CatsRabbitListeners.RabbitScope),
 	],
 
 	queryPreHandlers: {
@@ -105,6 +111,7 @@ export const CatsModule = createModule<CatsModuleDef>({
 		CatsController,
 		CatsEventListeners,
 		CatsQueueListeners,
+		CatsRabbitListeners,
 		CatsCronListeners,
 		CatsDecoratedController,
 		{
