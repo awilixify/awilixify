@@ -1,3 +1,4 @@
+import fastifyRateLimit from "@fastify/rate-limit";
 import fastifySwagger from "@fastify/swagger";
 import fastifySwaggerUi from "@fastify/swagger-ui";
 import { Deps } from "./http.module.js";
@@ -6,6 +7,10 @@ export class FastifyService {
 	constructor(private readonly deps: Deps) {}
 
 	async init() {
+		await this.deps.app.register(fastifyRateLimit, {
+			global: false,
+		});
+
 		await this.deps.app.register(fastifySwagger, {
 			openapi: {
 				info: {

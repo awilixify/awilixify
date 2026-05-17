@@ -1,5 +1,6 @@
 import { GET, schema } from "awilixify/http";
 import type { Request, Reply } from "@/modules/http/types.js";
+import { rateLimit } from "@/modules/http/rate-limit.decorator.js";
 
 import type { Deps } from "./cats.module.js";
 import { GetCatsSchema } from "./get-cats.dto.js";
@@ -9,7 +10,11 @@ export class CatsDecoratedController {
 
 	constructor(private readonly getCatsService: Deps["getCatsService"]) {}
 
-	@GET("/cats-decorated")
+	@GET("/cats-decorated/:id")
+	@rateLimit({
+		max: 3,
+		timeWindow: "1 minute",
+	})
 	@schema(GetCatsSchema)
 	async getCats(
 		req: Request<typeof GetCatsSchema>,
