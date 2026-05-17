@@ -3,6 +3,10 @@
 Configurable modules accept runtime configuration via a wrapper function.
 Each call returns a separate static module instance.
 
+That means the returned module is different for every importer.
+In practice, this is similar to a `forFeature(...)` style API:
+every import gets a fresh module instance with its own providers and configuration.
+
 ```typescript
 import { createModule, type ModuleDef } from "awilixify";
 
@@ -11,7 +15,7 @@ type DatabaseModuleDef = ModuleDef<{
     connectionString: string;
     databaseService: DatabaseService;
   };
-  exportKeys: ["databaseService"];
+  exports: ["databaseService"];
 }>;
 
 export function DatabaseModule(config: { connectionString: string }) {
@@ -40,8 +44,11 @@ export const UserModule = createModule<UserModuleDef>({
 });
 ```
 
-When the same configurable module is used multiple times, controllers are registered by default.
-If a secondary instance should provide services only, set `registerControllers: false` in `createModule` options.
+Because each wrapper call creates a new module instance, controller registration also happens per instance by default.
+That is why `registerControllers` exists.
+
+If you import the same dynamic module shape multiple times but only want one instance to register controllers, use `registerControllers: false` on the others.
+Otherwise, if the same controller class is registered more than once, awilixify throws a duplication error.
 
 ```typescript
 export function AuthModule(config: { jwtSecret: string; audience: string }) {

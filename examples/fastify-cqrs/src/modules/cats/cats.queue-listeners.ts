@@ -1,6 +1,6 @@
-import { onQueueJob } from "@/modules/queue/on-queue-job.decorator.js";
+import { onQueueJob } from "@/integrations/queue/on-queue-job.decorator.js";
 import { Type, type Static } from "@sinclair/typebox";
-import { QueueJob, createQueueScope } from "@/modules/queue/queue.types.js";
+import { QueueJob, createQueueScope } from "@/integrations/queue/queue.types.js";
 
 export class CatsViewedQueueJob extends QueueJob<
 	Static<(typeof CatsViewedQueueJob)["validationSchema"]>

@@ -1,6 +1,6 @@
 {
 	"name": "awilixify",
-	"description": "HTTP-framework-agnostic modular DI and CQRS framework for Awilix with Nest-like module patterns and strict type safety",
+	"description": "Transport-agnostic modular DI and CQRS framework for Awilix with Nest-like module patterns and strict type safety",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"exports": {

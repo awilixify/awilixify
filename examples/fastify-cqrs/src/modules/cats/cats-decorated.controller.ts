@@ -1,7 +1,7 @@
 import { GET, schema } from "awilixify/http";
-import type { Request } from "@/modules/http/types.js";
-import { rateLimit } from "@/modules/http/route-config.decorator.js";
-import { timeout } from "@/modules/timeout/timeout.decorator.js";
+import type { Request } from "@/integrations/http/types.js";
+import { rateLimit } from "@/integrations/http/route-config.decorator.js";
+import { timeout } from "@/integrations/timeout/timeout.decorator.js";
 
 import type { Deps } from "./cats.module.js";
 import { GetCatsSchema } from "./get-cats.dto.js";

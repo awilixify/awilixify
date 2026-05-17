@@ -2,7 +2,7 @@
 
 CQRS isn't just an architectural pattern—it's a mindset that brings clarity to your application structure. With awilixify, CQRS costs almost nothing to implement but provides significant benefits:
 
-**Clear Mental Separation from Controllers**: Controllers become thin routing layers that delegate to handlers, keeping HTTP concerns separate from business logic:
+**Clear Mental Separation from Controllers**: Controllers become thin transport layers that delegate to handlers, keeping HTTP/Cron/Listener... concerns separate from business logic:
 
 ```typescript
 // Controller stays clean - just routes to handlers, or some http work

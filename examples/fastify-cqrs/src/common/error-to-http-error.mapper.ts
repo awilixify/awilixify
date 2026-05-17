@@ -2,8 +2,8 @@ import { httpException, HttpException } from "awilixify/http";
 
 import { BaseError } from "./base.error.js";
 import { CatsViewedEventError } from "@/modules/cats/cats.event-listeners.js";
-import { InvalidEventPayloadError } from "@/modules/event-emitter/event-emitter.service.js";
-import { InvalidQueueJobPayloadError } from "@/modules/queue/queue.service.js";
+import { InvalidEventPayloadError } from "@/integrations/event-emitter/event-emitter.service.js";
+import { InvalidQueueJobPayloadError } from "@/integrations/queue/queue.service.js";
 
 export class UnauthorizedError extends BaseError {
 	static readonly CODE = "auth.unauthorized";

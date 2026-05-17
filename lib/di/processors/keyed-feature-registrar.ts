@@ -2,6 +2,7 @@ import * as Awilix from "awilix";
 import * as ERRORS from "../errors.js";
 import type { InternalModuleLike as M } from "../modules/runtime-module.types.js";
 import { ProviderResolver } from "../providers/provider-resolver.js";
+import type { Initializer } from "../providers/provider.types.js";
 import { resolveFromRequestScope } from "../request-scope-context.js";
 
 type ModuleWithScope = {
@@ -54,6 +55,7 @@ export class KeyedFeatureRegistrar {
 	}: RegisterKeyedFeatureParams): Map<string, () => T> {
 		const ownerByKey = new Map<string, string>();
 		const resolverMap = new Map<string, () => T>();
+		const ownerByInitializerToken = new Map<symbol, string>();
 		const config = this.featureConfig[featureKind];
 
 		for (const {
@@ -92,6 +94,16 @@ export class KeyedFeatureRegistrar {
 					}),
 				});
 
+				if (featureKind === "initializers") {
+					this.ensureInitializerTokenUniqueness({
+						scope,
+						symbol,
+						ownerByInitializerToken,
+						moduleName: module.name,
+						featureName: feature.name || key,
+					});
+				}
+
 				resolverMap.set(
 					key,
 					featureKind === "initializers"
@@ -122,6 +134,16 @@ export class KeyedFeatureRegistrar {
 				}),
 			});
 
+			if (featureKind === "initializers") {
+				this.ensureInitializerTokenUniqueness({
+					scope,
+					symbol,
+					ownerByInitializerToken,
+					moduleName: module.name,
+					featureName: feature.name || key,
+				});
+			}
+
 			resolverMap.set(
 				key,
 				featureKind === "initializers"
@@ -144,5 +166,33 @@ export class KeyedFeatureRegistrar {
 		}
 
 		return this.providerOptions;
+	}
+
+	private ensureInitializerTokenUniqueness({
+		scope,
+		symbol,
+		ownerByInitializerToken,
+		moduleName,
+		featureName,
+	}: {
+		scope: Awilix.AwilixContainer;
+		symbol: symbol;
+		ownerByInitializerToken: Map<symbol, string>;
+		moduleName: string;
+		featureName: string;
+	}): void {
+		const initializer = scope.resolve<Initializer>(symbol);
+		const token = initializer.token.stateSymbol;
+		const existingModuleName = ownerByInitializerToken.get(token);
+
+		if (existingModuleName) {
+			throw new ERRORS.DuplicateInitializerTokenError(
+				moduleName,
+				featureName,
+				existingModuleName,
+			);
+		}
+
+		ownerByInitializerToken.set(token, moduleName);
 	}
 }

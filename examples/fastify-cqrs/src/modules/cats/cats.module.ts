@@ -1,12 +1,12 @@
 import { createModule, type ModuleDef } from "awilixify";
 
-import { DbModule } from "@/modules/db/db.module.js";
-import { ScheduleModule } from "@/modules/scheduler/scheduler.module.js";
-import { EventEmitterModule } from "@/modules/event-emitter/event-emitter.module.js";
-import { QueueModule } from "@/modules/queue/queue.module.js";
-import { CacheModule } from "@/modules/cache/cache.module.js";
-import { TimeoutModule } from "@/modules/timeout/timeout.module.js";
-import { RabbitMqModule } from "@/modules/rabbitmq/rabbitmq.module.js";
+import { DbModule } from "@/integrations/db/db.module.js";
+import { ScheduleModule } from "@/integrations/scheduler/scheduler.module.js";
+import { EventEmitterModule } from "@/integrations/event-emitter/event-emitter.module.js";
+import { QueueModule } from "@/integrations/queue/queue.module.js";
+import { CacheModule } from "@/integrations/cache/cache.module.js";
+import { TimeoutModule } from "@/integrations/timeout/timeout.module.js";
+import { RabbitMqModule } from "@/integrations/rabbitmq/rabbitmq.module.js";
 
 import { OwnersModule } from "@/modules/owners/owners.module.js";
 import { CatsController } from "./cats.controller.js";

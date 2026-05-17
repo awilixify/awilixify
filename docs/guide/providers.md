@@ -179,9 +179,6 @@ export const OrderModule = createModule<OrderModuleDef>({
 > [!NOTE]
 > **Default Lifetime:** All providers use `Lifetime.SINGLETON` by default, and it's recommended to keep it unless other behavior is needed.
 
-> [!IMPORTANT]
-> **Singleton Scope:** `SINGLETON` lifetime is scoped to the module, not application-wide. Each module gets its own singleton instance.
-
 > [!WARNING]
 > **Strict Mode:** Awilix strict mode is enabled by default, which prevents lifetime mismatches. A consumer (like a controller) cannot have a shorter lifetime than the providers it depends on. For example, a `SCOPED` controller cannot inject a `TRANSIENT` provider.
 

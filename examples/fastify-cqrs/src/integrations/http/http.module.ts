@@ -4,7 +4,7 @@ import {
 	type InferGlobalDependencies,
 } from "awilixify";
 
-import type { FastifyInstance } from "@/modules/http/types.js";
+import type { FastifyInstance } from "@/integrations/http/types.js";
 import { FastifyHttpInitializer } from "./fastify-http.initializer.js";
 import { FastifyService } from "./fastify.service.js";
 import { initializeFastify } from "./initialize-fastify.js";

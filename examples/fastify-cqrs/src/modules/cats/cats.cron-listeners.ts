@@ -1,4 +1,4 @@
-import { CronTask, cron } from "@/modules/scheduler/cron.decorator.js";
+import { CronTask, cron } from "@/integrations/scheduler/cron.decorator.js";
 import type { Deps } from "./cats.module.js";
 
 export class CatsHeartbeatCronTask extends CronTask {

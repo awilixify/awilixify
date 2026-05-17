@@ -1,7 +1,15 @@
 # Global Modules
 
-Global modules let you register shared exports and shared pre-handlers once and make them available to all modules without explicit imports.
-Augment global types to make them shared.
+Global modules let you register shared exports once and make them available to every module without explicit imports.
+
+Typical use cases:
+
+- app or framework instances
+- config
+- logger
+- shared pre-handlers
+- shared interceptors
+- shared initializers
 
 ```typescript
 import {
@@ -25,7 +33,7 @@ export type GlobalModuleDef = ModuleDef<{
   commandPreHandlers: {
     audit: AuditPreHandler;
   };
-  exportKeys: ["logger"];
+  exports: ["logger"];
   exportQueryPreHandlerKeys: ["auth"];
   exportCommandPreHandlerKeys: ["audit"];
 }>;
@@ -41,15 +49,9 @@ export const GlobalModule = createModule<GlobalModuleDef>({
   commandPreHandlers: {
     audit: AuditPreHandler,
   },
-  exports: {
-    logger: Logger,
-  },
-  queryPreHandlerExports: {
-    auth: AuthPreHandler,
-  },
-  commandPreHandlerExports: {
-    audit: AuditPreHandler,
-  },
+  exports: ["logger"],
+  queryPreHandlerExports: ["auth"],
+  commandPreHandlerExports: ["audit"],
 });
 
 declare module "awilixify" {
@@ -59,4 +61,11 @@ declare module "awilixify" {
 }
 ```
 
-Use global modules for cross-cutting infrastructure dependencies (app instance, logger, config, pre-handlers) that should be accessible in every module.
+## Interceptors And Initializers
+
+Global modules are not limited to providers and pre-handlers.
+Exported interceptors and exported initializers from a global module also become globally available.
+
+That means you can define reusable behavior once in a global module and have it participate everywhere without importing the module explicitly in each feature module.
+
+Use global modules for cross-cutting infrastructure and cross-cutting behavior that should be available application-wide.

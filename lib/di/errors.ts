@@ -175,3 +175,17 @@ export class AsyncModuleRequiresAsyncCreateError extends Error {
 		this.name = "AsyncModuleRequiresAsyncCreateError";
 	}
 }
+
+export class DuplicateInitializerTokenError extends Error {
+	constructor(
+		moduleName: string,
+		initializerName: string,
+		existingModuleName: string,
+	) {
+		super(
+			`Initializer "${initializerName}" from module "${moduleName}" has a token conflict with an initializer already registered from module "${existingModuleName}". ` +
+				`Initializer tokens must be unique within a module scope.`,
+		);
+		this.name = "DuplicateInitializerTokenError";
+	}
+}

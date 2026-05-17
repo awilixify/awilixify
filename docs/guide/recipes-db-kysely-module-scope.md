@@ -2,6 +2,9 @@
 
 This pattern gives each module an explicit DB contract: which tables it can read and which it can modify.
 
+Full example:
+[DB integration on GitHub](https://github.com/wildstyles/awilixify/tree/main/examples/fastify-cqrs/src/integrations/db)
+
 ### Why this is useful
 
 - module boundaries are explicit at DB level (`readTables` and `writeTables`)

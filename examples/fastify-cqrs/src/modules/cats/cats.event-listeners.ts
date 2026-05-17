@@ -1,8 +1,8 @@
-import { onEvent } from "@/modules/event-emitter/on-event.decorator.js";
+import { onEvent } from "@/integrations/event-emitter/on-event.decorator.js";
 import {
 	createEventScope,
 	Event,
-} from "@/modules/event-emitter/event-emitter.types.js";
+} from "@/integrations/event-emitter/event-emitter.types.js";
 import { BaseError } from "@/common/base.error.js";
 import { type Static, Type } from "@sinclair/typebox";
 

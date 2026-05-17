@@ -25,9 +25,7 @@ export const OrderModule = createModule<OrderModuleDef>({
   providers: {
     orderService: OrderService,
   },
-  exports: {
-    orderService: OrderService,
-  },
+  exports: ["orderService"],
 });
 ```
 
@@ -68,7 +66,7 @@ export const UserModule = createModule<UserModuleDef>({
 
 Create a global module for app-wide dependencies like http framework
 instance, logger...
-Use `declare module` to make global dependencies available to all modules:
+Use `declare module` to make global dependencies available in `Deps` type to all modules:
 
 ```typescript
 // global.module.ts
@@ -127,7 +125,6 @@ const app = express();
 
 // Instantiate DIContext with root module and global modules
 DIContext.create(AppModule, {
-  framework: app,
   globalModules: [GlobalModule(app)],
 });
 
@@ -139,8 +136,9 @@ app.listen(3000);
 
 Use `ModuleDef['deps']` as **single source of truth** to get automatic type inference for all available dependencies in your service constructors.  
 This includes:
+
 - module providers
-- imported module exports
+- imported module exported providers
 - exported providers from global modules
 - module mediator instance (if query/command handlers are registered)
 

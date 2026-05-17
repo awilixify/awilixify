@@ -13,16 +13,19 @@ const docsSidebar = [
 			{ text: "Quick Start", link: "/docs/quick-start" },
 			{ text: "Providers", link: "/docs/providers" },
 			{ text: "Native Decorators", link: "/docs/native-decorators" },
+			{ text: "Initializers", link: "/docs/initializers" },
 			{ text: "Interceptors", link: "/docs/interceptors" },
-			{
-				text: "HTTP Exception Handling",
-				link: "/docs/http-exception-handling",
-			},
+			{ text: "Lifecycle", link: "/docs/lifecycle" },
 			{ text: "Global Modules", link: "/docs/global-modules" },
 			{ text: "Dynamic Modules", link: "/docs/dynamic-modules" },
+			{ text: "Async Modules", link: "/docs/async-modules" },
 			{
 				text: "Circular Dependencies",
 				link: "/docs/circular-dependencies",
+			},
+			{
+				text: "HTTP Exception Handling",
+				link: "/docs/http-exception-handling",
 			},
 			{
 				text: "Philosophy and Motivation",
@@ -50,6 +53,7 @@ const docsSidebar = [
 	{
 		text: "Recipes",
 		items: [
+			{ text: "Integrations", link: "/docs/integrations" },
 			{
 				text: "Type-safe Request/Response",
 				link: "/docs/recipes-type-safe-request-response",
@@ -71,15 +75,21 @@ const docsSidebar = [
 export default defineConfig({
 	title: "awilixify",
 	description:
-		"HTTP-framework-agnostic modular DI and CQRS framework for Awilix",
+		"Transport-agnostic modular DI and CQRS framework for Awilix",
 	base,
 	lang: "en-US",
 	cleanUrls: true,
 	lastUpdated: true,
+	head: [
+		["link", { rel: "icon", href: `${base}favicon.ico`, sizes: "any" }],
+		["link", { rel: "icon", type: "image/png", href: `${base}favicon.png` }],
+		["link", { rel: "apple-touch-icon", href: `${base}apple-touch-icon.png` }],
+	],
 	rewrites: {
 		"guide/:slug*": "docs/:slug*",
 	},
 	themeConfig: {
+		logo: "/logo.png",
 		sidebar: {
 			"/docs/": docsSidebar,
 		},

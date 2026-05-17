@@ -1,9 +1,9 @@
 import { DIContext } from "awilixify";
 
-import { ConfigModule } from "@/modules/config/config.module.js";
-import { HttpModule } from "@/modules/http/http.module.js";
+import { ConfigModule } from "@/integrations/config/config.module.js";
+import { HttpModule } from "@/integrations/http/http.module.js";
 import { AppModule } from "@/modules/index.js";
-import { TenantModule } from "@/modules/tenant/tenant.module.js";
+import { TenantModule } from "@/integrations/tenant/tenant.module.js";
 
 async function bootstrap() {
 	const app = DIContext.create(AppModule, {

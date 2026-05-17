@@ -5,7 +5,7 @@ import {
 	CatsNotFoundError,
 	LoggerError,
 } from "@/common/error-to-http-error.mapper.js";
-import { InvalidEventPayloadError } from "../event-emitter/event-emitter.service.js";
+import { InvalidEventPayloadError } from "@/integrations/event-emitter/event-emitter.service.js";
 import {
 	CatsViewedEvent,
 	CatsViewedEventError,

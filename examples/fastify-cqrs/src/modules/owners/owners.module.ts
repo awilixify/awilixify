@@ -6,9 +6,9 @@ import {
 	type Module,
 } from "awilixify";
 import { CatsModule, type CatsModuleDef } from "../cats/cats.module.js";
-import { DbModule } from "@/modules/db/db.module.js";
-import { ScheduleModule } from "@/modules/scheduler/scheduler.module.js";
-import { TimeoutModule } from "@/modules/timeout/timeout.module.js";
+import { DbModule } from "@/integrations/db/db.module.js";
+import { ScheduleModule } from "@/integrations/scheduler/scheduler.module.js";
+import { TimeoutModule } from "@/integrations/timeout/timeout.module.js";
 
 import { OwnersService } from "./owners.service.js";
 import { Owners1Service } from "./owners1.service.js";

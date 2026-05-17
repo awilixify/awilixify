@@ -6,7 +6,7 @@ import {
 	retry as createRetryPolicy,
 } from "cockatiel";
 
-import { getRequestSignal } from "@/modules/timeout/request-signal.context.js";
+import { getRequestSignal } from "@/integrations/timeout/request-signal.context.js";
 
 import {
 	RETRY_METADATA_TOKEN,

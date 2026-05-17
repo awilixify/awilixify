@@ -1,10 +1,10 @@
 import { Type, type Static } from "@sinclair/typebox";
 
-import { onRabbitMessage } from "@/modules/rabbitmq/on-rabbit-message.decorator.js";
+import { onRabbitMessage } from "@/integrations/rabbitmq/on-rabbit-message.decorator.js";
 import {
 	RabbitMessage,
 	createRabbitScope,
-} from "@/modules/rabbitmq/rabbitmq.types.js";
+} from "@/integrations/rabbitmq/rabbitmq.types.js";
 
 export class CatsViewedRabbitMessage extends RabbitMessage<
 	Static<(typeof CatsViewedRabbitMessage)["validationSchema"]>

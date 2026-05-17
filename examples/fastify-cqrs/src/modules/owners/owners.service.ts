@@ -1,4 +1,4 @@
-import { cancellable } from "@/modules/timeout/cancellable.decorator.js";
+import { cancellable } from "@/integrations/timeout/cancellable.decorator.js";
 
 import type { Deps } from "./owners.module.js";
 

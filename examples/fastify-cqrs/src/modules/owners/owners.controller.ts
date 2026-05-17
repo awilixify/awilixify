@@ -1,6 +1,6 @@
 import { GET, schema } from "awilixify/http";
-import type { Request, Reply } from "@/types.js";
-import { CronTask, cron } from "@/modules/scheduler/cron.decorator.js";
+import type { Request, Reply } from "@/integrations/http/types.js";
+import { CronTask, cron } from "@/integrations/scheduler/cron.decorator.js";
 
 import type { Deps } from "./owners.module.js";
 import { GetOwnersSchema } from "./get-owners.dto.js";

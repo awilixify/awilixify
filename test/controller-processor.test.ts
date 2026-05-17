@@ -11,6 +11,7 @@ import { createDecoratorStateUpdater } from "../lib/decorators/decorator-state.j
 import { createHttpTestModule, createMockExpress } from "./http-test-module.js";
 import type {
 	InterceptContext,
+	Initializer,
 	Interceptor,
 } from "../lib/di/providers/provider.types.js";
 
@@ -333,6 +334,51 @@ describe("ControllerProcessor", () => {
 			await app.init();
 
 			expect(resolveFromRequestScopeSpy).not.toHaveBeenCalled();
+		});
+
+		it("should throw when two initializers with same token enter the same module scope", () => {
+			const { token: DUP_TOKEN } = createDecoratorStateUpdater(
+				"duplicate-init",
+				{
+					method: () => ({ enabled: true }),
+				},
+			);
+
+			class DuplicateAwareInitializer implements Initializer<typeof DUP_TOKEN> {
+				public readonly token = DUP_TOKEN;
+
+				initialize() {}
+			}
+
+			class DuplicateDecoratedController {
+				duplicate() {
+					return "duplicate";
+				}
+			}
+
+			const InitializerModuleA = {
+				name: "InitializerModuleA",
+				initializers: {
+					first: DuplicateAwareInitializer,
+				},
+				initializerExports: ["first"],
+			};
+
+			const InitializerModuleB = {
+				name: "InitializerModuleB",
+				initializers: {
+					second: DuplicateAwareInitializer,
+				},
+				initializerExports: ["second"],
+			};
+
+			expect(() =>
+				registerModule({
+					name: "AppModule",
+					imports: [InitializerModuleA, InitializerModuleB],
+					controllers: [DuplicateDecoratedController],
+				}),
+			).toThrow(ERRORS.DuplicateInitializerTokenError);
 		});
 	});
 

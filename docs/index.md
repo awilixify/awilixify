@@ -4,7 +4,7 @@ layout: home
 hero:
   name: awilixify
   text: Type-safe, modular DI and CQRS
-  tagline: HTTP-framework-agnostic architecture with explicit module boundaries, typed contracts, and minimal runtime overhead.
+  tagline: Transport-agnostic architecture with explicit module boundaries, typed contracts, and minimal runtime overhead.
   actions:
     - theme: brand
       text: Getting Started
@@ -17,7 +17,7 @@ features:
   - title: Type-Safe Module System
     details: Define module dependencies once and reuse strongly typed module deps across services, handlers, and controllers.
 
-  - title: Framework Agnostic
+  - title: Transport Agnostic
     details: Keep business logic portable across Express, Fastify, Hono, Koa, jobs, queues, and CLI.
 
   - title: End-to-end type safety across middleware flow
