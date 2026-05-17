@@ -52,6 +52,45 @@ export function resolveDecoratorState<TState extends DecoratorState<any, any>>(
 	);
 }
 
+export function hasDecoratorMethodMetadata(target: unknown): boolean {
+	return [target, (target as { prototype?: unknown })?.prototype].some((value) =>
+		hasOwnDecoratorMethodMetadata(value),
+	);
+}
+
+function hasOwnDecoratorMethodMetadata(target: unknown): boolean {
+	if (
+		target === null ||
+		(typeof target !== "object" && typeof target !== "function")
+	) {
+		return false;
+	}
+
+	const metadataSymbol =
+		(typeof Symbol !== "undefined" && Symbol.metadata) ||
+		Object.getOwnPropertySymbols(target).find(
+			(s) => s.toString() === "Symbol(Symbol.metadata)",
+		);
+
+	if (!metadataSymbol) return false;
+
+	const metadata = (target as any)[metadataSymbol];
+
+	if (!metadata || typeof metadata !== "object") return false;
+
+	return [
+		...Object.getOwnPropertyNames(metadata).map((key) => metadata[key]),
+		...Object.getOwnPropertySymbols(metadata).map((key) => metadata[key]),
+	].some(
+		(state) =>
+			typeof state === "object" &&
+			state !== null &&
+			"methods" in state &&
+			(state as { methods?: unknown }).methods instanceof Map &&
+			(state as { methods: Map<unknown, unknown> }).methods.size > 0,
+	);
+}
+
 function createUpdater<TState extends DecoratorState<any, any>>(
 	token: DecoratorToken<TState>,
 	initializers: StateInitializers<TState>,

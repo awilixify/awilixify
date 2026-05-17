@@ -112,6 +112,39 @@ describe("Interceptors", () => {
 		expect(await asyncResult).toBe(9);
 	});
 
+	it("should not instantiate interceptors for providers without decorated methods", () => {
+		let interceptorInstances = 0;
+
+		class TrackInterceptor implements Interceptor<typeof MARK_TOKEN> {
+			token = MARK_TOKEN;
+
+			constructor() {
+				interceptorInstances += 1;
+			}
+
+			intercept(context: InterceptContext<typeof MARK_TOKEN>) {
+				return context.proceed();
+			}
+		}
+
+		class PlainService {
+			getValue() {
+				return 11;
+			}
+		}
+
+		const AppModule = createModule<any>({
+			name: "AppModule",
+			providers: { service: PlainService },
+			interceptors: { track: TrackInterceptor },
+		});
+
+		const service = DIContext.create(AppModule).scope.resolve<any>("service");
+
+		expect(service.getValue()).toBe(11);
+		expect(interceptorInstances).toBe(0);
+	});
+
 	it("should support imported interceptor exports and throw on interceptor key conflicts", () => {
 		const calls: string[] = [];
 

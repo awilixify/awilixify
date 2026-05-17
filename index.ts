@@ -5,6 +5,7 @@ export * from "./lib/di/modules/module.types.js";
 export * from "./lib/di/modules/module-def.types.js";
 export * from "./lib/di/modules/module-factories.js";
 export * from "./lib/di/modules/module-ref.types.js";
+export { isResultLike } from "./lib/di/type-guards.js";
 export type {
 	Controller,
 	Initializer,

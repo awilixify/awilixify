@@ -19,12 +19,14 @@ export class CatsService {
 		key: (id) => `cats:${id}`,
 	})
 	async getCats(id: string): Promise<CatsServiceResponse> {
+		const owners = await this.ownersService.getOwners();
+
 		return {
 			catsServiceId: this.getInstanceId(),
 			dogsServiceId: this.dogsService.getInstanceId(),
 			ownersServiceId: this.ownersService.getInstanceId(),
 			ownersService1Id: this.owners1Service.getInstanceId(),
-			ownersService: this.ownersService.getOwners(),
+			ownersService: owners,
 			dogsService: this.dogsService.getDogs(),
 		};
 	}

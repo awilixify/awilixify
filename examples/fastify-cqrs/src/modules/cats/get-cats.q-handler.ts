@@ -30,12 +30,15 @@ export class GetCatsQueryHandler
 	constructor(
 		private readonly catsService: Deps["catsService"],
 		private readonly dogsService: Deps["dogsService"],
+		private readonly ownersService: Deps["ownersService"],
 	) {}
 
 	async executor(
 		_payload: Payload,
 		context: this["context"],
 	): Promise<Response> {
+		const t = await this.ownersService.getOwners();
+
 		console.log(context, "CONTExt");
 		const { userId, roles } = this.normalizeContext(context);
 

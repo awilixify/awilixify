@@ -5,6 +5,7 @@ import type {
 	ConstructorController,
 	Controller,
 } from "../providers/provider.types.js";
+import type { InterceptorProcessor } from "./interceptor-processor.js";
 import { resolveFromRequestScope } from "../request-scope-context.js";
 import { hasUseClass } from "../type-guards.js";
 import type { ControllerRuntimeEntry } from "./initializer-processor.js";
@@ -16,6 +17,7 @@ export class ControllerProcessor {
 	>();
 
 	constructor(
+		private readonly interceptorProcessor: InterceptorProcessor,
 		private readonly providerOptions: Partial<Awilix.BuildResolverOptions<any>>,
 	) {}
 
@@ -48,28 +50,35 @@ export class ControllerProcessor {
 					...awilixOptions,
 				};
 				const isWithNewScope = options.lifetime !== Awilix.Lifetime.SINGLETON;
-
-				diScope.register({
-					[controllerSymbol]: Awilix.asClass(useClass, {
-						...options,
-						...(isWithNewScope && {
-							injector: () => ({
-								resolveSelf: () =>
-									this.resolveBySymbol(
-										controllerSymbol,
-										diScope,
-										isWithNewScope,
-									),
-							}),
+				const baseResolver = Awilix.asClass(useClass, {
+					...options,
+					...(isWithNewScope && {
+						injector: () => ({
+							resolveSelf: () =>
+								this.resolveBySymbol(
+									controllerSymbol,
+									diScope,
+									isWithNewScope,
+								),
 						}),
 					}),
 				});
 
-				const controllerInstance = this.resolveBySymbol(
-					controllerSymbol,
-					diScope,
-					false,
-				);
+				diScope.register({
+					[controllerSymbol]: this.interceptorProcessor.createInterceptedProviderResolver(
+						{
+							module: m,
+							useClass,
+							options,
+							resolver: baseResolver,
+						},
+					),
+				});
+
+				// Route registration happens during bootstrap before eager provider
+				// init hooks run. Use the raw controller instance here so imported
+				// interceptors are not resolved just to execute registerRoutes().
+				const controllerInstance = baseResolver.resolve(diScope);
 
 				if (controllerInstance.registerRoutes) {
 					controllerInstance.registerRoutes();

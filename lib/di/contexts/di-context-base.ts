@@ -63,13 +63,14 @@ export class DIContextBase {
 			},
 		};
 
-		this.controllerProcessor = new ControllerProcessor(
-			this.options.providerOptions || {},
-		);
 		this.handlerProcessor = new HandlerProcessor(
 			this.options.providerOptions || {},
 		);
 		this.interceptorProcessor = new InterceptorProcessor(
+			this.options.providerOptions || {},
+		);
+		this.controllerProcessor = new ControllerProcessor(
+			this.interceptorProcessor,
 			this.options.providerOptions || {},
 		);
 		this.providerResolver = new ProviderResolver(

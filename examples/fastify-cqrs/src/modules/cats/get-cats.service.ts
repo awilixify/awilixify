@@ -13,6 +13,8 @@ export class GetCatsService {
 	) {}
 
 	async executor(payload: Payload): Promise<Response> {
+		await new Promise((resolve) => setTimeout(resolve, 4000));
+
 		return {
 			handlerId: this.instanceId,
 			dogsServiceId: this.dogsService.getInstanceId(),

@@ -4,15 +4,22 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DIContext } from "../lib/di/contexts/di-context.js";
 import * as ERRORS from "../lib/di/errors.js";
 import type { AnyModule } from "../lib/di/modules/module.types.js";
-import type {
-	Controller
-} from "../lib/di/providers/provider.types.js";
+import type { Controller } from "../lib/di/providers/provider.types.js";
 import * as RequestScopeContext from "../lib/di/request-scope-context.js";
 import { GET } from "../lib/http/decorators.js";
+import { createDecoratorStateUpdater } from "../lib/decorators/decorator-state.js";
 import { createHttpTestModule, createMockExpress } from "./http-test-module.js";
+import type {
+	InterceptContext,
+	Interceptor,
+} from "../lib/di/providers/provider.types.js";
 
 describe("ControllerProcessor", () => {
 	let mockExpress: ReturnType<typeof createMockExpress>;
+	const { token: TRACK_TOKEN, update: track } = createDecoratorStateUpdater(
+		"track",
+		{ method: (): { tag?: string } => ({}) },
+	);
 
 	beforeEach(() => {
 		mockExpress = createMockExpress();
@@ -35,6 +42,15 @@ describe("ControllerProcessor", () => {
 		getTest() {
 			return "test";
 		}
+	}
+
+	function trackWith(tag: string) {
+		return (target: any, context: ClassMethodDecoratorContext) => {
+			track(context, {
+				method: () => ({ tag }),
+			});
+			return target;
+		};
 	}
 
 	describe("Basic Controller Registration", () => {
@@ -204,6 +220,94 @@ describe("ControllerProcessor", () => {
 			await handler({}, mockReply, vi.fn());
 
 			expect(mockReply.send).toHaveBeenCalledWith("test");
+		});
+
+		it("should not instantiate interceptors for controllers without decorated methods", async () => {
+			let interceptorInstances = 0;
+
+			class TrackInterceptor implements Interceptor<typeof TRACK_TOKEN> {
+				token = TRACK_TOKEN;
+
+				constructor() {
+					interceptorInstances += 1;
+				}
+
+				intercept(context: InterceptContext<typeof TRACK_TOKEN>) {
+					return context.proceed();
+				}
+			}
+
+			class PlainController implements Controller {
+				registerRoutes() {}
+			}
+
+			const TrackingModule = {
+				name: "TrackingModule",
+				interceptors: { track: TrackInterceptor },
+				interceptorExports: ["track"],
+			};
+
+			const app = registerModule({
+				name: "AppModule",
+				imports: [TrackingModule],
+				controllers: [PlainController],
+			});
+
+			await app.init();
+
+			expect(interceptorInstances).toBe(0);
+		});
+
+		it("should instantiate interceptors for controller methods with matching metadata", async () => {
+			let interceptorInstances = 0;
+			const calls: string[] = [];
+
+			class TrackInterceptor implements Interceptor<typeof TRACK_TOKEN> {
+				token = TRACK_TOKEN;
+
+				constructor() {
+					interceptorInstances += 1;
+				}
+
+				intercept(context: InterceptContext<typeof TRACK_TOKEN>) {
+					calls.push(String(context.methodName));
+					return context.proceed();
+				}
+			}
+
+			class TrackedController {
+				@GET("/tracked")
+				@trackWith("tracked")
+				getTracked() {
+					return "tracked";
+				}
+			}
+
+			const TrackingModule = {
+				name: "TrackingModule",
+				interceptors: { track: TrackInterceptor },
+				interceptorExports: ["track"],
+			};
+
+			const app = registerModule({
+				name: "AppModule",
+				imports: [TrackingModule],
+				controllers: [TrackedController],
+			});
+
+			await app.init();
+
+			const handlerCall = mockExpress.get.mock.calls.find(
+				(call) => call[0] === "/tracked",
+			);
+			const handler = handlerCall[1];
+			const mockReply = { send: vi.fn() };
+
+			await handler({}, mockReply, vi.fn());
+
+			expect(interceptorInstances).toBeGreaterThan(0);
+			expect(calls).toEqual(["getTracked"]);
+			expect(mockReply.send).toHaveBeenCalledWith("tracked");
 		});
 	});
 

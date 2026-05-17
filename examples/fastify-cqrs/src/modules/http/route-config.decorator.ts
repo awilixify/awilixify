@@ -21,7 +21,8 @@ export const FASTIFY_ROUTE_CONFIG_TOKEN = token;
 export function rateLimit(rateLimitConfig: NonNullable<RateLimitConfig>) {
 	return (target: any, context: ClassMethodDecoratorContext) => {
 		update(context, {
-			method: () => ({
+			method: (previous) => ({
+				...previous,
 				rateLimit: rateLimitConfig,
 			}),
 		});

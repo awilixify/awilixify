@@ -1,3 +1,5 @@
+import { cancellable } from "@/modules/timeout/cancellable.decorator.js";
+
 import type { Deps } from "./owners.module.js";
 
 export class OwnersService {
@@ -12,7 +14,10 @@ export class OwnersService {
 		return this.instanceId + " +++";
 	}
 
-	getOwners() {
+	@cancellable()
+	async getOwners() {
+		await new Promise((resolve) => setTimeout(resolve, 4000));
+
 		return {
 			catsServiceId: this.catsService.getInstanceId(),
 			ownersServiceId: this.getInstanceId(),

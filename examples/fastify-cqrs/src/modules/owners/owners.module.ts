@@ -8,6 +8,7 @@ import {
 import { CatsModule, type CatsModuleDef } from "../cats/cats.module.js";
 import { DbModule } from "@/modules/db/db.module.js";
 import { ScheduleModule } from "@/modules/scheduler/scheduler.module.js";
+import { TimeoutModule } from "@/modules/timeout/timeout.module.js";
 
 import { OwnersService } from "./owners.service.js";
 import { Owners1Service } from "./owners1.service.js";
@@ -33,6 +34,7 @@ export type OwnersModuleDef = ModuleDef<{
 		ModuleRef<CatsModuleDef>,
 		ReturnType<typeof DbModule<typeof dbScope>>,
 		typeof OwnersSchedulerModule,
+		typeof TimeoutModule,
 	];
 	queryHandlers: [GetOwnersQueryHandler];
 }>;
@@ -47,6 +49,7 @@ export const OwnersModule: Module<OwnersModuleDef> =
 			forwardRef(() => CatsModule),
 			DbModule(dbScope),
 			OwnersSchedulerModule,
+			TimeoutModule,
 		],
 
 		queryHandlers: [GetOwnersQueryHandler],

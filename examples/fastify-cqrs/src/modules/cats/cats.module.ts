@@ -5,6 +5,7 @@ import { ScheduleModule } from "@/modules/scheduler/scheduler.module.js";
 import { EventEmitterModule } from "@/modules/event-emitter/event-emitter.module.js";
 import { QueueModule } from "@/modules/queue/queue.module.js";
 import { CacheModule } from "@/modules/cache/cache.module.js";
+import { TimeoutModule } from "@/modules/timeout/timeout.module.js";
 
 import { OwnersModule } from "@/modules/owners/owners.module.js";
 import { CatsController } from "./cats.controller.js";
@@ -45,6 +46,7 @@ export type CatsModuleDef = ModuleDef<{
 		>,
 		ReturnType<typeof QueueModule<(typeof CatsQueueListeners)["QueueScope"]>>,
 		ReturnType<typeof CacheModule>,
+		typeof TimeoutModule,
 	];
 	queryHandlers: [GetCatsQueryHandler];
 	queryPreHandlers: {
@@ -65,6 +67,7 @@ export const CatsModule = createModule<CatsModuleDef>({
 		EventEmitterModule(CatsEventListeners.EventScope),
 		QueueModule(CatsQueueListeners.QueueScope),
 		CacheModule("cats"),
+		TimeoutModule,
 	],
 
 	queryPreHandlers: {

@@ -143,3 +143,16 @@ export function hasInitAfter(
 		Array.isArray(provider.initAfter)
 	);
 }
+
+export function isResultLike(
+	value: unknown,
+): value is { ok: true; value: unknown } | { ok: false; error: unknown } {
+	return (
+		typeof value === "object" &&
+		value !== null &&
+		"ok" in value &&
+		((value as { ok: unknown }).ok === true
+			? "value" in value
+			: (value as { ok: unknown }).ok === false && "error" in value)
+	);
+}
