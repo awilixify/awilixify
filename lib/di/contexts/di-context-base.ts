@@ -233,7 +233,7 @@ export class DIContextBase {
 			HandlerType.Command,
 		);
 		const controllers = this.controllerProcessor.processControllers(m, scope);
-		this.lifecycleProcessor.addInitializerTasks(
+		this.lifecycleProcessor.addInitializerTask(
 			this.initializerProcessor.collectInitializers(
 				m,
 				scope,

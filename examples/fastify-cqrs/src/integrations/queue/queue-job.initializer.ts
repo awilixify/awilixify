@@ -1,4 +1,5 @@
-import type { Initializer, InitializerContext } from "awilixify";
+import { Initializer } from "awilixify";
+import type { InitializerContext } from "awilixify";
 import { Value } from "@sinclair/typebox/value";
 
 import { ON_QUEUE_JOB_METADATA_TOKEN } from "./on-queue-job.decorator.js";
@@ -7,13 +8,15 @@ import { InvalidQueueJobPayloadError } from "./queue.service.js";
 
 type QueueJobToken = typeof ON_QUEUE_JOB_METADATA_TOKEN;
 
-export class QueueJobInitializer implements Initializer<QueueJobToken> {
+export class QueueJobInitializer extends Initializer<QueueJobToken> {
 	public readonly token = ON_QUEUE_JOB_METADATA_TOKEN;
 
 	constructor(
 		private readonly bullMqRegistry: Deps["bullMqRegistry"],
 		private readonly processableJobs: Deps["processableJobs"],
-	) {}
+	) {
+		super();
+	}
 
 	initialize(context: InitializerContext<QueueJobToken>): void {
 		const jobClass = context.metadata;

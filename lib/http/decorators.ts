@@ -201,17 +201,10 @@ function appendMiddleware(target: any[], incoming: MiddlewareParameter): any[] {
 // helpers to prepare state before mapping to http framework
 // ---------------------------------------------------------
 
-type RollUpRootState = {
-	paths: string[];
-	beforeMiddleware: any[];
-	afterMiddleware: any[];
-};
-
-// TODO: revisit, better return type
-export function rollUpHttpDecoratorState<TMethod extends RollUpRootState>(
-	root: RollUpRootState,
-	method: TMethod,
-): TMethod {
+export function rollUpHttpDecoratorState(
+	root: RootState,
+	method: MethodState,
+): MethodState {
 	return {
 		...method,
 		paths: concatPaths(root.paths, method.paths),

@@ -1,8 +1,8 @@
 import { Lifetime } from "awilix";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { DIContext } from "../lib/di/contexts/di-context.js";
-import type { AnyModule } from "../lib/di/modules/module.types.js";
-import { GET } from "../lib/http/decorators.js";
+import { DIContext } from "../../lib/di/contexts/di-context.js";
+import type { AnyModule } from "../../lib/di/modules/module.types.js";
+import { GET } from "../../lib/http/decorators.js";
 import { createHttpTestModule, createMockExpress } from "./http-test-module.js";
 
 describe("Request scope context (AsyncLocalStorage)", () => {

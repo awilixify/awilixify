@@ -4,18 +4,18 @@ import {
 	DIContext,
 	type DiContextOptions,
 	type ModuleScopeTree,
-} from "../lib/di/contexts/di-context.js";
-import * as ERRORS from "../lib/di/errors.js";
-import type { AnyModule } from "../lib/di/modules/module.types.js";
-import type { ModuleDef } from "../lib/di/modules/module-def.types.js";
+} from "../../lib/di/contexts/di-context.js";
+import * as ERRORS from "../../lib/di/errors.js";
+import type { AnyModule } from "../../lib/di/modules/module.types.js";
+import type { ModuleDef } from "../../lib/di/modules/module-def.types.js";
 import {
 	createModule,
 	forwardRef,
-} from "../lib/di/modules/module-factories.js";
+} from "../../lib/di/modules/module-factories.js";
 import type {
 	ForwardRef,
 	ModuleRef,
-} from "../lib/di/modules/module-ref.types.js";
+} from "../../lib/di/modules/module-ref.types.js";
 
 // Test-only type: Override resolve to return 'any' for convenience
 type TestContainer = Omit<AwilixContainer, "resolve"> & {

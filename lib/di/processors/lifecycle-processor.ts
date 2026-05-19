@@ -34,8 +34,10 @@ export class LifecycleProcessor {
 		}
 	}
 
-	addInitializerTasks(tasks: InitializerTask[]): void {
-		this.initializerTasks.push(...tasks);
+	addInitializerTask(task: InitializerTask | null): void {
+		if (!task) return;
+
+		this.initializerTasks.push(task);
 	}
 
 	init(): Promise<void> {

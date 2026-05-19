@@ -5,6 +5,8 @@ import type {
 	ConstructorController,
 	Initializer,
 } from "../providers/provider.types.js";
+import { runInRequestScopeContext } from "../request-scope-context.js";
+import * as ERRORS from "../errors.js";
 import { KeyedFeatureRegistrar } from "./keyed-feature-registrar.js";
 
 export type ControllerRuntimeEntry = {
@@ -32,48 +34,92 @@ export class InitializerProcessor {
 		scope: Awilix.AwilixContainer,
 		importedModulesWithScope: ModuleWithScope[],
 		controllers: ControllerRuntimeEntry[],
-	): InitializerTask[] {
+	): InitializerTask | null {
 		this.processInitializerResolvers(m, scope, importedModulesWithScope);
 
-		const initializers = this.resolversByModule.get(m) ?? new Map();
+		const initializers = [
+			...(
+				this.resolversByModule.get(m) ??
+				new Map<string, () => Initializer<any, boolean>>()
+			).values(),
+		];
 
-		if (initializers.size === 0 || controllers.length === 0) return [];
+		if (initializers.length === 0 || controllers.length === 0) return null;
 
-		return [
-			async () => {
-				for (const controller of controllers) {
-					for (const methodName of this.getControllerMethodNames(
-						controller.controllerClass,
-					)) {
-						const invoke = (...args: unknown[]) =>
-							controller.resolve()[methodName](...args);
+		return async () => {
+			for (const controller of controllers) {
+				for (const methodName of this.getControllerMethodNames(
+					controller.controllerClass,
+				)) {
+					const invoke = (...args: unknown[]) =>
+						runInRequestScopeContext(() =>
+							controller.resolve()[methodName](...args),
+						);
 
-						for (const resolveInitializer of initializers.values()) {
-							const initializer = resolveInitializer();
-							const decoratorState = resolveDecoratorState(
-								controller.controllerClass,
-								initializer.token,
-							);
+					this.ensureNoMultiInvokableInitializersPerMethod(
+						m.name,
+						methodName,
+						controller,
+						initializers,
+					);
 
-							if (decoratorState === null) continue;
+					for (const resolveInitializer of initializers) {
+						const initializer = resolveInitializer();
+						const decoratorState = resolveDecoratorState(
+							controller.controllerClass,
+							initializer.token,
+						);
 
-							const metadata = decoratorState.methods.get(methodName);
+						if (decoratorState === null) continue;
 
-							if (metadata === undefined) continue;
+						const metadata = decoratorState.methods.get(methodName);
 
-							await initializer.initialize({
-								moduleName: m.name,
-								target: controller.controllerClass,
-								methodName,
-								metadata,
-								decoratorState,
-								invoke,
-							});
-						}
+						if (metadata === undefined) continue;
+
+						await initializer.initialize({
+							moduleName: m.name,
+							target: controller.controllerClass,
+							methodName,
+							metadata,
+							decoratorState,
+							...(initializer.usesInvoke ? { invoke } : {}),
+						});
 					}
 				}
-			},
-		];
+			}
+		};
+	}
+
+	private ensureNoMultiInvokableInitializersPerMethod(
+		moduleName: string,
+		methodName: string | symbol,
+		controller: ControllerRuntimeEntry,
+		initializers: Array<() => Initializer<any, boolean>>,
+	): void {
+		const invokableInitializers = initializers
+			.map((resolver) => resolver())
+			.filter((initializer) => {
+				const decoratorState = resolveDecoratorState(
+					controller.controllerClass,
+					initializer.token,
+				);
+
+				return (
+					decoratorState?.methods.has(methodName) === true &&
+					initializer.usesInvoke === true
+				);
+			});
+
+		if (invokableInitializers.length > 1) {
+			throw new ERRORS.MultipleInvokeInitializersPerMethodError(
+				moduleName,
+				controller.controllerClass.name,
+				String(methodName),
+				invokableInitializers.map(
+					(initializer) => initializer.constructor.name,
+				),
+			);
+		}
 	}
 
 	private processInitializerResolvers(

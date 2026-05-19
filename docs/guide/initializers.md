@@ -88,8 +88,9 @@ This is the HTTP initializer from the Fastify example:
 
 ```typescript
 import {
-  type Initializer,
-  InitializerContext,
+  Initializer,
+  type InitializerContext,
+  type MetadataInitializerContext,
   resolveDecoratorState,
   isResultLike,
 } from "awilixify";
@@ -106,10 +107,12 @@ import type { Deps } from "./http.module.js";
 // "createDecoratorStateUpdater"
 type HttpToken = typeof HTTP_DECORATOR_STATE_TOKEN;
 
-export class FastifyHttpInitializer implements Initializer<HttpToken> {
+export class FastifyHttpInitializer extends Initializer<HttpToken> {
   public readonly token = HTTP_DECORATOR_STATE_TOKEN;
 
-  constructor(private readonly app: Deps['app']) {}
+  constructor(private readonly app: Deps['app']) {
+    super();
+  }
 
   // runs for every decorated method
   initialize(context: InitializerContext<HttpToken>) {
@@ -140,6 +143,15 @@ The important part is not Fastify itself.
 The important part is that the initializer reads decorator metadata and then uses the native Fastify API, `app.route(...)`, to register the route exactly how you want.
 
 That same pattern is what makes the event emitter, queue, RabbitMQ, and cron examples possible.
+
+## Invoke Ownership
+
+Most initializers only need metadata and startup wiring.
+
+- invoke-enabled initializers extend `Initializer<TToken>` and receive `InitializerContext`
+- metadata-only initializers extend `Initializer<TToken, false>` and receive `MetadataInitializerContext`
+
+Only one invoke-enabled initializer may match a controller method. This keeps execution ownership explicit and avoids accidentally wiring the same method into multiple runtime entrypoints.
 
 ## Why This Matters
 

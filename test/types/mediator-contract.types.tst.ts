@@ -1,13 +1,13 @@
 import { describe, expect, it } from "tstyche";
-import type { Module as M } from "../lib/di/modules/module.types.js";
-import type { ModuleDef as D } from "../lib/di/modules/module-def.types.js";
+import type { Module as M } from "../../lib/di/modules/module.types.js";
+import type { ModuleDef as D } from "../../lib/di/modules/module-def.types.js";
 import type {
 	CommandContract,
 	QueryContract,
-} from "../lib/mediator/contract.types.js";
-import { Mediator } from "../lib/mediator/mediator.js";
-import type { MiddlewareContract } from "../lib/mediator/middleware.types.js";
-import type { Result } from "../lib/mediator/result.js";
+} from "../../lib/mediator/contract.types.js";
+import { Mediator } from "../../lib/mediator/mediator.js";
+import type { MiddlewareContract } from "../../lib/mediator/middleware.types.js";
+import type { Result } from "../../lib/mediator/result.js";
 
 class LocalAuthError {
 	private declare readonly __brand: "LocalAuthError";

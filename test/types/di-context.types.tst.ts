@@ -1,20 +1,20 @@
 import { describe, expect, it } from "tstyche";
-import type { EmptyObject } from "../lib/di/common.types.js";
-import type { Module as M } from "../lib/di/modules/module.types.js";
+import type { EmptyObject } from "../../lib/di/common.types.js";
+import type { Module as M } from "../../lib/di/modules/module.types.js";
 import type {
 	ModuleDef as D,
 	GlobalDependencies,
-} from "../lib/di/modules/module-def.types.js";
+} from "../../lib/di/modules/module-def.types.js";
 import {
 	createFactoryProvider,
 	createModule,
-} from "../lib/di/modules/module-factories.js";
+} from "../../lib/di/modules/module-factories.js";
 
 class GlobalService {
 	private declare readonly __brand: never;
 }
 
-declare module "../lib/di/modules/module-def.types.js" {
+declare module "../../lib/di/modules/module-def.types.js" {
 	interface GlobalDependencies {
 		globalService: GlobalService;
 	}

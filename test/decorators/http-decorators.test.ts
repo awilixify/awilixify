@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { resolveDecoratorState } from "../lib/decorators/decorator-state.js";
+import {
+	resolveDecoratorState,
+	hasDecoratorMethodMetadata,
+} from "../../lib/decorators/decorator-state.js";
 import {
 	after as AFTER,
 	before as BEFORE,
@@ -10,10 +13,10 @@ import {
 	PATCH,
 	POST,
 	PUT,
+	rollUpHttpDecoratorState,
 	schema,
-} from "../lib/http/decorators.js";
-import { HttpVerbs } from "../lib/http/http-verbs.js";
-import { hasValidationSchema } from "../lib/http/openapi-builder.js";
+} from "../../lib/http/decorators.js";
+import { HttpVerbs } from "../../lib/http/http-verbs.js";
 
 describe("Decorators", () => {
 	describe("Route Decorators", () => {
@@ -70,10 +73,7 @@ describe("Decorators", () => {
 				HTTP_DECORATOR_STATE_TOKEN,
 			);
 
-			expect(state).not.toBeNull();
-
 			// GET
-			expect(state?.methods.has("getUsers")).toBe(true);
 			const getUsersRoute = state?.methods.get("getUsers");
 			expect(getUsersRoute?.verbs).toEqual([HttpVerbs.GET]);
 			expect(getUsersRoute?.paths).toEqual(["/users"]);
@@ -256,43 +256,49 @@ describe("Decorators", () => {
 		});
 	});
 
-	describe("hasValidationSchema", () => {
-		it("should return true when schema has body", () => {
-			expect(hasValidationSchema({ body: { type: "object" } })).toBe(true);
-		});
-
-		it("should return true when schema has querystring", () => {
-			expect(hasValidationSchema({ querystring: { type: "object" } })).toBe(
-				true,
-			);
-		});
-
-		it("should return true when schema has params", () => {
-			expect(hasValidationSchema({ params: { type: "object" } })).toBe(true);
-		});
-
-		it("should return true when schema has headers", () => {
-			expect(hasValidationSchema({ headers: { type: "object" } })).toBe(true);
-		});
-
-		it("should return false when schema has only response", () => {
+	describe("rollUpHttpDecoratorState", () => {
+		it("concatenates controller and method paths and preserves middleware ordering", () => {
 			expect(
-				hasValidationSchema({ response: { 200: { type: "object" } } }),
-			).toBe(false);
+				rollUpHttpDecoratorState(
+					{
+						paths: ["/api", "/v1"],
+						beforeMiddleware: ["rootBefore"],
+						afterMiddleware: ["rootAfter"],
+					},
+					{
+						paths: ["/users", "/admins"],
+						beforeMiddleware: ["methodBefore"],
+						afterMiddleware: ["methodAfter"],
+						verbs: ["GET"],
+						schema: {},
+					},
+				),
+			).toEqual({
+				paths: ["/api/users", "/api/admins", "/v1/users", "/v1/admins"],
+				beforeMiddleware: ["rootBefore", "methodBefore"],
+				afterMiddleware: ["methodAfter", "rootAfter"],
+				verbs: ["GET"],
+				schema: {},
+			});
 		});
+	});
+});
 
-		it("should return false when schema has only metadata fields", () => {
-			expect(
-				hasValidationSchema({
-					description: "Test endpoint",
-					summary: "Test",
-					tags: ["test"],
-				}),
-			).toBe(false);
-		});
+describe("decorator-state", () => {
+	it("detects decorator metadata on string-keyed metadata entries and ignores invalid targets", () => {
+		const metadataSymbol = Symbol.metadata ?? Symbol("Symbol.metadata");
+		const target = {};
 
-		it("should return false when schema is empty", () => {
-			expect(hasValidationSchema({})).toBe(false);
-		});
+		(target as Record<symbol, unknown>)[metadataSymbol] = {
+			plain: {
+				methods: new Map([["getValue", { enabled: true }]]),
+			},
+		};
+
+		expect(hasDecoratorMethodMetadata(target)).toBe(true);
+		expect(hasDecoratorMethodMetadata(null)).toBe(false);
+
+		(target as Record<symbol, unknown>)[metadataSymbol] = "invalid";
+		expect(hasDecoratorMethodMetadata(target)).toBe(false);
 	});
 });

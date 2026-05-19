@@ -8,20 +8,20 @@ import {
 	DIContext,
 	type DiContextOptions,
 	type ModuleScopeTree,
-} from "../lib/di/contexts/di-context.js";
-import { AsyncDIContext } from "../lib/di/contexts/di-context-async.js";
-import * as ERRORS from "../lib/di/errors.js";
-import type { AnyModule } from "../lib/di/modules/module.types.js";
-import type { ModuleDef } from "../lib/di/modules/module-def.types.js";
+} from "../../lib/di/contexts/di-context.js";
+import { AsyncDIContext } from "../../lib/di/contexts/di-context-async.js";
+import * as ERRORS from "../../lib/di/errors.js";
+import type { AnyModule } from "../../lib/di/modules/module.types.js";
+import type { ModuleDef } from "../../lib/di/modules/module-def.types.js";
 import {
 	createFactoryProvider,
 	createModule,
 	forwardRef,
-} from "../lib/di/modules/module-factories.js";
+} from "../../lib/di/modules/module-factories.js";
 import type {
 	ForwardRef,
 	ModuleRef,
-} from "../lib/di/modules/module-ref.types.js";
+} from "../../lib/di/modules/module-ref.types.js";
 
 // Test-only type: Override resolve to return 'any' for convenience
 type TestContainer = Omit<AwilixContainer, "resolve"> & {
@@ -472,6 +472,47 @@ describe("DIContext", () => {
 			expect(globalB.getDeps().globalA).toBe(globalA);
 		});
 
+		it("should resolve promised imports inside async global modules", async () => {
+			class ImportedService extends TestableBase {}
+
+			const ImportedModule: AnyModule = {
+				name: "ImportedModule",
+				providers: {
+					importedService: ImportedService,
+				},
+				exports: ["importedService"],
+			};
+
+			const { scope } = await AsyncDIContext.create(
+				{
+					name: "AppModule",
+				},
+				{
+					containerOptions: {
+						injectionMode: "PROXY",
+					},
+					globalModules: [
+						{
+							name: "GlobalModule",
+							imports: [Promise.resolve(ImportedModule)],
+							providers: {
+								globalConsumer: {
+									inject: ["importedService"],
+									useFactory: (importedService: ImportedService) =>
+										new TestableBase({ importedService }),
+								},
+							},
+							exports: ["globalConsumer"],
+						},
+					],
+				},
+			);
+
+			expect(scope.resolve<TestableBase>("globalConsumer").getDeps()).toEqual({
+				importedService: expect.any(ImportedService),
+			});
+		});
+
 		it("should throw when promised import is used with sync create", () => {
 			expect(() =>
 				registerModule({
@@ -482,6 +523,19 @@ describe("DIContext", () => {
 					],
 				}),
 			).toThrow(ERRORS.AsyncModuleRequiresAsyncCreateError);
+		});
+
+		it("should throw when imported modules export missing provider definitions", () => {
+			expect(() =>
+				registerModule({
+					imports: [
+						{
+							name: "BrokenModule",
+							exports: ["missingProvider"],
+						},
+					],
+				}),
+			).toThrow(ERRORS.InvalidProviderDefinitionError);
 		});
 
 		it("should resolve async forwardRef imports with AsyncDIContext", async () => {
@@ -750,12 +804,15 @@ describe("DIContext", () => {
 
 	describe("Primitive Provider Registration", () => {
 		it("should register string/number primitives as values", () => {
+			const plainFunction = () => "plain";
+
 			const { scope } = registerModule({
 				providers: {
 					apiUrl: "https://api.example.com",
 					port: 3000,
 					isProduction: true,
 					debugMode: false,
+					plainFunction,
 					nullValue: null,
 					undefinedValue: undefined,
 				},
@@ -768,6 +825,7 @@ describe("DIContext", () => {
 			expect(scope.resolve("nullValue")).toBe(null);
 			// undefined provider should not be registered
 			expect(scope.registrations.undefinedValue).toBeUndefined();
+			expect(scope.resolve("plainFunction")).toBe(plainFunction);
 		});
 
 		it("should register primitives alongside class providers", () => {
@@ -1052,6 +1110,70 @@ describe("DIContext", () => {
 				"loggerService",
 			);
 			expect(appScope.resolve("loggerService").getDeps().level).toBe("debug");
+		});
+	});
+
+	describe("createModule Helper", () => {
+		it("should generate a stable hash for equivalent nested objects with different key order", () => {
+			const moduleA = createModule(
+				{
+					name: "ConfigModule",
+				},
+				{
+					hashNameFrom: {
+						z: 1,
+						config: {
+							beta: true,
+							alpha: "x",
+						},
+						items: [{ b: 2, a: 1 }, "value", 7],
+					},
+				},
+			);
+
+			const moduleB = createModule(
+				{
+					name: "ConfigModule",
+				},
+				{
+					hashNameFrom: {
+						items: [{ a: 1, b: 2 }, "value", 7],
+						config: {
+							alpha: "x",
+							beta: true,
+						},
+						z: 1,
+					},
+				},
+			);
+
+			expect(moduleA.name).toBe(moduleB.name);
+		});
+
+		it("should preserve array order when generating module hashes", () => {
+			const moduleA = createModule(
+				{
+					name: "ConfigModule",
+				},
+				{
+					hashNameFrom: {
+						items: ["a", { b: 2, a: 1 }, "c"],
+					},
+				},
+			);
+
+			const moduleB = createModule(
+				{
+					name: "ConfigModule",
+				},
+				{
+					hashNameFrom: {
+						items: ["c", { a: 1, b: 2 }, "a"],
+					},
+				},
+			);
+
+			expect(moduleA.name).not.toBe(moduleB.name);
 		});
 	});
 

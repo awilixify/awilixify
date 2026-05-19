@@ -1,5 +1,5 @@
 import {
-	type Initializer,
+	Initializer,
 	InitializerContext,
 	resolveDecoratorState,
 	isResultLike,
@@ -18,11 +18,13 @@ import { BaseError } from "@/common/base.error.js";
 
 type HttpToken = typeof HTTP_DECORATOR_STATE_TOKEN;
 
-export class FastifyHttpInitializer implements Initializer<HttpToken> {
+export class FastifyHttpInitializer extends Initializer<HttpToken> {
 	public readonly token = HTTP_DECORATOR_STATE_TOKEN;
 	private readonly registeredMethods = new Set<string>();
 
-	constructor(private readonly deps: Deps) {}
+	constructor(private readonly deps: Deps) {
+		super();
+	}
 
 	initialize(context: InitializerContext<HttpToken>) {
 		const methodKey = `${context.target.name}:${String(context.methodName)}`;

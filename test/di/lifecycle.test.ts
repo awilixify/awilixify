@@ -1,16 +1,13 @@
-import {
-	type AwilixContainer,
-	Lifetime,
-} from "awilix";
+import { type AwilixContainer, Lifetime } from "awilix";
 import { describe, expect, it, vi } from "vitest";
 import {
 	DIContext,
 	type DiContextOptions,
 	type ModuleScopeTree,
-} from "../lib/di/contexts/di-context.js";
-import { AsyncDIContext } from "../lib/di/contexts/di-context-async.js";
-import * as ERRORS from "../lib/di/errors.js";
-import type { AnyModule } from "../lib/di/modules/module.types.js";
+} from "../../lib/di/contexts/di-context.js";
+import { AsyncDIContext } from "../../lib/di/contexts/di-context-async.js";
+import * as ERRORS from "../../lib/di/errors.js";
+import type { AnyModule } from "../../lib/di/modules/module.types.js";
 
 type TestContainer = Omit<AwilixContainer, "resolve"> & {
 	resolve<T = any>(name: string | symbol): T;
@@ -285,6 +282,39 @@ describe("Lifecycle", () => {
 			await app.init();
 
 			expect(init).toHaveBeenCalledTimes(1);
+		});
+
+		it("should resolve async eager factory dependencies before invoking the factory", async () => {
+			const calls: string[] = [];
+
+			const app = registerModule({
+				providers: {
+					dependency: {
+						inject: [],
+						useFactory: () => {
+							calls.push("dependency");
+							return new TestableBase({ token: "dep" });
+						},
+					},
+					eagerService: {
+						eager: true,
+						inject: ["dependency"],
+						useFactory: async (dependency: TestableBase) => {
+							calls.push("eager");
+							return new TestableBase({ dependency });
+						},
+					},
+				},
+			});
+
+			await app.init();
+
+			expect(calls).toEqual(["dependency", "eager"]);
+			expect(app.scope.resolve<TestableBase>("eagerService").getDeps()).toEqual(
+				{
+					dependency: expect.any(TestableBase),
+				},
+			);
 		});
 
 		it("should initialize eager providers using initAfter order", async () => {

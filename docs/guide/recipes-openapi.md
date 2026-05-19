@@ -22,7 +22,7 @@ import type { Express, Request, Response, NextFunction } from "express";
 import swaggerUi from "swagger-ui-express";
 
 import {
-  type Initializer,
+  Initializer,
   type InitializerContext,
   createModule,
 } from "awilixify";
@@ -91,13 +91,15 @@ class OpenApiDocsService {
   }
 }
 
-class ExpressHttpInitializer implements Initializer<HttpToken> {
+class ExpressHttpInitializer extends Initializer<HttpToken> {
   public readonly token = HTTP_DECORATOR_STATE_TOKEN;
 
   constructor(
     private readonly app: Deps["app"],
     private readonly openApiDocs: Deps["openApiDocs"],
-  ) {}
+  ) {
+    super();
+  }
 
   initialize(context: InitializerContext<HttpToken>) {
     const methodState = rollUpHttpDecoratorState(

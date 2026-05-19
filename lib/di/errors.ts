@@ -189,3 +189,19 @@ export class DuplicateInitializerTokenError extends Error {
 		this.name = "DuplicateInitializerTokenError";
 	}
 }
+
+export class MultipleInvokeInitializersPerMethodError extends Error {
+	constructor(
+		moduleName: string,
+		controllerName: string,
+		methodName: string,
+		initializerNames: string[],
+	) {
+		super(
+			`Controller method "${controllerName}.${methodName}" in module "${moduleName}" has multiple initializers that receive invoke: ${initializerNames.join(", ")}. ` +
+				`Only one invoke-enabled initializer is allowed per method. ` +
+				`Metadata-only initializers should set usesInvoke = false.`,
+		);
+		this.name = "MultipleInvokeInitializersPerMethodError";
+	}
+}
