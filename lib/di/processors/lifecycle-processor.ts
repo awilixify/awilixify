@@ -1,4 +1,5 @@
 import * as Awilix from "awilix";
+import type { ModuleInitOptions } from "../contexts/di-context-base.js";
 import * as ERRORS from "../errors.js";
 import type { InternalModuleLike as M } from "../modules/runtime-module.types.js";
 import * as GUARGS from "../type-guards.js";
@@ -8,6 +9,10 @@ type EagerProviderRef = {
 	module: M;
 	scope: Awilix.AwilixContainer;
 	key: string;
+};
+
+type InitializedProviderRef = EagerProviderRef & {
+	instance: unknown;
 };
 
 type EagerProviderNode = EagerProviderRef & {
@@ -40,14 +45,14 @@ export class LifecycleProcessor {
 		this.initializerTasks.push(task);
 	}
 
-	init(): Promise<void> {
-		this.initPromise ??= this.executeInit();
+	init(options?: ModuleInitOptions): Promise<void> {
+		this.initPromise ??= this.executeInit(options);
 
 		return this.initPromise;
 	}
 
-	private async executeInit(): Promise<void> {
-		const initializedInstances: unknown[] = [];
+	private async executeInit(options?: ModuleInitOptions): Promise<void> {
+		const initializedProviders: InitializedProviderRef[] = [];
 
 		for (const { module, scope, key } of this.sortEagerProviderRefs()) {
 			this.ensureEagerProviderUsesSingletonLifetime(module, scope, key);
@@ -56,17 +61,29 @@ export class LifecycleProcessor {
 				scope,
 				key,
 			});
-			initializedInstances.push(instance);
+			initializedProviders.push({ module, scope, key, instance });
 			await this.callProviderInitAsync(instance);
 		}
 
 		for (const initialize of this.initializerTasks) {
-			await initialize();
+			await initialize(options);
 		}
 
-		for (const instance of initializedInstances) {
+		for (const { key, instance } of initializedProviders) {
+			if (this.shouldSkipProviderPostInit(key, options)) continue;
+
 			await this.callProviderPostInitAsync(instance);
 		}
+	}
+
+	private shouldSkipProviderPostInit(
+		key: string,
+		options?: ModuleInitOptions,
+	): boolean {
+		if (options?.excludePostInit === true) return true;
+		if (!Array.isArray(options?.excludePostInit)) return false;
+
+		return new Set(options.excludePostInit).has(key);
 	}
 
 	private getEagerProviderKeys(m: M): string[] {

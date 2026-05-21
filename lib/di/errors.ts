@@ -52,6 +52,33 @@ export class ProviderNameConflictError extends Error {
 	}
 }
 
+export class ProviderOverrideNotFoundError extends Error {
+	constructor(moduleName: string, providerKey: string) {
+		super(
+			`Cannot override provider "${providerKey}" in module "${moduleName}" because it is not declared by that module.`,
+		);
+		this.name = "ProviderOverrideNotFoundError";
+	}
+}
+
+export class ModuleFeatureOverrideNotFoundError extends Error {
+	constructor(moduleName: string, featureKind: string, featureKey: string) {
+		super(
+			`Cannot override ${featureKind} "${featureKey}" in module "${moduleName}" because it is not declared by that module.`,
+		);
+		this.name = "ModuleFeatureOverrideNotFoundError";
+	}
+}
+
+export class ModuleOverrideTargetNotFoundError extends Error {
+	constructor(moduleName: string) {
+		super(
+			`Module override target "${moduleName}" was not found in the bootstrapped module graph.`,
+		);
+		this.name = "ModuleOverrideTargetNotFoundError";
+	}
+}
+
 export class CircularModuleDependencyError extends Error {
 	constructor(moduleName: string, chain: string[]) {
 		super(

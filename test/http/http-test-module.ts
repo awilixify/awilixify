@@ -1,8 +1,8 @@
 import { vi } from "vitest";
 import type { AnyModule } from "../../lib/di/modules/module.types.js";
 import { createModule } from "../../lib/di/modules/module-factories.js";
-import { Initializer } from "../../lib/di/providers/provider.types.js";
 import type { InitializerContext } from "../../lib/di/providers/provider.types.js";
+import { Initializer } from "../../lib/di/providers/provider.types.js";
 import {
 	HTTP_DECORATOR_STATE_TOKEN,
 	rollUpHttpDecoratorState,

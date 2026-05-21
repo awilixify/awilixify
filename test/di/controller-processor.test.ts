@@ -52,6 +52,29 @@ describe("ControllerProcessor", () => {
 
 			expect(registerRoutes).toHaveBeenCalledTimes(1);
 		});
+
+		it("should skip registerRoutes when skipRegisterRoutes is true", () => {
+			const registerRoutes = vi.fn();
+
+			class ApiController implements Controller {
+				registerRoutes() {
+					registerRoutes();
+				}
+			}
+
+			DIContext.create(
+				{
+					name: "ApiModule",
+					controllers: [ApiController],
+				},
+				{
+					globalModules: [createHttpTestModule(mockExpress)],
+					skipRegisterRoutes: true,
+				},
+			);
+
+			expect(registerRoutes).not.toHaveBeenCalled();
+		});
 	});
 
 	describe("Duplicate Controller Detection", () => {
@@ -210,8 +233,7 @@ describe("ControllerProcessor", () => {
 
 				constructor(private resolveSelf: () => SingletonController) {}
 
-				@GET("/self-singleton")
-				async getSelf() {
+				async registerRoutes() {
 					return {
 						instanceId: this.resolveSelf().instanceId,
 					};

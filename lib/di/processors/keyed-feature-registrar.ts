@@ -1,8 +1,8 @@
 import * as Awilix from "awilix";
 import * as ERRORS from "../errors.js";
 import type { InternalModuleLike as M } from "../modules/runtime-module.types.js";
-import { ProviderResolver } from "../providers/provider-resolver.js";
 import type { Initializer } from "../providers/provider.types.js";
+import { ProviderResolver } from "../providers/provider-resolver.js";
 import { resolveFromRequestScope } from "../request-scope-context.js";
 
 type ModuleWithScope = {

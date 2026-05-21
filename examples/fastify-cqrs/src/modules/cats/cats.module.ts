@@ -1,4 +1,9 @@
-import { createModule, type ModuleDef } from "awilixify";
+import {
+	createModule,
+	forwardRef,
+	type ModuleDef,
+	type ModuleRef,
+} from "awilixify";
 
 import { DbModule } from "@/integrations/db/db.module.js";
 import { ScheduleModule } from "@/integrations/scheduler/scheduler.module.js";
@@ -8,7 +13,10 @@ import { CacheModule } from "@/integrations/cache/cache.module.js";
 import { TimeoutModule } from "@/integrations/timeout/timeout.module.js";
 import { RabbitMqModule } from "@/integrations/rabbitmq/rabbitmq.module.js";
 
-import { OwnersModule } from "@/modules/owners/owners.module.js";
+import {
+	OwnersModule,
+	type OwnersModuleDef,
+} from "@/modules/owners/owners.module.js";
 import { CatsController } from "./cats.controller.js";
 import { CatsService } from "./cats.service.js";
 import { CatsAuthMiddleware } from "./cats-auth.middleware.js";
@@ -40,7 +48,7 @@ export type CatsModuleDef = ModuleDef<{
 	// exportKeys: ["catsService", 'catsService'];
 	exportKeys: ["catsService"];
 	imports: [
-		typeof OwnersModule,
+		ModuleRef<OwnersModuleDef>,
 		ReturnType<typeof DbModule<typeof dbScope>>,
 		ReturnType<typeof ScheduleModule>,
 		ReturnType<
@@ -66,7 +74,7 @@ export const CatsModule = createModule<CatsModuleDef>({
 	name: "CatsModule",
 
 	imports: [
-		OwnersModule,
+		forwardRef(() => OwnersModule),
 		DbModule(dbScope),
 		ScheduleModule([CatsHeartbeatCronTask]),
 		EventEmitterModule(CatsEventListeners.EventScope),

@@ -36,23 +36,24 @@ export const AnimalModule = createModule<AnimalModuleDef>({
 
 ### Between Modules
 
-When modules import each other, use `forwardRef` and `ModuleRef` type:
+When modules import each other, use `forwardRef` and the `ModuleRef` type on the cyclic edges:
 
 ```typescript
 // cats.module.ts
-import { OwnersModule } from "./owners.module";
+import { forwardRef, type ModuleRef } from "awilixify";
+import { OwnersModule, type OwnersModuleDef } from "./owners.module";
 
 export type CatsModuleDef = ModuleDef<{
   providers: {
     catsService: CatsService;
   };
-  imports: [typeof OwnersModule];
+  imports: [ModuleRef<OwnersModuleDef>];
   exportKeys: ["catsService"];
 }>;
 
 export const CatsModule = createModule<CatsModuleDef>({
   name: "CatsModule",
-  imports: [OwnersModule],
+  imports: [forwardRef(() => OwnersModule)],
   providers: { catsService: CatsService },
   exports: { catsService: CatsService },
 });
@@ -75,6 +76,11 @@ export const OwnersModule: Module<OwnersModuleDef> =
   });
 ```
 
+> [!IMPORTANT]
+> If two module files import each other, prefer `forwardRef` on both sides of the module cycle.
+> A direct import can work in one application entry order and fail in another, such as a focused test that boots the opposite module first.
+> `forwardRef` delays reading the imported module export until awilixify resolves imports, which makes the cycle entry-order independent.
+
 ### Between Providers in Cyclic Modules
 
 When providers from circularly dependent modules also depend on each other, combine both approaches:
@@ -83,7 +89,7 @@ When providers from circularly dependent modules also depend on each other, comb
 // cats.module.ts
 export const CatsModule = createModule<CatsModuleDef>({
   name: "CatsModule",
-  imports: [OwnersModule],
+  imports: [forwardRef(() => OwnersModule)],
   providers: {
     catsService: {
       useClass: CatsService,

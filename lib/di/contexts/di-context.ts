@@ -3,23 +3,35 @@ import * as ERRORS from "../errors.js";
 import type { InternalModuleLike as M } from "../modules/runtime-module.types.js";
 import * as GUARGS from "../type-guards.js";
 import type { DiContextOptions, ModuleScopeTree } from "./di-context-base.js";
-import { DIContextBase } from "./di-context-base.js";
-
-export type { DiContextOptions, ModuleScopeTree } from "./di-context-base.js";
+import {
+	DIContextBase,
+	type DiContextCreateOptions,
+} from "./di-context-base.js";
 
 export class DIContext extends DIContextBase {
-	private constructor(options: DiContextOptions) {
+	private constructor(options: DiContextOptions<any>) {
 		super(options);
 	}
 
-	static create(module: M, options?: DiContextOptions): ModuleScopeTree {
+	static create<TModule extends M>(
+		module: TModule,
+		options?: DiContextCreateOptions<TModule>,
+	): ModuleScopeTree {
 		return new DIContext(options ?? {}).bootstrap(module);
 	}
 
 	private bootstrap(module: M): ModuleScopeTree {
+		this.rootModule = module;
 		this.initializeGlobalModules();
 
-		return this.registerModuleWithScope(module, this.createContainer(module), []);
+		const moduleTree = this.registerModuleWithScope(
+			this.rootModule,
+			this.createContainer(module),
+			[],
+		);
+		this.ensureAllModuleOverridesApplied();
+
+		return moduleTree;
 	}
 
 	private registerModuleWithScope(
@@ -34,9 +46,11 @@ export class DIContext extends DIContextBase {
 		}
 
 		const imports = this.resolveImports(m);
-		this.ensureImportedModulesUniqueness(m, imports);
-		this.ensureNoProviderNameConflicts(m, imports);
-		this.markModuleIfImportsUseForwardRef(m);
+		const moduleWithOverrides = this.applyModuleOverrides(m);
+
+		this.ensureImportedModulesUniqueness(moduleWithOverrides, imports);
+		this.ensureNoProviderNameConflicts(moduleWithOverrides, imports);
+		this.markModuleIfImportsUseForwardRef(moduleWithOverrides);
 
 		const isCircular = moduleChain.includes(m);
 
@@ -54,47 +68,53 @@ export class DIContext extends DIContextBase {
 		// Store the scope in the map before processing (for circular references)
 		this.moduleScopeMap.set(m, scope);
 
-			const importedModulesWithScope = [
-				...this.globalModulesWithScope,
-				...imports.map((module) => ({
-					...this.registerModuleWithScope(
-						module,
-						this.createContainer(module),
-						[...moduleChain, m],
-					),
+		const importedModulesWithScope = [
+			...this.globalModulesWithScope,
+			...imports.map((module) => {
+				const moduleTree = this.registerModuleWithScope(
 					module,
-				})),
-			];
+					this.createContainer(module),
+					[...moduleChain, m],
+				);
+
+				return {
+					...moduleTree,
+					module: this.getEffectiveModule(module),
+				};
+			}),
+		];
 
 		this.registerExportedProviders(scope, importedModulesWithScope);
 
 		const moduleForSorting: M = {
-			...m,
+			...moduleWithOverrides,
 			imports: importedModulesWithScope.map((el) => el.module),
 		};
 
 		this.interceptorProcessor.processInterceptors(
-			m,
+			moduleWithOverrides,
 			scope,
 			importedModulesWithScope,
 		);
 
-		Object.entries(this.sorter.sortByDependencies(moduleForSorting)).forEach(
-			([key, provider]) => {
-				scope.register({
-					[key]: this.providerResolver.resolveProvider({
-						key,
-						provider,
-						resolutionScope: scope,
-						module: m,
-					}),
-				});
-			},
+		this.getProviderEntries(m, moduleForSorting).forEach(([key, provider]) => {
+			scope.register({
+				[key]: this.providerResolver.resolveProvider({
+					key,
+					provider,
+					resolutionScope: scope,
+					module: moduleWithOverrides,
+				}),
+			});
+		});
+
+		this.lifecycleProcessor.collectEagerProviders(moduleWithOverrides, scope);
+
+		this.processModuleFeatures(
+			moduleWithOverrides,
+			scope,
+			importedModulesWithScope,
 		);
-
-		this.lifecycleProcessor.collectEagerProviders(m, scope);
-
-		this.processModuleFeatures(m, scope, importedModulesWithScope);
 
 		const moduleTree = this.createModuleScopeTree(
 			m.name,
@@ -121,16 +141,17 @@ export class DIContext extends DIContextBase {
 
 		this.globalModulesWithScope = [];
 
-			for (const module of globalModules) {
-				this.globalModulesWithScope.push({
-					...this.registerModuleWithScope(
-						module,
-						this.createContainer(module),
-						[],
-					),
-					module,
-				});
-			}
+		for (const module of globalModules) {
+			const moduleTree = this.registerModuleWithScope(
+				module,
+				this.createContainer(module),
+				[],
+			);
+			this.globalModulesWithScope.push({
+				...moduleTree,
+				module: this.getEffectiveModule(module),
+			});
+		}
 	}
 
 	private resolveImports(m: M): M[] {

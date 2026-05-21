@@ -2,7 +2,10 @@ import type * as Awilix from "awilix";
 import type { InternalModuleLike as M } from "../modules/runtime-module.types.js";
 import * as GUARGS from "../type-guards.js";
 import type { DiContextOptions, ModuleScopeTree } from "./di-context-base.js";
-import { DIContextBase } from "./di-context-base.js";
+import {
+	DIContextBase,
+	type DiContextCreateOptions,
+} from "./di-context-base.js";
 
 export class AsyncDIContext extends DIContextBase {
 	private readonly moduleTreePromiseMap = new WeakMap<
@@ -10,26 +13,29 @@ export class AsyncDIContext extends DIContextBase {
 		Promise<ModuleScopeTree>
 	>();
 
-	private constructor(options: DiContextOptions) {
+	private constructor(options: DiContextOptions<any>) {
 		super(options);
 	}
 
-	static async create(
-		module: M | Promise<M>,
-		options?: DiContextOptions,
+	static async create<TModule extends M>(
+		module: TModule | Promise<TModule>,
+		options?: DiContextCreateOptions<TModule>,
 	): Promise<ModuleScopeTree> {
 		return new AsyncDIContext(options ?? {}).bootstrap(module);
 	}
 
 	private async bootstrap(module: M | Promise<M>): Promise<ModuleScopeTree> {
+		this.rootModule = await module;
 		await this.initializeGlobalModulesAsync();
-		const resolvedModule = await module;
 
-		return this.registerModuleWithScopeAsync(
-			resolvedModule,
-			this.createContainer(resolvedModule),
+		const moduleTree = await this.registerModuleWithScopeAsync(
+			this.rootModule,
+			this.createContainer(this.rootModule),
 			[],
 		);
+		this.ensureAllModuleOverridesApplied();
+
+		return moduleTree;
 	}
 
 	private async initializeGlobalModulesAsync(): Promise<void> {
@@ -55,16 +61,17 @@ export class AsyncDIContext extends DIContextBase {
 
 		this.globalModulesWithScope = [];
 
-			for (const module of globalModules) {
-				this.globalModulesWithScope.push({
-					...(await this.registerModuleWithScopeAsync(
-						module,
-						this.createContainer(module),
-						[],
-					)),
-					module,
-				});
-			}
+		for (const module of globalModules) {
+			const moduleTree = await this.registerModuleWithScopeAsync(
+				module,
+				this.createContainer(module),
+				[],
+			);
+			this.globalModulesWithScope.push({
+				...moduleTree,
+				module: this.getEffectiveModule(module),
+			});
+		}
 	}
 
 	private async registerModuleWithScopeAsync(
@@ -79,9 +86,10 @@ export class AsyncDIContext extends DIContextBase {
 		}
 
 		const imports = await this.resolveImportsAsync(m);
-		this.ensureImportedModulesUniqueness(m, imports);
-		this.ensureNoProviderNameConflicts(m, imports);
-		this.markModuleIfImportsUseForwardRef(m);
+		const moduleWithOverrides = this.applyModuleOverrides(m);
+		this.ensureImportedModulesUniqueness(moduleWithOverrides, imports);
+		this.ensureNoProviderNameConflicts(moduleWithOverrides, imports);
+		this.markModuleIfImportsUseForwardRef(moduleWithOverrides);
 
 		const isCircular = moduleChain.includes(m);
 
@@ -103,7 +111,9 @@ export class AsyncDIContext extends DIContextBase {
 		}
 
 		const moduleTreePromise = this.registerNewModuleWithScopeAsync(
+			// QUEST: why m and moduleWithOverrides at same time?
 			m,
+			moduleWithOverrides,
 			scope,
 			imports,
 			moduleChain,
@@ -115,6 +125,7 @@ export class AsyncDIContext extends DIContextBase {
 
 	private async registerNewModuleWithScopeAsync(
 		m: M,
+		moduleWithOverrides: M,
 		scope: Awilix.AwilixContainer,
 		imports: M[],
 		moduleChain: M[],
@@ -123,47 +134,56 @@ export class AsyncDIContext extends DIContextBase {
 
 		const importedModulesWithScope = [
 			...this.globalModulesWithScope,
-				...(await Promise.all(
-					imports.map(async (module) => ({
-						...(await this.registerModuleWithScopeAsync(
-							module,
-							this.createContainer(module),
-							[...moduleChain, m],
-						)),
+			...(await Promise.all(
+				imports.map(async (module) => {
+					const moduleTree = await this.registerModuleWithScopeAsync(
 						module,
-					})),
+						this.createContainer(module),
+						[...moduleChain, m],
+					);
+
+					return {
+						...moduleTree,
+						module: this.getEffectiveModule(module),
+					};
+				}),
 			)),
 		];
 
 		this.registerExportedProviders(scope, importedModulesWithScope);
 
 		const moduleForSorting: M = {
-			...m,
+			...moduleWithOverrides,
 			imports: importedModulesWithScope.map((el) => el.module),
 		};
 
 		this.interceptorProcessor.processInterceptors(
-			m,
+			moduleWithOverrides,
 			scope,
 			importedModulesWithScope,
 		);
 
-		for (const [key, provider] of Object.entries(
-			this.sorter.sortByDependencies(moduleForSorting),
+		for (const [key, provider] of this.getProviderEntries(
+			m,
+			moduleForSorting,
 		)) {
 			scope.register({
 				[key]: await this.providerResolver.resolveProviderAsync({
 					key,
 					provider,
 					resolutionScope: scope,
-					module: m,
+					module: moduleWithOverrides,
 				}),
 			});
 		}
 
-		this.lifecycleProcessor.collectEagerProviders(m, scope);
+		this.lifecycleProcessor.collectEagerProviders(moduleWithOverrides, scope);
 
-		this.processModuleFeatures(m, scope, importedModulesWithScope);
+		this.processModuleFeatures(
+			moduleWithOverrides,
+			scope,
+			importedModulesWithScope,
+		);
 
 		const moduleTree = this.createModuleScopeTree(
 			m.name,

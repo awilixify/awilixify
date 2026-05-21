@@ -5,6 +5,8 @@
 	"type": "module",
 	"scripts": {
 		"dev": "tsx watch src/main.ts",
+		"test": "vitest run",
+		"test:watch": "vitest",
 		"typecheck:watch": "tsc --noEmit --watch",
 		"dev:strict": "concurrently -k -n app,types -c cyan,yellow \"pnpm dev\" \"pnpm typecheck:watch\"",
 		"start": "tsx src/main.ts"
@@ -30,10 +32,14 @@
 		"toad-scheduler": "^3.1.0"
 	},
 	"devDependencies": {
+		"@swc/core": "^1.15.33",
 		"@types/node": "^22.10.2",
 		"@types/pg": "^8.15.6",
+		"@vitest/coverage-v8": "^4.1.7",
 		"concurrently": "^9.2.1",
 		"tsx": "^4.19.2",
-		"typescript": "^5.7.2"
+		"typescript": "^5.7.2",
+		"unplugin-swc": "^1.5.9",
+		"vitest": "^4.1.7"
 	}
 }

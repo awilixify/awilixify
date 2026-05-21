@@ -5,10 +5,10 @@ import type {
 	ConstructorController,
 	Controller,
 } from "../providers/provider.types.js";
-import type { InterceptorProcessor } from "./interceptor-processor.js";
 import { resolveFromRequestScope } from "../request-scope-context.js";
 import { hasUseClass } from "../type-guards.js";
 import type { ControllerRuntimeEntry } from "./initializer-processor.js";
+import type { InterceptorProcessor } from "./interceptor-processor.js";
 
 export class ControllerProcessor {
 	private readonly registeredControllers = new WeakMap<
@@ -19,6 +19,7 @@ export class ControllerProcessor {
 	constructor(
 		private readonly interceptorProcessor: InterceptorProcessor,
 		private readonly providerOptions: Partial<Awilix.BuildResolverOptions<any>>,
+		private readonly skipRegisterRoutes: boolean,
 	) {}
 
 	public processControllers(
@@ -55,33 +56,29 @@ export class ControllerProcessor {
 					...(isWithNewScope && {
 						injector: () => ({
 							resolveSelf: () =>
-								this.resolveBySymbol(
-									controllerSymbol,
-									diScope,
-									isWithNewScope,
-								),
+								this.resolveBySymbol(controllerSymbol, diScope, isWithNewScope),
 						}),
 					}),
 				});
 
 				diScope.register({
-					[controllerSymbol]: this.interceptorProcessor.createInterceptedProviderResolver(
-						{
+					[controllerSymbol]:
+						this.interceptorProcessor.createInterceptedProviderResolver({
 							module: m,
 							useClass,
 							options,
 							resolver: baseResolver,
-						},
-					),
+						}),
 				});
 
-				// Route registration happens during bootstrap before eager provider
-				// init hooks run. Use the raw controller instance here so imported
-				// interceptors are not resolved just to execute registerRoutes().
-				const controllerInstance = baseResolver.resolve(diScope);
-
-				if (controllerInstance.registerRoutes) {
-					controllerInstance.registerRoutes();
+				if (
+					!this.skipRegisterRoutes &&
+					typeof useClass.prototype.registerRoutes === "function"
+				) {
+					// Route registration happens during bootstrap before eager provider
+					// init hooks run. Use the raw controller instance here so imported
+					// interceptors are not resolved just to execute registerRoutes().
+					baseResolver.resolve(diScope).registerRoutes();
 				}
 
 				runtimeEntries.push({

@@ -27,6 +27,7 @@ const docsSidebar = [
 				text: "HTTP Exception Handling",
 				link: "/docs/http-exception-handling",
 			},
+			{ text: "Testing", link: "/docs/testing" },
 			{
 				text: "Philosophy and Motivation",
 				link: "/docs/philosophy-and-motivation",

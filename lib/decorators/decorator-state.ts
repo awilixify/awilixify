@@ -53,8 +53,8 @@ export function resolveDecoratorState<TState extends DecoratorState<any, any>>(
 }
 
 export function hasDecoratorMethodMetadata(target: unknown): boolean {
-	return [target, (target as { prototype?: unknown })?.prototype].some((value) =>
-		hasOwnDecoratorMethodMetadata(value),
+	return [target, (target as { prototype?: unknown })?.prototype].some(
+		(value) => hasOwnDecoratorMethodMetadata(value),
 	);
 }
 

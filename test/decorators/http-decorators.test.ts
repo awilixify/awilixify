@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
-	resolveDecoratorState,
 	hasDecoratorMethodMetadata,
+	resolveDecoratorState,
 } from "../../lib/decorators/decorator-state.js";
 import {
 	after as AFTER,

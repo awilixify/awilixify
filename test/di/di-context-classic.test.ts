@@ -1,10 +1,10 @@
 import { type AwilixContainer, AwilixResolutionError, Lifetime } from "awilix";
 import { describe, expect, it } from "vitest";
-import {
-	DIContext,
-	type DiContextOptions,
-	type ModuleScopeTree,
-} from "../../lib/di/contexts/di-context.js";
+import { DIContext } from "../../lib/di/contexts/di-context.js";
+import type {
+	ModuleScopeTree,
+	DiContextOptions,
+} from "../../lib/di/contexts/di-context-base.js";
 import * as ERRORS from "../../lib/di/errors.js";
 import type { AnyModule } from "../../lib/di/modules/module.types.js";
 import type { ModuleDef } from "../../lib/di/modules/module-def.types.js";

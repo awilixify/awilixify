@@ -9,6 +9,7 @@ import {
 import { InitializerProcessor } from "../processors/initializer-processor.js";
 import { InterceptorProcessor } from "../processors/interceptor-processor.js";
 import { LifecycleProcessor } from "../processors/lifecycle-processor.js";
+import type { AnyProvider } from "../providers/provider.types.js";
 import { ProviderDependencySorter } from "../providers/provider-dependency-sorter.js";
 import { ProviderResolver } from "../providers/provider-resolver.js";
 import {
@@ -16,11 +17,28 @@ import {
 	resolveFromRequestScope,
 } from "../request-scope-context.js";
 import * as GUARGS from "../type-guards.js";
+import type { AnyModuleOverride } from "./module-overrides.js";
+import type {
+	AnyProviderOverrides,
+	ProviderOverridesFor,
+} from "./provider-overrides.types.js";
 
-export interface DiContextOptions {
+export type DiContextCreateOptions<TModule extends M> = DiContextOptions<
+	ProviderOverridesFor<TModule>
+>;
+
+export interface DiContextOptions<TProviderOverrides = AnyProviderOverrides> {
 	containerOptions?: Awilix.ContainerOptions;
 	providerOptions?: Partial<Awilix.BuildResolverOptions<any>>;
 	globalModules?: readonly M[];
+	skipRegisterRoutes?: boolean;
+	providerOverrides?: TProviderOverrides;
+	moduleOverrides?: readonly AnyModuleOverride[];
+}
+
+export interface ModuleInitOptions {
+	excludeInitializers?: true | readonly string[];
+	excludePostInit?: true | readonly string[];
 }
 
 export interface ModuleScopeTree<
@@ -29,7 +47,7 @@ export interface ModuleScopeTree<
 	name: string;
 	scope: S;
 	importedScopes: Map<string, ModuleScopeTree>;
-	init(): Promise<void>;
+	init(options?: ModuleInitOptions): Promise<void>;
 	dispose(): Promise<void>;
 }
 
@@ -44,12 +62,15 @@ export class DIContextBase {
 	protected readonly initializerProcessor = new InitializerProcessor();
 	protected readonly lifecycleProcessor: LifecycleProcessor;
 	protected readonly providerResolver: ProviderResolver;
-	protected readonly options: DiContextOptions;
+	protected readonly options: DiContextOptions<any>;
 	protected globalModulesWithScope: (ModuleScopeTree & { module: M })[] = [];
+	protected rootModule?: M;
+	private readonly effectiveModuleMap = new WeakMap<M, M>();
+	private readonly appliedModuleOverrides = new WeakSet<M>();
 	private readonly createdScopes: Awilix.AwilixContainer[] = [];
 	private disposePromise?: Promise<void>;
 
-	protected constructor(options: DiContextOptions) {
+	protected constructor(options: DiContextOptions<any>) {
 		this.options = {
 			...options,
 			containerOptions: {
@@ -72,6 +93,7 @@ export class DIContextBase {
 		this.controllerProcessor = new ControllerProcessor(
 			this.interceptorProcessor,
 			this.options.providerOptions || {},
+			this.options.skipRegisterRoutes === true,
 		);
 		this.providerResolver = new ProviderResolver(
 			this.interceptorProcessor,
@@ -243,6 +265,152 @@ export class DIContextBase {
 		);
 	}
 
+	protected applyModuleOverrides(m: M): M {
+		const moduleOverride = this.options.moduleOverrides?.find(
+			(override) => override.module === m,
+		);
+
+		if (!moduleOverride) {
+			this.effectiveModuleMap.set(m, m);
+			return m;
+		}
+
+		this.ensureModuleOverrideKeysExist(m, moduleOverride);
+		this.appliedModuleOverrides.add(m);
+
+		const effectiveModule = {
+			...m,
+			providers: {
+				...m.providers,
+				...moduleOverride.overrides.providers,
+			} as M["providers"],
+			queryPreHandlers: {
+				...m.queryPreHandlers,
+				...moduleOverride.overrides.queryPreHandlers,
+			} as M["queryPreHandlers"],
+			commandPreHandlers: {
+				...m.commandPreHandlers,
+				...moduleOverride.overrides.commandPreHandlers,
+			} as M["commandPreHandlers"],
+			interceptors: {
+				...m.interceptors,
+				...moduleOverride.overrides.interceptors,
+			} as M["interceptors"],
+			initializers: {
+				...m.initializers,
+				...moduleOverride.overrides.initializers,
+			} as M["initializers"],
+		};
+		this.effectiveModuleMap.set(m, effectiveModule);
+
+		return effectiveModule;
+	}
+
+	protected getEffectiveModule(m: M): M {
+		return this.effectiveModuleMap.get(m) ?? m;
+	}
+
+	protected ensureAllModuleOverridesApplied(): void {
+		for (const override of this.options.moduleOverrides ?? []) {
+			if (!this.appliedModuleOverrides.has(override.module)) {
+				throw new ERRORS.ModuleOverrideTargetNotFoundError(
+					override.module.name,
+				);
+			}
+		}
+	}
+
+	protected getProviderEntries(
+		m: M,
+		moduleForSorting: M,
+	): [string, AnyProvider][] {
+		const providers = this.sorter.sortByDependencies(
+			this.applyRootProviderOverrides(m, moduleForSorting),
+		);
+
+		return Object.entries(providers);
+	}
+
+	private applyRootProviderOverrides(m: M, moduleForSorting: M): M {
+		const overrides = this.options.providerOverrides;
+
+		if (m !== this.rootModule || !overrides) {
+			return moduleForSorting;
+		}
+
+		const providerKeys = new Set(Object.keys(m.providers || {}));
+
+		for (const key of Object.keys(overrides)) {
+			if (!providerKeys.has(key)) {
+				throw new ERRORS.ProviderOverrideNotFoundError(m.name, key);
+			}
+		}
+
+		return {
+			...moduleForSorting,
+			providers: {
+				...moduleForSorting.providers,
+				...overrides,
+			} as NonNullable<M["providers"]>,
+		};
+	}
+
+	private ensureModuleOverrideKeysExist(
+		m: M,
+		moduleOverride: AnyModuleOverride,
+	): void {
+		this.ensureFeatureOverrideKeysExist(
+			m,
+			"providers",
+			moduleOverride.overrides.providers,
+		);
+		this.ensureFeatureOverrideKeysExist(
+			m,
+			"queryPreHandlers",
+			moduleOverride.overrides.queryPreHandlers,
+		);
+		this.ensureFeatureOverrideKeysExist(
+			m,
+			"commandPreHandlers",
+			moduleOverride.overrides.commandPreHandlers,
+		);
+		this.ensureFeatureOverrideKeysExist(
+			m,
+			"interceptors",
+			moduleOverride.overrides.interceptors,
+		);
+		this.ensureFeatureOverrideKeysExist(
+			m,
+			"initializers",
+			moduleOverride.overrides.initializers,
+		);
+	}
+
+	private ensureFeatureOverrideKeysExist(
+		m: M,
+		featureKind:
+			| "providers"
+			| "queryPreHandlers"
+			| "commandPreHandlers"
+			| "interceptors"
+			| "initializers",
+		overrides: Record<string, unknown> | undefined,
+	): void {
+		if (!overrides) return;
+
+		const featureKeys = new Set(Object.keys(m[featureKind] || {}));
+
+		for (const key of Object.keys(overrides)) {
+			if (!featureKeys.has(key)) {
+				throw new ERRORS.ModuleFeatureOverrideNotFoundError(
+					m.name,
+					featureKind,
+					key,
+				);
+			}
+		}
+	}
+
 	protected createModuleScopeTree(
 		name: string,
 		scope: Awilix.AwilixContainer,
@@ -252,7 +420,7 @@ export class DIContextBase {
 			name,
 			scope,
 			importedScopes,
-			init: () => this.lifecycleProcessor.init(),
+			init: (options) => this.lifecycleProcessor.init(options),
 			dispose: () => this.dispose(),
 		};
 	}

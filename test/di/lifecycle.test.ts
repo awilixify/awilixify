@@ -1,13 +1,18 @@
 import { type AwilixContainer, Lifetime } from "awilix";
 import { describe, expect, it, vi } from "vitest";
-import {
-	DIContext,
-	type DiContextOptions,
-	type ModuleScopeTree,
-} from "../../lib/di/contexts/di-context.js";
+import { createDecoratorStateUpdater } from "../../lib/decorators/decorator-state.js";
+import { DIContext } from "../../lib/di/contexts/di-context.js";
+import type {
+	ModuleScopeTree,
+	DiContextOptions,
+} from "../../lib/di/contexts/di-context-base.js";
 import { AsyncDIContext } from "../../lib/di/contexts/di-context-async.js";
 import * as ERRORS from "../../lib/di/errors.js";
 import type { AnyModule } from "../../lib/di/modules/module.types.js";
+import {
+	Initializer,
+	type MetadataInitializerContext,
+} from "../../lib/di/providers/provider.types.js";
 
 type TestContainer = Omit<AwilixContainer, "resolve"> & {
 	resolve<T = any>(name: string | symbol): T;
@@ -77,6 +82,36 @@ async function registerModuleAsync(
 }
 
 describe("Lifecycle", () => {
+	function createLifecycleInitializer(name: string, calls: string[]) {
+		const { token, update } = createDecoratorStateUpdater(
+			`lifecycle-${name}-initializer`,
+			{
+				method: () => ({ name }),
+			},
+		);
+
+		class TestInitializer extends Initializer<typeof token, false> {
+			readonly token = token;
+			readonly usesInvoke = false;
+
+			initialize(context: MetadataInitializerContext<typeof token>) {
+				calls.push(
+					`${name}:${String(context.methodName)}:${context.metadata.name}`,
+				);
+			}
+		}
+
+		return {
+			decorate() {
+				return (target: any, context: ClassMethodDecoratorContext) => {
+					update(context, { method: () => ({ name }) });
+					return target;
+				};
+			},
+			Initializer: TestInitializer,
+		};
+	}
+
 	it("should allow async factory provider with eager in sync create and resolve after init", async () => {
 		let calls = 0;
 		const app = registerModule({
@@ -120,6 +155,57 @@ describe("Lifecycle", () => {
 		await app.dispose();
 
 		expect(dispose).toHaveBeenCalledTimes(1);
+	});
+
+	describe("Controller Initializers", () => {
+		it("should skip controller initializers when init excludes initializers", async () => {
+			const calls: string[] = [];
+			const tracked = createLifecycleInitializer("tracked", calls);
+
+			class DecoratedController {
+				@tracked.decorate()
+				handler() {
+					return "ok";
+				}
+			}
+
+			const app = registerModule({
+				controllers: [DecoratedController],
+				initializers: {
+					tracked: tracked.Initializer,
+				},
+			});
+
+			await app.init({ excludeInitializers: true });
+
+			expect(calls).toEqual([]);
+		});
+
+		it("should skip controller initializers by key when init excludes initializer keys", async () => {
+			const calls: string[] = [];
+			const first = createLifecycleInitializer("first", calls);
+			const second = createLifecycleInitializer("second", calls);
+
+			class DecoratedController {
+				@first.decorate()
+				@second.decorate()
+				handler() {
+					return "ok";
+				}
+			}
+
+			const app = registerModule({
+				controllers: [DecoratedController],
+				initializers: {
+					first: first.Initializer,
+					second: second.Initializer,
+				},
+			});
+
+			await app.init({ excludeInitializers: ["first"] });
+
+			expect(calls).toEqual(["second:handler:second"]);
+		});
 	});
 
 	describe("Eager Provider Initialization", () => {
@@ -237,6 +323,66 @@ describe("Lifecycle", () => {
 			await app.init();
 
 			expect(calls).toEqual(["init", "postInit"]);
+		});
+
+		it("should skip postInit when init excludes postInit", async () => {
+			const calls: string[] = [];
+
+			class EagerService {
+				init() {
+					calls.push("init");
+				}
+
+				postInit() {
+					calls.push("postInit");
+				}
+			}
+
+			const app = registerModule({
+				providers: {
+					eagerService: {
+						eager: true,
+						useClass: EagerService,
+					},
+				},
+			});
+
+			await app.init({ excludePostInit: true });
+
+			expect(calls).toEqual(["init"]);
+		});
+
+		it("should skip postInit by eager provider key", async () => {
+			const calls: string[] = [];
+
+			class FirstEagerService {
+				postInit() {
+					calls.push("first");
+				}
+			}
+
+			class SecondEagerService {
+				postInit() {
+					calls.push("second");
+				}
+			}
+
+			const app = registerModule({
+				providers: {
+					firstEagerService: {
+						eager: true,
+						useClass: FirstEagerService,
+					},
+					secondEagerService: {
+						eager: true,
+						useClass: SecondEagerService,
+					},
+				},
+			});
+
+			await app.init({ excludePostInit: ["firstEagerService"] });
+
+			expect(calls).toEqual(["second"]);
 		});
 
 		it("should only run init once", async () => {

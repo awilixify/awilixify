@@ -1,5 +1,8 @@
 import * as Awilix from "awilix";
-import { hasDecoratorMethodMetadata, resolveDecoratorState } from "../../decorators/decorator-state.js";
+import {
+	hasDecoratorMethodMetadata,
+	resolveDecoratorState,
+} from "../../decorators/decorator-state.js";
 import type { DecoratorState } from "../../decorators/decorator-state.types.js";
 import type { DiContextOptions } from "../contexts/di-context-base.js";
 import type { InternalModuleLike as M } from "../modules/runtime-module.types.js";

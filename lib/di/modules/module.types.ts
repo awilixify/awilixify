@@ -195,7 +195,7 @@ type ToModuleProviderMap<
 
 // Allow plain object values (e.g. framework instances) while rejecting
 // object literals that accidentally look like incomplete provider configs.
-type RawValueObject<T> = T & {
+export type RawValueObject<T> = T & {
 	useClass?: never;
 	useFactory?: never;
 	lifetime?: never;

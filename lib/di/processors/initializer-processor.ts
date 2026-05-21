@@ -1,12 +1,13 @@
 import type * as Awilix from "awilix";
 import { resolveDecoratorState } from "../../decorators/decorator-state.js";
+import type { ModuleInitOptions } from "../contexts/di-context-base.js";
+import * as ERRORS from "../errors.js";
 import type { InternalModuleLike as M } from "../modules/runtime-module.types.js";
 import type {
 	ConstructorController,
 	Initializer,
 } from "../providers/provider.types.js";
 import { runInRequestScopeContext } from "../request-scope-context.js";
-import * as ERRORS from "../errors.js";
 import { KeyedFeatureRegistrar } from "./keyed-feature-registrar.js";
 
 export type ControllerRuntimeEntry = {
@@ -19,7 +20,7 @@ type ModuleWithScope = {
 	scope: Awilix.AwilixContainer;
 };
 
-export type InitializerTask = () => Promise<void>;
+export type InitializerTask = (options?: ModuleInitOptions) => Promise<void>;
 
 export class InitializerProcessor {
 	private readonly keyedFeatureRegistrar = new KeyedFeatureRegistrar({});
@@ -41,12 +42,19 @@ export class InitializerProcessor {
 			...(
 				this.resolversByModule.get(m) ??
 				new Map<string, () => Initializer<any, boolean>>()
-			).values(),
+			).entries(),
 		];
 
 		if (initializers.length === 0 || controllers.length === 0) return null;
 
-		return async () => {
+		return async (options) => {
+			const activeInitializers = this.filterActiveInitializers(
+				initializers,
+				options,
+			);
+
+			if (activeInitializers.length === 0) return;
+
 			for (const controller of controllers) {
 				for (const methodName of this.getControllerMethodNames(
 					controller.controllerClass,
@@ -60,10 +68,10 @@ export class InitializerProcessor {
 						m.name,
 						methodName,
 						controller,
-						initializers,
+						activeInitializers,
 					);
 
-					for (const resolveInitializer of initializers) {
+					for (const [, resolveInitializer] of activeInitializers) {
 						const initializer = resolveInitializer();
 						const decoratorState = resolveDecoratorState(
 							controller.controllerClass,
@@ -94,10 +102,10 @@ export class InitializerProcessor {
 		moduleName: string,
 		methodName: string | symbol,
 		controller: ControllerRuntimeEntry,
-		initializers: Array<() => Initializer<any, boolean>>,
+		initializers: Array<[string, () => Initializer<any, boolean>]>,
 	): void {
 		const invokableInitializers = initializers
-			.map((resolver) => resolver())
+			.map(([, resolver]) => resolver())
 			.filter((initializer) => {
 				const decoratorState = resolveDecoratorState(
 					controller.controllerClass,
@@ -120,6 +128,19 @@ export class InitializerProcessor {
 				),
 			);
 		}
+	}
+
+	private filterActiveInitializers(
+		initializers: Array<[string, () => Initializer<any, boolean>]>,
+		options?: ModuleInitOptions,
+	): Array<[string, () => Initializer<any, boolean>]> {
+		if (options?.excludeInitializers === true) return [];
+
+		if (!Array.isArray(options?.excludeInitializers)) return initializers;
+
+		const excludedKeys = new Set(options.excludeInitializers);
+
+		return initializers.filter(([key]) => !excludedKeys.has(key));
 	}
 
 	private processInitializerResolvers(
