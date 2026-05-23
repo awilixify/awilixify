@@ -13,7 +13,7 @@ export class AsyncDIContext extends DIContextBase {
 		Promise<ModuleScopeTree>
 	>();
 
-	private constructor(options: DiContextOptions<any>) {
+	private constructor(options: DiContextOptions) {
 		super(options);
 	}
 
@@ -25,15 +25,16 @@ export class AsyncDIContext extends DIContextBase {
 	}
 
 	private async bootstrap(module: M | Promise<M>): Promise<ModuleScopeTree> {
-		this.rootModule = await module;
+		const rootModule = await module;
+
 		await this.initializeGlobalModulesAsync();
 
 		const moduleTree = await this.registerModuleWithScopeAsync(
-			this.rootModule,
-			this.createContainer(this.rootModule),
+			rootModule,
+			this.createContainer(rootModule),
 			[],
 		);
-		this.ensureAllModuleOverridesApplied();
+		this.overridesProcessor.ensureAllModuleOverridesApplied();
 
 		return moduleTree;
 	}
@@ -69,7 +70,7 @@ export class AsyncDIContext extends DIContextBase {
 			);
 			this.globalModulesWithScope.push({
 				...moduleTree,
-				module: this.getEffectiveModule(module),
+				module: this.overridesProcessor.getModuleWithOverrides(module),
 			});
 		}
 	}
@@ -86,7 +87,8 @@ export class AsyncDIContext extends DIContextBase {
 		}
 
 		const imports = await this.resolveImportsAsync(m);
-		const moduleWithOverrides = this.applyModuleOverrides(m);
+		const moduleWithOverrides = this.overridesProcessor.applyModuleOverrides(m);
+
 		this.ensureImportedModulesUniqueness(moduleWithOverrides, imports);
 		this.ensureNoProviderNameConflicts(moduleWithOverrides, imports);
 		this.markModuleIfImportsUseForwardRef(moduleWithOverrides);
@@ -144,7 +146,7 @@ export class AsyncDIContext extends DIContextBase {
 
 					return {
 						...moduleTree,
-						module: this.getEffectiveModule(module),
+						module: this.overridesProcessor.getModuleWithOverrides(module),
 					};
 				}),
 			)),
@@ -163,10 +165,9 @@ export class AsyncDIContext extends DIContextBase {
 			importedModulesWithScope,
 		);
 
-		for (const [key, provider] of this.getProviderEntries(
-			m,
-			moduleForSorting,
-		)) {
+		const providers = this.sorter.sortByDependencies(moduleForSorting);
+
+		for (const [key, provider] of Object.entries(providers)) {
 			scope.register({
 				[key]: await this.providerResolver.resolveProviderAsync({
 					key,

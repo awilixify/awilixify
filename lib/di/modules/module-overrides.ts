@@ -1,7 +1,7 @@
 import type { BuildResolverOptions, Constructor } from "awilix";
 import type { EmptyObject } from "../common.types.js";
-import type { RawValueObject } from "../modules/module.types.js";
-import type { InternalModuleLike } from "../modules/runtime-module.types.js";
+import type { RawValueObject } from "./module.types.js";
+import type { InternalModuleLike } from "./runtime-module.types.js";
 import type {
 	AnyInitializer,
 	AnyInterceptor,
@@ -130,6 +130,7 @@ export type AnyModuleOverride = {
 	};
 };
 
+// TODO: move to /modules
 export function overrideModule<TModule extends InternalModuleLike>(
 	module: TModule,
 	overrides: ModuleFeatureOverridesFor<TModule>,

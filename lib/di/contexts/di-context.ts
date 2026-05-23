@@ -9,7 +9,7 @@ import {
 } from "./di-context-base.js";
 
 export class DIContext extends DIContextBase {
-	private constructor(options: DiContextOptions<any>) {
+	private constructor(options: DiContextOptions) {
 		super(options);
 	}
 
@@ -21,15 +21,14 @@ export class DIContext extends DIContextBase {
 	}
 
 	private bootstrap(module: M): ModuleScopeTree {
-		this.rootModule = module;
 		this.initializeGlobalModules();
 
 		const moduleTree = this.registerModuleWithScope(
-			this.rootModule,
+			module,
 			this.createContainer(module),
 			[],
 		);
-		this.ensureAllModuleOverridesApplied();
+		this.overridesProcessor.ensureAllModuleOverridesApplied();
 
 		return moduleTree;
 	}
@@ -46,7 +45,7 @@ export class DIContext extends DIContextBase {
 		}
 
 		const imports = this.resolveImports(m);
-		const moduleWithOverrides = this.applyModuleOverrides(m);
+		const moduleWithOverrides = this.overridesProcessor.applyModuleOverrides(m);
 
 		this.ensureImportedModulesUniqueness(moduleWithOverrides, imports);
 		this.ensureNoProviderNameConflicts(moduleWithOverrides, imports);
@@ -79,7 +78,7 @@ export class DIContext extends DIContextBase {
 
 				return {
 					...moduleTree,
-					module: this.getEffectiveModule(module),
+					module: this.overridesProcessor.getModuleWithOverrides(module),
 				};
 			}),
 		];
@@ -97,7 +96,9 @@ export class DIContext extends DIContextBase {
 			importedModulesWithScope,
 		);
 
-		this.getProviderEntries(m, moduleForSorting).forEach(([key, provider]) => {
+		const providers = this.sorter.sortByDependencies(moduleForSorting);
+
+		Object.entries(providers).forEach(([key, provider]) => {
 			scope.register({
 				[key]: this.providerResolver.resolveProvider({
 					key,
@@ -149,7 +150,7 @@ export class DIContext extends DIContextBase {
 			);
 			this.globalModulesWithScope.push({
 				...moduleTree,
-				module: this.getEffectiveModule(module),
+				module: this.overridesProcessor.getModuleWithOverrides(module),
 			});
 		}
 	}

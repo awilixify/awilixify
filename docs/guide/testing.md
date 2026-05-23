@@ -2,55 +2,46 @@
 
 awilixify tests usually use the same module graph as the application and then disable or replace only the parts that should not run in a test.
 
-## Provider Overrides
+## Module Overrides
 
-Use `providerOverrides` to replace providers declared by the root module passed to `DIContext.create`.
+Use `moduleOverrides` to override providers or other keyed features in any module in the bootstrapped graph, including the root module, global modules, imported modules, and nested imported modules.
 
 ```typescript
 const app = DIContext.create(OwnersModule, {
-  providerOverrides: {
-    ownersService: FakeOwnersService,
-    owners1Service: {
-      useClass: FakeOwners1Service,
-      lifetime: "SINGLETON",
+  moduleOverrides: [
+    overrideModule(OwnersModule, {
+      providers: {
+        ownersService: FakeOwnersService,
+        owners1Service: {
+          useClass: FakeOwners1Service,
+          lifetime: "SINGLETON",
+        },
+      },
+    }),
+  ],
+});
+```
+
+Provider overrides use the same provider syntax as `module.providers`:
+
+```typescript
+overrideModule(OwnersModule, {
+  providers: {
+    service: FakeService,
+    repository: { useClass: InMemoryRepository },
+    config: testConfig,
+    db: {
+      useFactory: () => createTestDb(),
     },
   },
 });
 ```
 
-Overrides use the same provider syntax as `module.providers`:
-
-```typescript
-providerOverrides: {
-  service: FakeService,
-  repository: { useClass: InMemoryRepository },
-  config: testConfig,
-  db: {
-    useFactory: () => createTestDb(),
-  },
-}
-```
-
 > [!IMPORTANT]
-> A provider override is a complete provider definition replacement.
+> An override is a complete feature definition replacement.
 > Original provider options such as `lifetime`, `eager`, `initAfter`, and `allowCircular` are not preserved unless repeated in the override.
 
-The first version of provider overrides is intentionally scoped to the root module's own providers. Imported providers are not overridden through this option.
-
-```typescript
-DIContext.create(OwnersModule, {
-  providerOverrides: {
-    // allowed only if ownersService is declared in OwnersModule.providers
-    ownersService: FakeOwnersService,
-  },
-});
-```
-
-Override typing checks the public injectable contract of the original provider. Private and protected members are ignored so separately declared test doubles can be used without extending the original class.
-
-## Module Overrides
-
-Use `moduleOverrides` when you need to override providers or other keyed features in a specific module, including global modules, imported modules, and nested imported modules.
+Provider override typing checks the public injectable contract of the original provider. Private and protected members are ignored so separately declared test doubles can be used without extending the original class.
 
 ```typescript
 const app = DIContext.create(AppModule, {

@@ -1,8 +1,7 @@
-import { DIContext, type ModuleScopeTree } from "awilixify";
+import { DIContext, type ModuleScopeTree, overrideModule } from "awilixify";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
-
-import { OwnersModule, Deps } from "./owners.module.js";
 import { ConfigModule } from "@/integrations/config/config.module.js";
+import { type Deps, OwnersModule } from "./owners.module.js";
 
 class Owners1Service {
 	// private readonly instanceId = Math.random().toString(36).substring(7);
@@ -34,9 +33,13 @@ describe("CatsModule", () => {
 		app = DIContext.create(OwnersModule, {
 			globalModules: [ConfigModule],
 			skipRegisterRoutes: true,
-			providerOverrides: {
-				owners1Service: Owners1Service,
-			},
+			moduleOverrides: [
+				overrideModule(OwnersModule, {
+					providers: {
+						owners1Service: Owners1Service,
+					},
+				}),
+			],
 		});
 
 		await app.init({ excludeInitializers: true });

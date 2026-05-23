@@ -52,15 +52,6 @@ export class ProviderNameConflictError extends Error {
 	}
 }
 
-export class ProviderOverrideNotFoundError extends Error {
-	constructor(moduleName: string, providerKey: string) {
-		super(
-			`Cannot override provider "${providerKey}" in module "${moduleName}" because it is not declared by that module.`,
-		);
-		this.name = "ProviderOverrideNotFoundError";
-	}
-}
-
 export class ModuleFeatureOverrideNotFoundError extends Error {
 	constructor(moduleName: string, featureKind: string, featureKey: string) {
 		super(

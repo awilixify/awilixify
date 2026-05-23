@@ -2,14 +2,14 @@ import type { AwilixContainer } from "awilix";
 import { describe, expect, it } from "vitest";
 
 import { DIContext } from "../../lib/di/contexts/di-context.js";
-import type {
-	ModuleScopeTree,
-	DiContextOptions,
-} from "../../lib/di/contexts/di-context-base.js";
 import { AsyncDIContext } from "../../lib/di/contexts/di-context-async.js";
-import { overrideModule } from "../../lib/di/contexts/module-overrides.js";
+import type {
+	DiContextOptions,
+	ModuleScopeTree,
+} from "../../lib/di/contexts/di-context-base.js";
 import * as ERRORS from "../../lib/di/errors.js";
 import type { AnyModule } from "../../lib/di/modules/module.types.js";
+import { overrideModule } from "../../lib/di/modules/module-overrides.js";
 
 type TestContainer = Omit<AwilixContainer, "resolve"> & {
 	resolve<T = any>(name: string | symbol): T;
@@ -20,37 +20,81 @@ type TestModuleScopeTree = Omit<ModuleScopeTree, "scope" | "importedScopes"> & {
 	importedScopes: Map<string, TestModuleScopeTree>;
 };
 
+class RealValueService {
+	getValue() {
+		return "real";
+	}
+}
+
+class TestValueService {
+	getValue() {
+		return "test";
+	}
+}
+
 function registerModule(
 	module: AnyModule,
 	options?: Partial<DiContextOptions>,
 ): TestModuleScopeTree {
 	return DIContext.create(module, {
-		containerOptions: {
-			injectionMode: "CLASSIC",
-		},
 		...options,
 	});
 }
 
+async function registerModuleAsync(
+	module: AnyModule | Promise<AnyModule>,
+	options?: Partial<DiContextOptions>,
+) {
+	return AsyncDIContext.create(module, {
+		...options,
+	});
+}
+
+function createValueModule(name: string, providerKey: string) {
+	return {
+		name,
+		providers: {
+			[providerKey]: RealValueService,
+		},
+		exports: [providerKey],
+	};
+}
+
 describe("Module overrides", () => {
-	it("should override providers in a global module", () => {
-		class RealConfig {
-			getValue() {
-				return "real";
-			}
-		}
-
+	it("should override providers in the root module", () => {
 		class ConsumerService {
-			constructor(public readonly config: RealConfig) {}
+			constructor(public readonly realService: RealValueService) {}
 		}
 
-		const ConfigModule = {
-			name: "ConfigModule",
+		const AppModule = {
+			name: "AppModule",
 			providers: {
-				config: RealConfig,
+				realService: RealValueService,
+				consumerService: ConsumerService,
 			},
-			exports: ["config"],
 		};
+
+		const app = registerModule(AppModule, {
+			moduleOverrides: [
+				overrideModule(AppModule, {
+					providers: {
+						realService: TestValueService,
+					},
+				}),
+			],
+		});
+
+		const consumer = app.scope.resolve<ConsumerService>("consumerService");
+
+		expect(consumer.realService.getValue()).toBe("test");
+	});
+
+	it("should override providers in a global module", () => {
+		class ConsumerService {
+			constructor(public readonly config: RealValueService) {}
+		}
+
+		const ConfigModule = createValueModule("ConfigModule", "config");
 
 		const AppModule = {
 			name: "AppModule",
@@ -64,11 +108,7 @@ describe("Module overrides", () => {
 			moduleOverrides: [
 				overrideModule(ConfigModule, {
 					providers: {
-						config: {
-							getValue() {
-								return "test";
-							},
-						},
+						config: TestValueService,
 					},
 				}),
 			],
@@ -80,23 +120,11 @@ describe("Module overrides", () => {
 	});
 
 	it("should override providers in a nested imported module", () => {
-		class RealService {
-			getValue() {
-				return "real";
-			}
-		}
-
 		class ParentConsumer {
-			constructor(public readonly nestedService: RealService) {}
+			constructor(public readonly nestedService: RealValueService) {}
 		}
 
-		const NestedModule = {
-			name: "NestedModule",
-			providers: {
-				nestedService: RealService,
-			},
-			exports: ["nestedService"],
-		};
+		const NestedModule = createValueModule("NestedModule", "nestedService");
 
 		const ParentModule = {
 			name: "ParentModule",
@@ -116,11 +144,7 @@ describe("Module overrides", () => {
 			moduleOverrides: [
 				overrideModule(NestedModule, {
 					providers: {
-						nestedService: {
-							getValue() {
-								return "test";
-							},
-						},
+						nestedService: TestValueService,
 					},
 				}),
 			],
@@ -186,24 +210,12 @@ describe("Module overrides", () => {
 	});
 
 	it("should override a hoisted dynamic module instance", () => {
-		class RealCache {
-			getValue() {
-				return "real";
-			}
-		}
-
 		class FeatureService {
-			constructor(public readonly cache: RealCache) {}
+			constructor(public readonly cache: RealValueService) {}
 		}
 
 		function createCacheModule(name: string): AnyModule {
-			return {
-				name,
-				providers: {
-					cache: RealCache,
-				},
-				exports: ["cache"],
-			};
+			return createValueModule(name, "cache");
 		}
 
 		const CacheModule = createCacheModule("CacheModule");
@@ -219,11 +231,7 @@ describe("Module overrides", () => {
 			moduleOverrides: [
 				overrideModule(CacheModule, {
 					providers: {
-						cache: {
-							getValue() {
-								return "test";
-							},
-						},
+						cache: TestValueService,
 					},
 				}),
 			],
@@ -235,23 +243,14 @@ describe("Module overrides", () => {
 	});
 
 	it("should override providers in async imported modules", async () => {
-		class RealService {
-			getValue() {
-				return "real";
-			}
-		}
-
 		class ConsumerService {
-			constructor(public readonly asyncService: RealService) {}
+			constructor(public readonly asyncService: RealValueService) {}
 		}
 
-		const AsyncImportedModule = {
-			name: "AsyncImportedModule",
-			providers: {
-				asyncService: RealService,
-			},
-			exports: ["asyncService"],
-		};
+		const AsyncImportedModule = createValueModule(
+			"AsyncImportedModule",
+			"asyncService",
+		);
 
 		const AppModule = {
 			name: "AppModule",
@@ -261,18 +260,11 @@ describe("Module overrides", () => {
 			},
 		};
 
-		const app = await AsyncDIContext.create(AppModule, {
-			containerOptions: {
-				injectionMode: "CLASSIC",
-			},
+		const app = await registerModuleAsync(AppModule, {
 			moduleOverrides: [
 				overrideModule(AsyncImportedModule, {
 					providers: {
-						asyncService: {
-							getValue() {
-								return "test";
-							},
-						},
+						asyncService: TestValueService,
 					},
 				}),
 			],
@@ -322,6 +314,38 @@ describe("Module overrides", () => {
 					overrideModule(TargetModule, {
 						queryPreHandlers: {
 							auth: class AuthMiddleware {},
+						},
+					}),
+				],
+			});
+		}).toThrow(ERRORS.ModuleFeatureOverrideNotFoundError);
+	});
+
+	it("should throw when overriding a root provider not declared by the root module", () => {
+		class ImportedService {
+			readonly instanceId = Math.random();
+		}
+
+		const ImportedModule: AnyModule = {
+			name: "ImportedModule",
+			providers: {
+				importedService: ImportedService,
+			},
+			exports: ["importedService"],
+		};
+
+		const AppModule = {
+			name: "AppModule",
+			imports: [ImportedModule],
+			providers: {},
+		};
+
+		expect(() => {
+			registerModule(AppModule, {
+				moduleOverrides: [
+					overrideModule(AppModule, {
+						providers: {
+							importedService: ImportedService,
 						},
 					}),
 				],
