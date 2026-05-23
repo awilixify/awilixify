@@ -4,15 +4,11 @@ import {
 	resolveDecoratorState,
 } from "../../decorators/decorator-state.js";
 import type { DecoratorState } from "../../decorators/decorator-state.types.js";
+import type { RegisteredModuleScope } from "../contexts/container-context-base.js";
 import type { DiContextOptions } from "../contexts/di-context-base.js";
 import type { InternalModuleLike as M } from "../modules/runtime-module.types.js";
 import type { Interceptor } from "../providers/provider.types.js";
 import { KeyedFeatureRegistrar } from "./keyed-feature-registrar.js";
-
-type ModuleWithScope = {
-	module: M;
-	scope: Awilix.AwilixContainer;
-};
 
 type InterceptorMetadata = {
 	state: DecoratorState<any, any>;
@@ -36,7 +32,7 @@ export class InterceptorProcessor {
 	public processInterceptors(
 		m: M,
 		scope: Awilix.AwilixContainer,
-		importedModulesWithScope: ModuleWithScope[],
+		importedModulesWithScope: RegisteredModuleScope[],
 	): void {
 		const resolverMap = this.keyedFeatureRegistrar.register<Interceptor>({
 			featureKind: "interceptors",

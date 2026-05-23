@@ -11,6 +11,10 @@
 		"./http": {
 			"types": "./dist/lib/http/index.d.ts",
 			"import": "./dist/lib/http/index.js"
+		},
+		"./react": {
+			"types": "./dist/react.d.ts",
+			"import": "./dist/react.js"
 		}
 	},
 	"version": "2.2.1",
@@ -32,16 +36,28 @@
 		"test:types:watch": "tstyche --watch"
 	},
 	"peerDependencies": {
-		"awilix": ">=9.0.0"
+		"awilix": ">=9.0.0",
+		"react": ">=18.0.0 || >=19.0.0"
+	},
+	"peerDependenciesMeta": {
+		"react": {
+			"optional": true
+		}
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.3.15",
 		"@shikijs/vitepress-twoslash": "^4.0.2",
+		"@testing-library/react": "^16.3.0",
 		"@types/node": "^22.15.21",
+		"@types/react": "^19.2.7",
 		"@vitest/coverage-v8": "^4.0.18",
 		"del-cli": "^7.0.0",
+		"happy-dom": "^20.0.11",
+		"react": "^19.2.3",
+		"react-dom": "^19.2.3",
 		"tstyche": "^5.0.2",
 		"typescript": "^5.9.3",
+		"vite": "^6.4.2",
 		"vitepress": "^1.6.4",
 		"vitest": "^4.0.18"
 	},

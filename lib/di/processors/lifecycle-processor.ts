@@ -1,5 +1,4 @@
 import * as Awilix from "awilix";
-import type { ModuleInitOptions } from "../contexts/di-context-base.js";
 import * as ERRORS from "../errors.js";
 import type { InternalModuleLike as M } from "../modules/runtime-module.types.js";
 import * as GUARGS from "../type-guards.js";
@@ -20,10 +19,22 @@ type EagerProviderNode = EagerProviderRef & {
 	initAfter: string[];
 };
 
+export interface ModuleInitOptions {
+	excludeInitializers?: true | readonly string[];
+	excludePostInit?: true | readonly string[];
+}
+
+export interface LifecycleMethods {
+	init(options?: ModuleInitOptions): Promise<void>;
+	dispose(): Promise<void>;
+}
+
 export class LifecycleProcessor {
 	private readonly eagerProviderRefs: EagerProviderRef[] = [];
 	private readonly initializerTasks: InitializerTask[] = [];
+	private readonly createdScopes: Awilix.AwilixContainer[] = [];
 	private initPromise?: Promise<void>;
+	private disposePromise?: Promise<void>;
 
 	constructor(
 		private readonly providerOptions: Partial<Awilix.BuildResolverOptions<any>>,
@@ -39,6 +50,10 @@ export class LifecycleProcessor {
 		}
 	}
 
+	trackScope(scope: Awilix.AwilixContainer): void {
+		this.createdScopes.push(scope);
+	}
+
 	addInitializerTask(task: InitializerTask | null): void {
 		if (!task) return;
 
@@ -49,6 +64,12 @@ export class LifecycleProcessor {
 		this.initPromise ??= this.executeInit(options);
 
 		return this.initPromise;
+	}
+
+	dispose(): Promise<void> {
+		this.disposePromise ??= this.executeDispose();
+
+		return this.disposePromise;
 	}
 
 	private async executeInit(options?: ModuleInitOptions): Promise<void> {
@@ -73,6 +94,14 @@ export class LifecycleProcessor {
 			if (this.shouldSkipProviderPostInit(key, options)) continue;
 
 			await this.callProviderPostInitAsync(instance);
+		}
+	}
+
+	private async executeDispose(): Promise<void> {
+		const uniqueScopes = Array.from(new Set(this.createdScopes)).reverse();
+
+		for (const scope of uniqueScopes) {
+			await scope.dispose();
 		}
 	}
 
@@ -121,6 +150,7 @@ export class LifecycleProcessor {
 			// biome-ignore lint/style/noNonNullAssertion: dependencies are validated by ProviderDependencySorter
 			scope.registrations[dependencyKey]!.resolve(scope),
 		);
+		// biome-ignore lint/correctness/useHookAtTopLevel: useFactory is a provider option, not a React hook.
 		const resolvedValue = await provider.useFactory(...factoryDeps);
 		const { eager, initAfter, inject, useFactory, ...providerResolverOptions } =
 			provider;

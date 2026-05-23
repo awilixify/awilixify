@@ -1,5 +1,5 @@
-import { defineConfig } from "vitepress";
 import { transformerTwoslash } from "@shikijs/vitepress-twoslash";
+import { defineConfig } from "vitepress";
 
 const repoName = process.env.GITHUB_REPOSITORY?.split("/")[1];
 const base =
@@ -8,14 +8,28 @@ const base =
 
 const docsSidebar = [
 	{
-		text: "Core",
+		text: "Getting Started",
 		items: [
 			{ text: "Quick Start", link: "/docs/quick-start" },
+			{
+				text: "Philosophy and Motivation",
+				link: "/docs/philosophy-and-motivation",
+			},
+		],
+	},
+	{
+		text: "Core DI",
+		items: [
 			{ text: "Providers", link: "/docs/providers" },
 			{ text: "Native Decorators", link: "/docs/native-decorators" },
 			{ text: "Initializers", link: "/docs/initializers" },
 			{ text: "Interceptors", link: "/docs/interceptors" },
 			{ text: "Lifecycle", link: "/docs/lifecycle" },
+		],
+	},
+	{
+		text: "Modules",
+		items: [
 			{ text: "Global Modules", link: "/docs/global-modules" },
 			{ text: "Dynamic Modules", link: "/docs/dynamic-modules" },
 			{ text: "Async Modules", link: "/docs/async-modules" },
@@ -23,15 +37,14 @@ const docsSidebar = [
 				text: "Circular Dependencies",
 				link: "/docs/circular-dependencies",
 			},
-			{
-				text: "HTTP Exception Handling",
-				link: "/docs/http-exception-handling",
-			},
 			{ text: "Testing", link: "/docs/testing" },
-			{
-				text: "Philosophy and Motivation",
-				link: "/docs/philosophy-and-motivation",
-			},
+		],
+	},
+	{
+		text: "Frontend",
+		items: [
+			{ text: "Overview", link: "/docs/frontend-overview" },
+			{ text: "React", link: "/docs/react" },
 		],
 	},
 	{
@@ -56,6 +69,10 @@ const docsSidebar = [
 		items: [
 			{ text: "Integrations", link: "/docs/integrations" },
 			{
+				text: "HTTP Exception Handling",
+				link: "/docs/http-exception-handling",
+			},
+			{
 				text: "Type-safe Request/Response",
 				link: "/docs/recipes-type-safe-request-response",
 			},
@@ -75,8 +92,7 @@ const docsSidebar = [
 
 export default defineConfig({
 	title: "awilixify",
-	description:
-		"Transport-agnostic modular DI and CQRS framework for Awilix",
+	description: "Transport-agnostic modular DI and CQRS framework for Awilix",
 	base,
 	lang: "en-US",
 	cleanUrls: true,

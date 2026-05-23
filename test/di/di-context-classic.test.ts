@@ -2,8 +2,8 @@ import { type AwilixContainer, AwilixResolutionError, Lifetime } from "awilix";
 import { describe, expect, it } from "vitest";
 import { DIContext } from "../../lib/di/contexts/di-context.js";
 import type {
-	ModuleScopeTree,
 	DiContextOptions,
+	ModuleScope,
 } from "../../lib/di/contexts/di-context-base.js";
 import * as ERRORS from "../../lib/di/errors.js";
 import type { AnyModule } from "../../lib/di/modules/module.types.js";
@@ -22,15 +22,15 @@ type TestContainer = Omit<AwilixContainer, "resolve"> & {
 	resolve<T = any>(name: string | symbol): T;
 };
 
-type TestModuleScopeTree = Omit<ModuleScopeTree, "scope" | "importedScopes"> & {
+type TestModuleScope = Omit<ModuleScope, "scope" | "importedScopes"> & {
 	scope: TestContainer;
-	importedScopes: Map<string, TestModuleScopeTree>;
+	importedScopes: Map<string, TestModuleScope>;
 };
 
 function registerModule(
 	module: Partial<AnyModule>,
 	options?: Partial<DiContextOptions>,
-): TestModuleScopeTree {
+): TestModuleScope {
 	return DIContext.create(
 		{
 			name: "TestModule",

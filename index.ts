@@ -1,12 +1,12 @@
 export * from "./lib/decorators/decorator-state.js";
+export type { ModuleScope } from "./lib/di/contexts/container-context-base.js";
 export * from "./lib/di/contexts/di-context.js";
 export * from "./lib/di/contexts/di-context-async.js";
-export * from "./lib/di/modules/module-overrides.js";
 export * from "./lib/di/modules/module.types.js";
 export * from "./lib/di/modules/module-def.types.js";
 export * from "./lib/di/modules/module-factories.js";
+export * from "./lib/di/modules/module-overrides.js";
 export * from "./lib/di/modules/module-ref.types.js";
-export { ModuleScopeTree } from "./lib/di/contexts/di-context-base.js";
 export type {
 	Controller,
 	InitializerContext,

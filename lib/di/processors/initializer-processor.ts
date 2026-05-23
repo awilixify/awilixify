@@ -1,6 +1,6 @@
 import type * as Awilix from "awilix";
 import { resolveDecoratorState } from "../../decorators/decorator-state.js";
-import type { ModuleInitOptions } from "../contexts/di-context-base.js";
+import type { RegisteredModuleScope } from "../contexts/container-context-base.js";
 import * as ERRORS from "../errors.js";
 import type { InternalModuleLike as M } from "../modules/runtime-module.types.js";
 import type {
@@ -9,15 +9,11 @@ import type {
 } from "../providers/provider.types.js";
 import { runInRequestScopeContext } from "../request-scope-context.js";
 import { KeyedFeatureRegistrar } from "./keyed-feature-registrar.js";
+import type { ModuleInitOptions } from "./lifecycle-processor.js";
 
 export type ControllerRuntimeEntry = {
 	controllerClass: ConstructorController;
 	resolve: () => any;
-};
-
-type ModuleWithScope = {
-	module: M;
-	scope: Awilix.AwilixContainer;
 };
 
 export type InitializerTask = (options?: ModuleInitOptions) => Promise<void>;
@@ -33,7 +29,7 @@ export class InitializerProcessor {
 	public collectInitializers(
 		m: M,
 		scope: Awilix.AwilixContainer,
-		importedModulesWithScope: ModuleWithScope[],
+		importedModulesWithScope: RegisteredModuleScope[],
 		controllers: ControllerRuntimeEntry[],
 	): InitializerTask | null {
 		this.processInitializerResolvers(m, scope, importedModulesWithScope);
@@ -146,7 +142,7 @@ export class InitializerProcessor {
 	private processInitializerResolvers(
 		m: M,
 		scope: Awilix.AwilixContainer,
-		importedModulesWithScope: ModuleWithScope[],
+		importedModulesWithScope: RegisteredModuleScope[],
 	): void {
 		this.resolversByModule.set(
 			m,

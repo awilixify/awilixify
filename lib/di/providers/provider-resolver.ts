@@ -2,9 +2,12 @@ import * as Awilix from "awilix";
 import * as ERRORS from "../errors.js";
 import type { InternalModuleLike as M } from "../modules/runtime-module.types.js";
 import type { InterceptorProcessor } from "../processors/interceptor-processor.js";
-import { getOrCreateRequestScope } from "../request-scope-context.js";
 import * as GUARGS from "../type-guards.js";
 import type { AnyProvider } from "./provider.types.js";
+
+export type RequestScopeResolver = (
+	scope: Awilix.AwilixContainer,
+) => Awilix.AwilixContainer;
 
 type ResolveProviderParams = {
 	key: string;
@@ -17,14 +20,15 @@ type ResolveClassProviderParams = {
 	provider: unknown;
 	resolutionScope: Awilix.AwilixContainer;
 	module: M;
-	providerOptions: Partial<Awilix.BuildResolverOptions<any>>;
+	providerOptions?: Partial<Awilix.BuildResolverOptions<any>>;
 	wrapForExport?: boolean;
 };
 
 export class ProviderResolver {
 	constructor(
-		private readonly interceptorProcessor: InterceptorProcessor,
+		private readonly interceptorProcessor: InterceptorProcessor | undefined,
 		private readonly providerOptions: Partial<Awilix.BuildResolverOptions<any>>,
+		private readonly requestScopeResolver?: RequestScopeResolver,
 	) {}
 
 	static mergeResolverOptions(
@@ -39,11 +43,10 @@ export class ProviderResolver {
 		};
 	}
 
-	static resolveClassProvider({
+	public resolveClassProvider({
 		provider,
 		resolutionScope,
 		module,
-		providerOptions,
 		wrapForExport,
 	}: ResolveClassProviderParams): Awilix.Resolver<any> {
 		const { useClass, ...featureOptions } = GUARGS.hasUseClass<any>(provider)
@@ -51,7 +54,7 @@ export class ProviderResolver {
 			: { useClass: provider as Awilix.Constructor<any> };
 
 		const resolverOptions: Awilix.BuildResolverOptions<any> = {
-			...providerOptions,
+			...this.providerOptions,
 			...module.providerOptions,
 			...featureOptions,
 		};
@@ -64,7 +67,9 @@ export class ProviderResolver {
 				resolver.resolve(
 					resolverOptions.lifetime === Awilix.Lifetime.SINGLETON
 						? resolutionScope
-						: getOrCreateRequestScope(resolutionScope),
+						: this.requestScopeResolver
+							? this.requestScopeResolver(resolutionScope)
+							: resolutionScope,
 				),
 			resolverOptions,
 		);
@@ -99,6 +104,10 @@ export class ProviderResolver {
 		const resolverOptions = this.extractResolverOptions(module, provider);
 
 		if (GUARGS.isCostructorProvider(provider)) {
+			if (!this.interceptorProcessor) {
+				return Awilix.asClass(provider, resolverOptions);
+			}
+
 			return this.interceptorProcessor.createInterceptedProviderResolver({
 				module,
 				useClass: provider,
@@ -139,6 +148,10 @@ export class ProviderResolver {
 			? this.createProxyResolver(baseResolver, resolverOptions)
 			: baseResolver;
 
+		if (!this.interceptorProcessor) {
+			return classResolver;
+		}
+
 		return this.interceptorProcessor.createInterceptedProviderResolver({
 			module,
 			useClass: provider.useClass,
@@ -174,6 +187,7 @@ export class ProviderResolver {
 			resolutionScope.registrations[k]!.resolve(resolutionScope),
 		);
 
+		// biome-ignore lint/correctness/useHookAtTopLevel: useFactory is a provider option, not a React hook.
 		return Awilix.asValue(await provider.useFactory(...factoryDeps));
 	}
 

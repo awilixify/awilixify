@@ -43,6 +43,11 @@ It can be cron jobs, RabbitMQ consumers, queue workers, event listeners, or a CL
 That is why the goal was not to build an HTTP framework abstraction.
 The goal was to build a modular DI system that works for everything around the business layer and keeps transports at the boundary.
 
+The same idea now applies to frontend code too.
+React applications still have modules, side effects, service boundaries, and communication between features.
+DI is less common in frontend code than in backend code, but React can still benefit from explicit module boundaries and shared wiring rules.
+That is the direction of the React support: keep components as the UI boundary, keep services explicit, and let the module definition describe how frontend features are wired.
+
 ## Start Small
 
 In real business projects, it is often unrealistic to start from scratch with a big framework or to rewrite everything at once.

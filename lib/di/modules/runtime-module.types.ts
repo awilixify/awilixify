@@ -20,6 +20,8 @@ export interface InternalModuleLike {
 	)[];
 	providers?: Record<string, AnyProvider>;
 	exports?: readonly string[];
+	components?: Record<string, (...args: any[]) => unknown>;
+	componentExports?: readonly string[];
 	controllers?: AnyController[];
 	registerControllers?: boolean;
 	containerOptions?: ContainerOptions;

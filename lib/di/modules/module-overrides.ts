@@ -1,7 +1,5 @@
 import type { BuildResolverOptions, Constructor } from "awilix";
 import type { EmptyObject } from "../common.types.js";
-import type { RawValueObject } from "./module.types.js";
-import type { InternalModuleLike } from "./runtime-module.types.js";
 import type {
 	AnyInitializer,
 	AnyInterceptor,
@@ -11,6 +9,8 @@ import type {
 	DefProviderMap,
 	Provider,
 } from "../providers/provider.types.js";
+import type { RawValueObject } from "./module.types.js";
+import type { InternalModuleLike } from "./runtime-module.types.js";
 
 type OwnProviderMap<TModule> = TModule extends {
 	providers: infer TProviders extends DefProviderMap;
@@ -130,7 +130,6 @@ export type AnyModuleOverride = {
 	};
 };
 
-// TODO: move to /modules
 export function overrideModule<TModule extends InternalModuleLike>(
 	module: TModule,
 	overrides: ModuleFeatureOverridesFor<TModule>,

@@ -1,0 +1,27 @@
+{
+	"name": "awilixify-react-tanstack-example",
+	"version": "1.0.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "vite",
+		"build": "tsc --noEmit && vite build",
+		"preview": "vite preview",
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@tanstack/react-query": "^5.90.12",
+		"@tanstack/react-router": "^1.139.2",
+		"awilix": "^10.0.2",
+		"awilixify": "link:../..",
+		"react": "^19.2.3",
+		"react-dom": "^19.2.3"
+	},
+	"devDependencies": {
+		"@vitejs/plugin-react": "^5.1.2",
+		"vite": "^7.2.7",
+		"@types/react": "^19.2.7",
+		"@types/react-dom": "^19.2.3",
+		"typescript": "^5.9.3"
+	}
+}

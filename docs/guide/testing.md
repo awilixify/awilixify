@@ -2,6 +2,31 @@
 
 awilixify tests usually use the same module graph as the application and then disable or replace only the parts that should not run in a test.
 
+## Testing Through Mediator
+
+awilixify encourages using the mediator for focused module tests when possible.
+It keeps tests close to the application module graph while avoiding transport-specific test setup.
+
+You can bootstrap a module, resolve the mediator from the module scope, and execute queries or commands with full typings:
+
+```typescript
+const app = DIContext.create(OwnersModule, {
+  moduleOverrides: [
+    overrideModule(OwnersModule, {
+      providers: {
+        ownersRepository: inMemoryOwnersRepository,
+      },
+    }),
+  ],
+});
+
+const mediator = app.scope.resolve<Deps["queryMediator"]>("queryMediator");
+// with complete type safety
+const result = await mediator.execute("cats/get-cats", {});
+```
+
+For E2E-style tests, such as tests built with Supertest, you can still resolve the framework instance from the same module scope and test through HTTP
+
 ## Module Overrides
 
 Use `moduleOverrides` to override providers or other keyed features in any module in the bootstrapped graph, including the root module, global modules, imported modules, and nested imported modules.
@@ -41,20 +66,7 @@ overrideModule(OwnersModule, {
 > An override is a complete feature definition replacement.
 > Original provider options such as `lifetime`, `eager`, `initAfter`, and `allowCircular` are not preserved unless repeated in the override.
 
-Provider override typing checks the public injectable contract of the original provider. Private and protected members are ignored so separately declared test doubles can be used without extending the original class.
-
-```typescript
-const app = DIContext.create(AppModule, {
-  globalModules: [ConfigModule],
-  moduleOverrides: [
-    overrideModule(ConfigModule, {
-      providers: {
-        config: testConfig,
-      },
-    }),
-  ],
-});
-```
+Provider override typing checks the public methods of the original provider. Private and protected members are ignored so separately declared test class can be used without extending the original class.
 
 `overrideModule` matches modules by object identity. For dynamic modules, hoist the module instance if tests need to override it:
 

@@ -10,7 +10,7 @@ hero:
       text: Getting Started
       link: /docs/quick-start
     - theme: alt
-      text: Why awilixify?
+      text: Why Awilixify?
       link: /docs/philosophy-and-motivation
 
 features:
@@ -18,7 +18,7 @@ features:
     details: Define module dependencies once and reuse strongly typed module deps across services, handlers, and controllers.
 
   - title: Transport Agnostic
-    details: Keep business logic portable across Express, Fastify, Hono, Koa, jobs, queues or whatever you need.
+    details: Keep business logic portable across Express, Fastify, React, Hono, Koa, jobs, queues or whatever you need.
 
   - title: End-to-end type safety across middleware flow
     details: Scenarios explicitly select pre-handlers with type checks, making middleware part of the same typed execution flow as handlers.

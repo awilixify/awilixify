@@ -11,6 +11,7 @@ export type FactoryProvider<
 	DepsMap extends Record<string, unknown>,
 	Keys extends readonly Extract<keyof DepsMap, string>[],
 	Strict extends boolean = true,
+	ResolverOptions extends object = BuildResolverOptions<T>,
 > = {
 	inject?: Keys;
 	initAfter?: readonly Extract<keyof DepsMap, string>[];
@@ -18,17 +19,18 @@ export type FactoryProvider<
 	useFactory: Strict extends true
 		? (...args: MapKeysToValues<DepsMap, Keys>) => T | Promise<T>
 		: (...args: any[]) => T | Promise<T>;
-} & BuildResolverOptions<T>;
+} & ResolverOptions;
 
 export type ClassProvider<
 	T extends object,
 	DepsMap extends Record<string, unknown> = Record<string, unknown>,
+	ResolverOptions extends object = BuildResolverOptions<T>,
 > = {
 	useClass: Constructor<T>;
 	allowCircular?: boolean;
 	eager?: boolean;
 	initAfter?: readonly Extract<keyof DepsMap, string>[];
-} & BuildResolverOptions<T>;
+} & ResolverOptions;
 
 export interface ProviderInit {
 	init(): void | Promise<void>;
@@ -37,6 +39,7 @@ export interface ProviderInit {
 export type Provider<
 	T extends object,
 	DepsMap extends Record<string, unknown> = Record<string, unknown>,
+	ResolverOptions extends object = BuildResolverOptions<T>,
 > =
 	| FactoryProvider<
 			T,
@@ -44,7 +47,7 @@ export type Provider<
 			readonly Extract<keyof DepsMap, string>[],
 			false
 	  >
-	| ClassProvider<T, DepsMap>
+	| ClassProvider<T, DepsMap, ResolverOptions>
 	| ConstructorProvider<T>;
 
 export type AnyProvider =

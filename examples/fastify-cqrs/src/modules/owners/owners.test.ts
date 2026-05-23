@@ -1,4 +1,4 @@
-import { DIContext, type ModuleScopeTree, overrideModule } from "awilixify";
+import { DIContext, type ModuleScope, overrideModule } from "awilixify";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { ConfigModule } from "@/integrations/config/config.module.js";
 import { type Deps, OwnersModule } from "./owners.module.js";
@@ -21,7 +21,7 @@ class Owners1Service {
 }
 
 describe("CatsModule", () => {
-	let app: ModuleScopeTree | undefined;
+	let app: ModuleScope | undefined;
 	let queryMediator: Deps["queryMediator"];
 
 	afterEach(async () => {

@@ -5,11 +5,11 @@ import {
 } from "awilix";
 import { describe, expect, it, vi } from "vitest";
 import { DIContext } from "../../lib/di/contexts/di-context.js";
-import type {
-	ModuleScopeTree,
-	DiContextOptions,
-} from "../../lib/di/contexts/di-context-base.js";
 import { AsyncDIContext } from "../../lib/di/contexts/di-context-async.js";
+import type {
+	DiContextOptions,
+	ModuleScope,
+} from "../../lib/di/contexts/di-context-base.js";
 import * as ERRORS from "../../lib/di/errors.js";
 import type { AnyModule } from "../../lib/di/modules/module.types.js";
 import type { ModuleDef } from "../../lib/di/modules/module-def.types.js";
@@ -28,9 +28,9 @@ type TestContainer = Omit<AwilixContainer, "resolve"> & {
 	resolve<T = any>(name: string | symbol): T;
 };
 
-type TestModuleScopeTree = Omit<ModuleScopeTree, "scope" | "importedScopes"> & {
+type TestModuleScope = Omit<ModuleScope, "scope" | "importedScopes"> & {
 	scope: TestContainer;
-	importedScopes: Map<string, TestModuleScopeTree>;
+	importedScopes: Map<string, TestModuleScope>;
 };
 
 describe("DIContext", () => {
@@ -59,7 +59,7 @@ describe("DIContext", () => {
 	function registerModule(
 		module: Partial<AnyModule>,
 		options?: Partial<DiContextOptions>,
-	): TestModuleScopeTree {
+	): TestModuleScope {
 		return DIContext.create(
 			{
 				name: "AnyModule",
@@ -77,7 +77,7 @@ describe("DIContext", () => {
 	async function registerModuleAsync(
 		module: Partial<AnyModule>,
 		options?: Partial<DiContextOptions>,
-	): Promise<TestModuleScopeTree> {
+	): Promise<TestModuleScope> {
 		return AsyncDIContext.create(
 			{
 				name: "AnyModule",

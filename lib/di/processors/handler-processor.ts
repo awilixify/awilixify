@@ -3,6 +3,7 @@ import type { AnyContract } from "../../mediator/contract.types.js";
 import type { Handler } from "../../mediator/handler.types.js";
 import { Mediator } from "../../mediator/mediator.js";
 import type { Middleware } from "../../mediator/middleware.types.js";
+import type { RegisteredModuleScope } from "../contexts/container-context-base.js";
 import * as ERRORS from "../errors.js";
 import type { InternalModuleLike as M } from "../modules/runtime-module.types.js";
 import { ProviderResolver } from "../providers/provider-resolver.js";
@@ -16,11 +17,6 @@ export const HandlerType = {
 } as const;
 
 export type HandlerType = (typeof HandlerType)[keyof typeof HandlerType];
-
-type ModuleWithScope = {
-	module: M;
-	scope: Awilix.AwilixContainer;
-};
 
 export class HandlerProcessor {
 	private readonly keyedFeatureRegistrar: KeyedFeatureRegistrar;
@@ -47,7 +43,7 @@ export class HandlerProcessor {
 	public processHandlers(
 		m: M,
 		scope: Awilix.AwilixContainer,
-		importedModulesWithScope: ModuleWithScope[],
+		importedModulesWithScope: RegisteredModuleScope[],
 		handlerType: HandlerType,
 	): void {
 		const { handlersKey, mediatorKey, preHandlersKey } =

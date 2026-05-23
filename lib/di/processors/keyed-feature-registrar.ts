@@ -1,14 +1,13 @@
 import * as Awilix from "awilix";
+import type { RegisteredModuleScope } from "../contexts/container-context-base.js";
 import * as ERRORS from "../errors.js";
 import type { InternalModuleLike as M } from "../modules/runtime-module.types.js";
 import type { Initializer } from "../providers/provider.types.js";
 import { ProviderResolver } from "../providers/provider-resolver.js";
-import { resolveFromRequestScope } from "../request-scope-context.js";
-
-type ModuleWithScope = {
-	module: M;
-	scope: Awilix.AwilixContainer;
-};
+import {
+	getOrCreateRequestScope,
+	resolveFromRequestScope,
+} from "../request-scope-context.js";
 
 type KeyedFeatureKind =
 	| "queryPreHandlers"
@@ -20,7 +19,7 @@ type RegisterKeyedFeatureParams = {
 	featureKind: KeyedFeatureKind;
 	module: M;
 	scope: Awilix.AwilixContainer;
-	importedModulesWithScope: ModuleWithScope[];
+	importedModulesWithScope: RegisteredModuleScope[];
 };
 
 export class KeyedFeatureRegistrar {
@@ -57,10 +56,15 @@ export class KeyedFeatureRegistrar {
 		const resolverMap = new Map<string, () => T>();
 		const ownerByInitializerToken = new Map<symbol, string>();
 		const config = this.featureConfig[featureKind];
+		const providerResolver = new ProviderResolver(
+			undefined,
+			this.getProviderOptions(featureKind),
+			getOrCreateRequestScope,
+		);
 
 		for (const {
 			module: importedModule,
-			scope: importedScope,
+			moduleScope: importedModuleScope,
 		} of importedModulesWithScope) {
 			for (const key of importedModule[config.exportKey] ?? []) {
 				const feature = importedModule[featureKind]?.[key];
@@ -85,11 +89,10 @@ export class KeyedFeatureRegistrar {
 					`${featureKind}_export_${importedModule.name}_${key}`,
 				);
 				scope.register({
-					[symbol]: ProviderResolver.resolveClassProvider({
+					[symbol]: providerResolver.resolveClassProvider({
 						provider: feature,
-						resolutionScope: importedScope,
+						resolutionScope: importedModuleScope.scope,
 						module: importedModule,
-						providerOptions: this.getProviderOptions(featureKind),
 						wrapForExport: true,
 					}),
 				});
@@ -126,11 +129,10 @@ export class KeyedFeatureRegistrar {
 
 			const symbol = Symbol(`${featureKind}_${module.name}_${key}`);
 			scope.register({
-				[symbol]: ProviderResolver.resolveClassProvider({
+				[symbol]: providerResolver.resolveClassProvider({
 					provider: feature,
 					resolutionScope: scope,
 					module,
-					providerOptions: this.getProviderOptions(featureKind),
 				}),
 			});
 

@@ -1,30 +1,28 @@
 import type * as Awilix from "awilix";
 import type { InternalModuleLike as M } from "../modules/runtime-module.types.js";
 import * as GUARGS from "../type-guards.js";
-import type { DiContextOptions, ModuleScopeTree } from "./di-context-base.js";
-import {
-	DIContextBase,
-	type DiContextCreateOptions,
-} from "./di-context-base.js";
+import type { ModuleScope } from "./container-context-base.js";
+import type { DiContextOptions } from "./di-context-base.js";
+import { DIContextBase } from "./di-context-base.js";
 
 export class AsyncDIContext extends DIContextBase {
 	private readonly moduleTreePromiseMap = new WeakMap<
 		M,
-		Promise<ModuleScopeTree>
+		Promise<ModuleScope>
 	>();
 
 	private constructor(options: DiContextOptions) {
 		super(options);
 	}
 
-	static async create<TModule extends M>(
-		module: TModule | Promise<TModule>,
-		options?: DiContextCreateOptions<TModule>,
-	): Promise<ModuleScopeTree> {
+	static async create(
+		module: M | Promise<M>,
+		options?: DiContextOptions,
+	): Promise<ModuleScope> {
 		return new AsyncDIContext(options ?? {}).bootstrap(module);
 	}
 
-	private async bootstrap(module: M | Promise<M>): Promise<ModuleScopeTree> {
+	private async bootstrap(module: M | Promise<M>): Promise<ModuleScope> {
 		const rootModule = await module;
 
 		await this.initializeGlobalModulesAsync();
@@ -55,10 +53,10 @@ export class AsyncDIContext extends DIContextBase {
 			)
 		).flat();
 
-		this.ensureGlobalModulesDoNotImportGlobalModules(
+		this.moduleGraphEnsurer.ensureGlobalModulesDoNotImportGlobalModules({
 			globalModules,
 			globalModuleImports,
-		);
+		});
 
 		this.globalModulesWithScope = [];
 
@@ -69,8 +67,8 @@ export class AsyncDIContext extends DIContextBase {
 				[],
 			);
 			this.globalModulesWithScope.push({
-				...moduleTree,
 				module: this.overridesProcessor.getModuleWithOverrides(module),
+				moduleScope: moduleTree,
 			});
 		}
 	}
@@ -79,7 +77,7 @@ export class AsyncDIContext extends DIContextBase {
 		m: M,
 		scope: Awilix.AwilixContainer,
 		moduleChain: M[],
-	): Promise<ModuleScopeTree> {
+	): Promise<ModuleScope> {
 		const existingTree = this.moduleTreeMap.get(m);
 
 		if (existingTree) {
@@ -89,20 +87,33 @@ export class AsyncDIContext extends DIContextBase {
 		const imports = await this.resolveImportsAsync(m);
 		const moduleWithOverrides = this.overridesProcessor.applyModuleOverrides(m);
 
-		this.ensureImportedModulesUniqueness(moduleWithOverrides, imports);
-		this.ensureNoProviderNameConflicts(moduleWithOverrides, imports);
+		this.moduleGraphEnsurer.ensureImportedModulesUniqueness({
+			module: moduleWithOverrides,
+			resolvedImports: imports,
+			globalModules: this.globalModulesWithScope.map((el) => el.module),
+		});
+		this.moduleGraphEnsurer.ensureNoProviderNameConflicts({
+			module: moduleWithOverrides,
+			resolvedImports: imports,
+			globalModules: this.globalModulesWithScope.map((el) => el.module),
+			getExportedProviderKeys: (module) => this.getExportedProviderKeys(module),
+		});
 		this.markModuleIfImportsUseForwardRef(moduleWithOverrides);
 
 		const isCircular = moduleChain.includes(m);
 
 		if (isCircular) {
-			this.ensureCircularDependencyHasForwardRef(m, moduleChain);
+			this.moduleGraphEnsurer.ensureCircularDependencyHasForwardRef({
+				module: m,
+				moduleChain,
+				forwardRefModules: this.forwardRefModules,
+			});
 
-			return this.createModuleScopeTree(
+			return this.createModuleScope(
 				m.name,
 				// biome-ignore lint/style/noNonNullAssertion: circular module was already registered
 				this.moduleScopeMap.get(m)!,
-				new Map(),
+				[],
 			);
 		}
 
@@ -131,7 +142,7 @@ export class AsyncDIContext extends DIContextBase {
 		scope: Awilix.AwilixContainer,
 		imports: M[],
 		moduleChain: M[],
-	): Promise<ModuleScopeTree> {
+	): Promise<ModuleScope> {
 		this.moduleScopeMap.set(m, scope);
 
 		const importedModulesWithScope = [
@@ -145,8 +156,8 @@ export class AsyncDIContext extends DIContextBase {
 					);
 
 					return {
-						...moduleTree,
 						module: this.overridesProcessor.getModuleWithOverrides(module),
+						moduleScope: moduleTree,
 					};
 				}),
 			)),
@@ -180,16 +191,16 @@ export class AsyncDIContext extends DIContextBase {
 
 		this.lifecycleProcessor.collectEagerProviders(moduleWithOverrides, scope);
 
-		this.processModuleFeatures(
+		this.afterRegisterProviders(
 			moduleWithOverrides,
 			scope,
 			importedModulesWithScope,
 		);
 
-		const moduleTree = this.createModuleScopeTree(
+		const moduleTree = this.createModuleScope(
 			m.name,
 			scope,
-			this.buildImportedScopesMap(importedModulesWithScope),
+			importedModulesWithScope,
 		);
 		this.moduleTreeMap.set(m, moduleTree);
 		this.moduleTreePromiseMap.delete(m);
