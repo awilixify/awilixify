@@ -4,7 +4,7 @@ layout: home
 hero:
   name: awilixify
   text: Type-safe, modular DI and CQRS
-  tagline: Transport-agnostic architectural framework with explicit module boundaries, typed contracts, and minimal runtime overhead.
+  tagline: Transport-agnostic architectural framework with explicit module boundaries, typed contracts, and frontend DI support.
   actions:
     - theme: brand
       text: Getting Started
@@ -29,6 +29,6 @@ features:
   - title: Native standard decorators
     details: Uses native ES decorators instead of legacy experimental semantics, with clearer runtime behavior and long-term compatibility.
 
-  - title: Minimal Overhead
-    details: Minimal runtime overhead(<2500 lines), built on top of Awilix without heavy reflection magic.
+  - title: React Support
+    details: Bring the same explicit module boundaries, inferred deps, and provider wiring advantages to React applications.
 ---
