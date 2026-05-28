@@ -7,8 +7,8 @@ Transport-agnostic, type-safe, modular DI and CQRS framework on top of [Awilix](
 [![Build Status](https://github.com/wildstyles/awilixify/workflows/ci/badge.svg)](https://github.com/wildstyles/awilixify/actions)
 [![codecov](https://codecov.io/gh/wildstyles/awilixify/branch/main/graph/badge.svg)](https://codecov.io/gh/wildstyles/awilixify)
 
-> [!WARNING]
-> This project is in active development and is not production-ready yet.
+> [!TIP]
+> 🤔 “Another JS framework?” Here is my attempt to convince you to give Awilixify a try: [Awilixify: NestJS-Like Modular DI for Legacy Applications](https://medium.com/@r.vanzhula/awilixify-nestjs-like-modular-di-for-legacy-applications-db2a1e29c7de)
 
 📚 Documentation: https://wildstyles.github.io/awilixify/
 
