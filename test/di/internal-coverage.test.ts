@@ -1,11 +1,12 @@
-import { createContainer } from "awilix";
-import { describe, expect, it } from "vitest";
+import { Lifetime, createContainer } from "awilix";
+import { describe, expect, it, vi } from "vitest";
 
 import { AsyncDIContext } from "../../lib/di/contexts/di-context-async.js";
 import { ControllerProcessor } from "../../lib/di/processors/controller-processor.js";
 import { InitializerProcessor } from "../../lib/di/processors/initializer-processor.js";
 import { InterceptorProcessor } from "../../lib/di/processors/interceptor-processor.js";
 import { ProviderDependencySorter } from "../../lib/di/providers/provider-dependency-sorter.js";
+import { ProviderResolver } from "../../lib/di/providers/provider-resolver.js";
 import { isResultLike } from "../../lib/di/type-guards.js";
 
 describe("Internal coverage", () => {
@@ -133,5 +134,66 @@ describe("Internal coverage", () => {
 				proceed: () => 7,
 			}),
 		).toBe(7);
+	});
+
+	it("uses request scope resolver for exported non-singleton class providers only when provided", () => {
+		class Service {}
+
+		const module = { name: "ProviderModule" } as any;
+		const baseScope = createContainer();
+		const requestScope = createContainer();
+		const requestScopeResolver = vi.fn(() => requestScope);
+
+		const resolverWithRequestScope = new ProviderResolver(
+			undefined,
+			{},
+			requestScopeResolver,
+		);
+
+		resolverWithRequestScope
+			.resolveClassProvider({
+				provider: {
+					useClass: Service,
+					lifetime: Lifetime.SCOPED,
+				},
+				resolutionScope: baseScope,
+				module,
+				wrapForExport: true,
+			})
+			.resolve(baseScope);
+
+		expect(requestScopeResolver).toHaveBeenCalledWith(baseScope);
+
+		requestScopeResolver.mockClear();
+
+		resolverWithRequestScope
+			.resolveClassProvider({
+				provider: {
+					useClass: Service,
+					lifetime: Lifetime.SINGLETON,
+				},
+				resolutionScope: baseScope,
+				module,
+				wrapForExport: true,
+			})
+			.resolve(baseScope);
+
+		expect(requestScopeResolver).not.toHaveBeenCalled();
+
+		const resolverWithoutRequestScope = new ProviderResolver(undefined, {});
+
+		expect(() =>
+			resolverWithoutRequestScope
+				.resolveClassProvider({
+					provider: {
+						useClass: Service,
+						lifetime: Lifetime.SCOPED,
+					},
+					resolutionScope: baseScope,
+					module,
+					wrapForExport: true,
+				})
+				.resolve(baseScope),
+		).not.toThrow();
 	});
 });

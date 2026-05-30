@@ -13,8 +13,8 @@
 			"import": "./dist/lib/http/index.js"
 		},
 		"./react": {
-			"types": "./dist/react.d.ts",
-			"import": "./dist/react.js"
+			"types": "./dist/lib/react/index.d.ts",
+			"import": "./dist/lib/react/index.js"
 		}
 	},
 	"version": "3.0.0",
