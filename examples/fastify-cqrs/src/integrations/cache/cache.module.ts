@@ -18,17 +18,20 @@ type CacheModuleDef = ModuleDef<{
 export type Deps = CacheModuleDef["deps"];
 
 export const CacheModule = (namespace: string) =>
-	createModule<CacheModuleDef>({
-		name: "CacheModule",
-		imports: [BentoCacheModule],
-		providers: {
-			namespace,
+	createModule<CacheModuleDef>(
+		{
+			name: "CacheModule",
+			imports: [BentoCacheModule],
+			providers: {
+				namespace,
+			},
+			interceptors: {
+				cache: CacheInterceptor,
+			},
+			interceptorExports: ["cache"],
 		},
-		interceptors: {
-			cache: CacheInterceptor,
-		},
-		interceptorExports: ["cache"],
-	});
+		{ hashNameFrom: namespace },
+	);
 
 type BentoCacheModuleDef = ModuleDef<{
 	providers: {

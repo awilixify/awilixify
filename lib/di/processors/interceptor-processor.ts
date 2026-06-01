@@ -4,6 +4,7 @@ import {
 	resolveDecoratorState,
 } from "../../decorators/decorator-state.js";
 import type { DecoratorState } from "../../decorators/decorator-state.types.js";
+import type { DevtoolsProcessorRef } from "../../devtools/devtools.types.js";
 import type { RegisteredModuleScope } from "../contexts/container-context-base.js";
 import type { DiContextOptions } from "../contexts/di-context-base.js";
 import type { InternalModuleLike as M } from "../modules/runtime-module.types.js";
@@ -23,7 +24,10 @@ export class InterceptorProcessor {
 		Map<string, () => Interceptor>
 	>();
 
-	constructor(providerOptions: DiContextOptions["providerOptions"]) {
+	constructor(
+		providerOptions: DiContextOptions["providerOptions"],
+		private readonly devtoolsProcessorRef: DevtoolsProcessorRef,
+	) {
 		this.keyedFeatureRegistrar = new KeyedFeatureRegistrar(
 			providerOptions ?? {},
 		);
@@ -102,6 +106,7 @@ export class InterceptorProcessor {
 				const wrapped = (...args: unknown[]) => {
 					const interceptors = resolveInterceptors.map((resolve) => resolve());
 					const metadataByToken = new Map<symbol, InterceptorMetadata>();
+
 					for (const interceptor of interceptors) {
 						const state = resolveDecoratorState(
 							metadataTarget,
@@ -172,17 +177,34 @@ export class InterceptorProcessor {
 				return invoke(index + 1, next);
 			}
 
-			return current.intercept({
-				target,
-				methodName,
-				args,
+			const interceptorName = current.constructor.name;
+			const callInterceptor = () =>
+				current.intercept({
+					target,
+					methodName,
+					args,
+					moduleName,
+					metadata: metadata.method,
+					decoratorState: metadata.state,
+					proceed: () => invoke(index + 1, next),
+				});
+
+			if (!this.devtoolsTracer) return callInterceptor();
+
+			return this.devtoolsTracer.recordSpan({
+				kind: "interceptor",
 				moduleName,
-				metadata: metadata.method,
-				decoratorState: metadata.state,
-				proceed: () => invoke(index + 1, next),
+				providerKey: interceptorName,
+				methodName: String(methodName),
+				args,
+				callback: callInterceptor,
 			});
 		};
 
 		return invoke(0, proceed);
+	}
+
+	private get devtoolsTracer() {
+		return this.devtoolsProcessorRef.current?.tracer;
 	}
 }

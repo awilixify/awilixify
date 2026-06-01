@@ -13,6 +13,13 @@ import type { ForwardRef } from "./module-ref.types.js";
 // (Module/ModuleDef helpers) to keep TS/LSP responsive in runtime files.
 export interface InternalModuleLike {
 	name: string;
+	__devtools?: {
+		baseName?: string;
+		dynamic?: {
+			hash: string;
+			paramsPreview: string;
+		};
+	};
 	imports?: readonly (
 		| InternalModuleLike
 		| Promise<InternalModuleLike>

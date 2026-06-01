@@ -1,9 +1,8 @@
-import { Lifetime, createContainer } from "awilix";
+import { createContainer, Lifetime } from "awilix";
 import { describe, expect, it, vi } from "vitest";
-
+import { getControllerMethodNames } from "../../lib/devtools/helpers.js";
 import { AsyncDIContext } from "../../lib/di/contexts/di-context-async.js";
 import { ControllerProcessor } from "../../lib/di/processors/controller-processor.js";
-import { InitializerProcessor } from "../../lib/di/processors/initializer-processor.js";
 import { InterceptorProcessor } from "../../lib/di/processors/interceptor-processor.js";
 import { ProviderDependencySorter } from "../../lib/di/providers/provider-dependency-sorter.js";
 import { ProviderResolver } from "../../lib/di/providers/provider-resolver.js";
@@ -81,6 +80,7 @@ describe("Internal coverage", () => {
 					resolver,
 			} as any,
 			{},
+			false,
 		);
 		const scope = createContainer();
 		const module = {
@@ -96,17 +96,17 @@ describe("Internal coverage", () => {
 		const METHOD = Symbol("method");
 
 		class SymbolController {
+			registerRoutes() {}
 			[METHOD]() {}
 		}
 
-		const processor = new InitializerProcessor({}) as any;
-		const methods = processor.getControllerMethodNames(SymbolController);
+		const methods = getControllerMethodNames(SymbolController);
 
 		expect(methods).toContain(METHOD);
 	});
 
 	it("returns plain properties, reuses wrapped methods, and tolerates sparse interceptor chains", () => {
-		const processor = new InterceptorProcessor({}) as any;
+		const processor = new InterceptorProcessor({}, {}) as any;
 		const instance = {
 			value: 7,
 			getValue() {
@@ -147,6 +147,7 @@ describe("Internal coverage", () => {
 		const resolverWithRequestScope = new ProviderResolver(
 			undefined,
 			{},
+			{},
 			requestScopeResolver,
 		);
 
@@ -180,7 +181,7 @@ describe("Internal coverage", () => {
 
 		expect(requestScopeResolver).not.toHaveBeenCalled();
 
-		const resolverWithoutRequestScope = new ProviderResolver(undefined, {});
+		const resolverWithoutRequestScope = new ProviderResolver(undefined, {}, {});
 
 		expect(() =>
 			resolverWithoutRequestScope

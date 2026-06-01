@@ -182,7 +182,7 @@ export class LifecycleProcessor {
 	private sortEagerProviderRefs(): EagerProviderRef[] {
 		const nodes = this.eagerProviderRefs.map((ref) => ({
 			...ref,
-			id: LifecycleProcessor.createEagerProviderId(ref.module.name, ref.key),
+			id: `${ref.module.name}:${ref.key}`,
 			initAfter: this.getProviderInitAfter(ref.module, ref.key),
 		}));
 		const nodeById = new Map(nodes.map((node) => [node.id, node]));
@@ -266,12 +266,5 @@ export class LifecycleProcessor {
 		}
 
 		return nodeByKey;
-	}
-
-	private static createEagerProviderId(
-		moduleName: string,
-		key: string,
-	): string {
-		return `${moduleName}:${key}`;
 	}
 }

@@ -43,6 +43,15 @@ export class DuplicateModuleImportError extends Error {
 	}
 }
 
+export class DuplicateDevtoolsModuleError extends Error {
+	constructor(moduleNames: string[]) {
+		super(
+			`Only one devtools module can be registered. Found: ${moduleNames.join(", ")}`,
+		);
+		this.name = "DuplicateDevtoolsModuleError";
+	}
+}
+
 export class ProviderNameConflictError extends Error {
 	constructor(moduleName: string, conflictingKeys: string[]) {
 		super(

@@ -25,7 +25,7 @@ export class AsyncDIContext extends DIContextBase {
 	private async bootstrap(module: M | Promise<M>): Promise<ModuleScope> {
 		const rootModule = await module;
 
-		await this.initializeGlobalModulesAsync();
+		await this.initializeGlobalModulesAsync(rootModule);
 
 		const moduleTree = await this.registerModuleWithScopeAsync(
 			rootModule,
@@ -37,12 +37,10 @@ export class AsyncDIContext extends DIContextBase {
 		return moduleTree;
 	}
 
-	private async initializeGlobalModulesAsync(): Promise<void> {
-		const globalModules = this.options.globalModules || [];
-
+	private async initializeGlobalModulesAsync(rootModule: M): Promise<void> {
 		const globalModuleImports = (
 			await Promise.all(
-				globalModules.map(async (module) =>
+				this.globalModules.map(async (module) =>
 					(
 						await this.resolveImportsAsync(module)
 					).map((importedModule) => ({
@@ -54,20 +52,21 @@ export class AsyncDIContext extends DIContextBase {
 		).flat();
 
 		this.moduleGraphEnsurer.ensureGlobalModulesDoNotImportGlobalModules({
-			globalModules,
+			globalModules: this.globalModules,
 			globalModuleImports,
 		});
 
 		this.globalModulesWithScope = [];
+		this.attachDevtools(rootModule);
 
-		for (const module of globalModules) {
+		for (const module of this.globalModules) {
 			const moduleTree = await this.registerModuleWithScopeAsync(
 				module,
 				this.createContainer(module),
 				[],
 			);
 			this.globalModulesWithScope.push({
-				module: this.overridesProcessor.getModuleWithOverrides(module),
+				module,
 				moduleScope: moduleTree,
 			});
 		}
@@ -86,6 +85,11 @@ export class AsyncDIContext extends DIContextBase {
 
 		const imports = await this.resolveImportsAsync(m);
 		const moduleWithOverrides = this.overridesProcessor.applyModuleOverrides(m);
+		const moduleId = this.registerModuleInGraph({
+			module: moduleWithOverrides,
+			scope,
+			importedModules: imports,
+		});
 
 		this.moduleGraphEnsurer.ensureImportedModulesUniqueness({
 			module: moduleWithOverrides,
@@ -127,6 +131,7 @@ export class AsyncDIContext extends DIContextBase {
 			// QUEST: why m and moduleWithOverrides at same time?
 			m,
 			moduleWithOverrides,
+			moduleId,
 			scope,
 			imports,
 			moduleChain,
@@ -139,6 +144,7 @@ export class AsyncDIContext extends DIContextBase {
 	private async registerNewModuleWithScopeAsync(
 		m: M,
 		moduleWithOverrides: M,
+		moduleId: string | undefined,
 		scope: Awilix.AwilixContainer,
 		imports: M[],
 		moduleChain: M[],
@@ -162,7 +168,6 @@ export class AsyncDIContext extends DIContextBase {
 				}),
 			)),
 		];
-
 		this.registerExportedProviders(scope, importedModulesWithScope);
 
 		const moduleForSorting: M = {
@@ -182,6 +187,7 @@ export class AsyncDIContext extends DIContextBase {
 			scope.register({
 				[key]: await this.providerResolver.resolveProviderAsync({
 					key,
+					moduleId,
 					provider,
 					resolutionScope: scope,
 					module: moduleWithOverrides,

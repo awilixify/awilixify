@@ -1,4 +1,8 @@
 import * as Awilix from "awilix";
+import {
+	AWILIXIFY_DEVTOOLS_PROCESSOR,
+	type DevtoolsProcessorRef,
+} from "../../devtools/devtools.types.js";
 import * as ERRORS from "../errors.js";
 import type { InternalModuleLike as M } from "../modules/runtime-module.types.js";
 import {
@@ -49,6 +53,8 @@ export abstract class ContainerContextBase<
 > {
 	protected readonly forwardRefModules = new WeakSet<M>();
 	protected readonly moduleScopeMap = new WeakMap<M, Awilix.AwilixContainer>();
+	protected readonly devtoolsProcessorRef: DevtoolsProcessorRef = {};
+
 	protected readonly moduleTreeMap = new WeakMap<M, ModuleScope>();
 	protected readonly options: TOptions;
 
@@ -86,7 +92,7 @@ export abstract class ContainerContextBase<
 	}
 
 	protected bootstrapModule(module: M): ModuleScope {
-		this.initializeGlobalModules();
+		this.initializeGlobalModules(module);
 
 		const moduleTree = this.registerModuleWithScope(
 			module,
@@ -103,6 +109,7 @@ export abstract class ContainerContextBase<
 			...this.options.containerOptions,
 			...module?.containerOptions,
 		});
+
 		this.lifecycleProcessor.trackScope(scope);
 
 		return scope;
@@ -121,6 +128,11 @@ export abstract class ContainerContextBase<
 
 		const imports = this.resolveImports(m);
 		const moduleWithOverrides = this.overridesProcessor.applyModuleOverrides(m);
+		const moduleId = this.registerModuleInGraph({
+			module: moduleWithOverrides,
+			scope,
+			importedModules: imports,
+		});
 
 		this.moduleGraphEnsurer.ensureImportedModulesUniqueness({
 			module: moduleWithOverrides,
@@ -190,6 +202,7 @@ export abstract class ContainerContextBase<
 			scope.register({
 				[key]: this.providerResolver.resolveProvider({
 					key,
+					moduleId,
 					provider,
 					resolutionScope: scope,
 					module: moduleWithOverrides,
@@ -215,29 +228,29 @@ export abstract class ContainerContextBase<
 		return moduleTree;
 	}
 
-	protected initializeGlobalModules(): void {
-		const globalModules = this.options.globalModules || [];
-		const globalModuleImports = globalModules.flatMap((module) =>
+	protected initializeGlobalModules(rootModule: M): void {
+		const globalModuleImports = this.globalModules.flatMap((module) =>
 			this.resolveImports(module).map((importedModule) => ({
 				module,
 				importedModule,
 			})),
 		);
 		this.moduleGraphEnsurer.ensureGlobalModulesDoNotImportGlobalModules({
-			globalModules,
+			globalModules: this.globalModules,
 			globalModuleImports,
 		});
 
 		this.globalModulesWithScope = [];
+		this.attachDevtools(rootModule);
 
-		for (const module of globalModules) {
+		for (const module of this.globalModules) {
 			const moduleTree = this.registerModuleWithScope(
 				module,
 				this.createContainer(module),
 				[],
 			);
 			this.globalModulesWithScope.push({
-				module: this.overridesProcessor.getModuleWithOverrides(module),
+				module,
 				moduleScope: moduleTree,
 			});
 		}
@@ -339,6 +352,29 @@ export abstract class ContainerContextBase<
 		});
 	}
 
+	protected registerModuleInGraph({
+		module,
+		scope,
+		importedModules,
+	}: {
+		module: M;
+		scope: Awilix.AwilixContainer;
+		importedModules: readonly M[];
+	}): string | undefined {
+		if (!this.devtoolsProcessorRef.current) {
+			return undefined;
+		}
+
+		const moduleId =
+			this.devtoolsProcessorRef.current.graphCollector.registerModule({
+				module,
+				scope,
+				importedModules,
+			});
+
+		return moduleId;
+	}
+
 	protected ensureAdditionalNameConflicts(
 		_module: M,
 		_resolvedImports: M[],
@@ -355,4 +391,38 @@ export abstract class ContainerContextBase<
 		_scope: Awilix.AwilixContainer,
 		_importedModulesWithScope: RegisteredModuleScope[],
 	): void {}
+
+	protected hasDevtoolsProcessorProvider(module: M): boolean {
+		return Boolean(module.providers?.[AWILIXIFY_DEVTOOLS_PROCESSOR]);
+	}
+
+	protected get globalModules(): M[] {
+		return (this.options.globalModules || [])
+			.filter((module) => !this.hasDevtoolsProcessorProvider(module))
+			.map((el) => this.overridesProcessor.getModuleWithOverrides(el));
+	}
+
+	protected attachDevtools(rootModule: M): void {
+		const module = this.moduleGraphEnsurer.ensureSingleDevtoolsModule(
+			(this.options.globalModules || []).filter((module) =>
+				this.hasDevtoolsProcessorProvider(module),
+			),
+		);
+
+		if (!module) return;
+
+		const moduleTree = this.registerModuleWithScope(
+			module,
+			this.createContainer(module),
+			[],
+		);
+
+		this.devtoolsProcessorRef.current = moduleTree.scope.resolve<
+			NonNullable<DevtoolsProcessorRef["current"]>
+		>(AWILIXIFY_DEVTOOLS_PROCESSOR);
+		this.devtoolsProcessorRef.current.initialize({
+			rootModule,
+			globalModules: this.globalModules,
+		});
+	}
 }

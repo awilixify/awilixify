@@ -49,14 +49,22 @@ export function createModule<TDef extends ModuleDefinition>(
 		return withOptions;
 	}
 
+	const hashSource = stableStringify(options.hashNameFrom);
 	const hash = createHash("sha256")
-		.update(stableStringify(options.hashNameFrom))
+		.update(hashSource)
 		.digest("hex")
 		.slice(0, Math.max(4, options.hashLength ?? 8));
 
 	return {
 		...withOptions,
 		name: `${withOptions.name}_${hash}`,
+		__devtools: {
+			baseName: withOptions.name,
+			dynamic: {
+				hash,
+				paramsPreview: hashSource,
+			},
+		},
 	};
 }
 

@@ -12,6 +12,10 @@
 			"types": "./dist/lib/http/index.d.ts",
 			"import": "./dist/lib/http/index.js"
 		},
+		"./devtools": {
+			"types": "./dist/lib/devtools/index.d.ts",
+			"import": "./dist/lib/devtools/index.js"
+		},
 		"./react": {
 			"types": "./dist/lib/react/index.d.ts",
 			"import": "./dist/lib/react/index.js"

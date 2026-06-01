@@ -16,7 +16,7 @@ export class OwnersService {
 
 	@cancellable()
 	async getOwners() {
-		await new Promise((resolve) => setTimeout(resolve, 4000));
+		// await new Promise((resolve) => setTimeout(resolve, 4000));
 
 		return {
 			catsServiceId: this.catsService.getInstanceId(),

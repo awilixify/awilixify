@@ -1,12 +1,10 @@
 import { type AwilixContainer, Lifetime } from "awilix";
 import { describe, expect, it, vi } from "vitest";
 import { createDecoratorStateUpdater } from "../../lib/decorators/decorator-state.js";
+import type { ModuleScope } from "../../lib/di/contexts/container-context-base.js";
 import { DIContext } from "../../lib/di/contexts/di-context.js";
 import { AsyncDIContext } from "../../lib/di/contexts/di-context-async.js";
-import type {
-	DiContextOptions,
-	ModuleScope,
-} from "../../lib/di/contexts/di-context-base.js";
+import type { DiContextOptions } from "../../lib/di/contexts/di-context-base.js";
 import * as ERRORS from "../../lib/di/errors.js";
 import type { AnyModule } from "../../lib/di/modules/module.types.js";
 import {

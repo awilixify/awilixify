@@ -59,6 +59,7 @@ export class KeyedFeatureRegistrar {
 		const providerResolver = new ProviderResolver(
 			undefined,
 			this.getProviderOptions(featureKind),
+			{},
 			getOrCreateRequestScope,
 		);
 

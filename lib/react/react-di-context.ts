@@ -23,6 +23,7 @@ export class ReactDIContext extends ContainerContextBase {
 		this.providerResolver = new ProviderResolver(
 			undefined,
 			this.options.providerOptions || {},
+			{},
 		);
 	}
 

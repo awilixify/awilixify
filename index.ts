@@ -1,4 +1,5 @@
 export * from "./lib/decorators/decorator-state.js";
+export type { DecoratorToken } from "./lib/decorators/decorator-state.types.js";
 export type { ModuleScope } from "./lib/di/contexts/container-context-base.js";
 export * from "./lib/di/contexts/di-context.js";
 export * from "./lib/di/contexts/di-context-async.js";
@@ -8,6 +9,7 @@ export * from "./lib/di/modules/module-factories.js";
 export * from "./lib/di/modules/module-overrides.js";
 export * from "./lib/di/modules/module-ref.types.js";
 export type {
+	ConstructorController,
 	Controller,
 	InitializerContext,
 	InterceptContext,

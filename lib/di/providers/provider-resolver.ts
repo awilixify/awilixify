@@ -1,4 +1,5 @@
 import * as Awilix from "awilix";
+import type { DevtoolsProcessorRef } from "../../devtools/devtools.types.js";
 import * as ERRORS from "../errors.js";
 import type { InternalModuleLike as M } from "../modules/runtime-module.types.js";
 import type { InterceptorProcessor } from "../processors/interceptor-processor.js";
@@ -11,6 +12,7 @@ export type RequestScopeResolver = (
 
 type ResolveProviderParams = {
 	key: string;
+	moduleId?: string;
 	provider: AnyProvider;
 	resolutionScope: Awilix.AwilixContainer;
 	module: M;
@@ -28,6 +30,7 @@ export class ProviderResolver {
 	constructor(
 		private readonly interceptorProcessor: InterceptorProcessor | undefined,
 		private readonly providerOptions: Partial<Awilix.BuildResolverOptions<any>>,
+		private readonly devtoolsProcessorRef: DevtoolsProcessorRef,
 		private readonly requestScopeResolver?: RequestScopeResolver,
 	) {}
 
@@ -77,6 +80,7 @@ export class ProviderResolver {
 
 	resolveProvider({
 		key,
+		moduleId,
 		provider,
 		resolutionScope,
 		module,
@@ -104,14 +108,23 @@ export class ProviderResolver {
 		const resolverOptions = this.extractResolverOptions(module, provider);
 
 		if (GUARGS.isCostructorProvider(provider)) {
-			if (!this.interceptorProcessor) {
-				return Awilix.asClass(provider, resolverOptions);
-			}
+			const resolver = !this.interceptorProcessor
+				? Awilix.asClass(provider, resolverOptions)
+				: this.interceptorProcessor.createInterceptedProviderResolver({
+						module,
+						useClass: provider,
+						options: resolverOptions,
+					});
 
-			return this.interceptorProcessor.createInterceptedProviderResolver({
+			if (!this.devtoolsTracer) return resolver;
+
+			return this.devtoolsTracer.wrapResolver({
+				kind: "provider",
 				module,
-				useClass: provider,
+				moduleId,
 				options: resolverOptions,
+				providerKey: key,
+				resolver,
 			});
 		}
 
@@ -137,10 +150,22 @@ export class ProviderResolver {
 				resolutionScope.registrations[k]!.resolve(resolutionScope),
 			);
 
-			return Awilix.asFunction(
+			const resolver = Awilix.asFunction(
 				() => provider.useFactory(...factoryDeps),
 				resolverOptions,
 			);
+
+			if (!this.devtoolsTracer) return resolver;
+
+			return this.devtoolsTracer.wrapResolver({
+				kind: "provider",
+				module,
+				moduleId,
+				options: resolverOptions,
+				providerKey: key,
+				isFactory: true,
+				resolver,
+			});
 		}
 
 		const baseResolver = Awilix.asClass(provider.useClass, resolverOptions);
@@ -148,20 +173,30 @@ export class ProviderResolver {
 			? this.createProxyResolver(baseResolver, resolverOptions)
 			: baseResolver;
 
-		if (!this.interceptorProcessor) {
-			return classResolver;
-		}
+		const resolver = !this.interceptorProcessor
+			? classResolver
+			: this.interceptorProcessor.createInterceptedProviderResolver({
+					module,
+					useClass: provider.useClass,
+					options: resolverOptions,
+					resolver: classResolver,
+				});
 
-		return this.interceptorProcessor.createInterceptedProviderResolver({
+		if (!this.devtoolsTracer) return resolver;
+
+		return this.devtoolsTracer.wrapResolver({
+			kind: "provider",
 			module,
-			useClass: provider.useClass,
+			moduleId,
 			options: resolverOptions,
-			resolver: classResolver,
+			providerKey: key,
+			resolver,
 		});
 	}
 
 	async resolveProviderAsync({
 		key,
+		moduleId,
 		provider,
 		resolutionScope,
 		module,
@@ -170,7 +205,13 @@ export class ProviderResolver {
 			!GUARGS.isFactoryProvider(provider) ||
 			!GUARGS.isAsyncFactoryProvider(provider)
 		) {
-			return this.resolveProvider({ provider, resolutionScope, module, key });
+			return this.resolveProvider({
+				provider,
+				resolutionScope,
+				module,
+				key,
+				moduleId,
+			});
 		}
 
 		const resolverOptions = this.extractResolverOptions(module, provider);
@@ -243,5 +284,9 @@ export class ProviderResolver {
 				);
 			},
 		});
+	}
+
+	private get devtoolsTracer() {
+		return this.devtoolsProcessorRef.current?.tracer;
 	}
 }

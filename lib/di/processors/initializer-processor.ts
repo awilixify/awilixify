@@ -1,5 +1,7 @@
 import type * as Awilix from "awilix";
 import { resolveDecoratorState } from "../../decorators/decorator-state.js";
+import type { DevtoolsProcessorRef } from "../../devtools/devtools.types.js";
+import { getControllerMethodNames } from "../../devtools/helpers.js";
 import type { RegisteredModuleScope } from "../contexts/container-context-base.js";
 import * as ERRORS from "../errors.js";
 import type { InternalModuleLike as M } from "../modules/runtime-module.types.js";
@@ -26,13 +28,23 @@ export class InitializerProcessor {
 		Map<string, () => Initializer>
 	>();
 
+	constructor(private readonly devtoolsProcessorRef: DevtoolsProcessorRef) {}
+
 	public collectInitializers(
 		m: M,
 		scope: Awilix.AwilixContainer,
 		importedModulesWithScope: RegisteredModuleScope[],
 		controllers: ControllerRuntimeEntry[],
 	): InitializerTask | null {
-		this.processInitializerResolvers(m, scope, importedModulesWithScope);
+		this.resolversByModule.set(
+			m,
+			this.keyedFeatureRegistrar.register<Initializer>({
+				featureKind: "initializers",
+				module: m,
+				scope,
+				importedModulesWithScope,
+			}),
+		);
 
 		const initializers = [
 			...(
@@ -43,6 +55,12 @@ export class InitializerProcessor {
 
 		if (initializers.length === 0 || controllers.length === 0) return null;
 
+		this.devtoolsProcessorRef.current?.graphCollector.collectModuleRoutes({
+			module: m,
+			controllers,
+			initializers,
+		});
+
 		return async (options) => {
 			const activeInitializers = this.filterActiveInitializers(
 				initializers,
@@ -52,10 +70,21 @@ export class InitializerProcessor {
 			if (activeInitializers.length === 0) return;
 
 			for (const controller of controllers) {
-				for (const methodName of this.getControllerMethodNames(
+				for (const methodName of getControllerMethodNames(
 					controller.controllerClass,
 				)) {
 					const invoke = (...args: unknown[]) =>
+						this.devtoolsProcessorRef.current?.tracer.traceInitializer({
+							args,
+							callback: () =>
+								runInRequestScopeContext(() =>
+									controller.resolve()[methodName](...args),
+								),
+							controllerName: controller.controllerClass.name,
+							getStatusCode: () => getStatusCode(args),
+							methodName: String(methodName),
+							moduleName: m.name,
+						}) ??
 						runInRequestScopeContext(() =>
 							controller.resolve()[methodName](...args),
 						);
@@ -138,47 +167,14 @@ export class InitializerProcessor {
 
 		return initializers.filter(([key]) => !excludedKeys.has(key));
 	}
+}
 
-	private processInitializerResolvers(
-		m: M,
-		scope: Awilix.AwilixContainer,
-		importedModulesWithScope: RegisteredModuleScope[],
-	): void {
-		this.resolversByModule.set(
-			m,
-			this.keyedFeatureRegistrar.register<Initializer>({
-				featureKind: "initializers",
-				module: m,
-				scope,
-				importedModulesWithScope,
-			}),
-		);
-	}
+function getStatusCode(args: unknown[]): number | undefined {
+	const reply = args[1];
 
-	private getControllerMethodNames(
-		controllerClass: ConstructorController,
-	): Array<string | symbol> {
-		const collected = new Set<string | symbol>();
-		let proto = controllerClass.prototype;
+	if (!reply || typeof reply !== "object") return undefined;
 
-		while (proto && proto !== Object.prototype) {
-			Object.getOwnPropertyNames(proto)
-				.filter(
-					(name) => name !== "constructor" && typeof proto[name] === "function",
-				)
-				.forEach((name) => {
-					collected.add(name);
-				});
+	const statusCode = (reply as { statusCode?: unknown }).statusCode;
 
-			Object.getOwnPropertySymbols(proto)
-				.filter((symbol) => typeof proto[symbol] === "function")
-				.forEach((symbol) => {
-					collected.add(symbol);
-				});
-
-			proto = Object.getPrototypeOf(proto);
-		}
-
-		return [...collected];
-	}
+	return typeof statusCode === "number" ? statusCode : undefined;
 }

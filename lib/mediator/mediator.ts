@@ -1,3 +1,4 @@
+import type { DevtoolsProcessorRef } from "../devtools/devtools.types.js";
 import { runInRequestScopeContext } from "../di/request-scope-context.js";
 import type { AnyContract } from "./contract.types.js";
 import * as errors from "./errors.js";
@@ -20,11 +21,20 @@ import { Result, type Result as ResultType } from "./result.js";
 export class Mediator<C extends AnyContract> {
 	private handlers = new Map<string, Executor>();
 	private middlewareResolvers: MiddlewareResolverMap;
+	private handlerType: string;
 	private moduleName: string;
+	private devtoolsProcessorRef: DevtoolsProcessorRef;
 
-	constructor(middlewareResolvers: MiddlewareResolverMap, moduleName: string) {
+	constructor(
+		middlewareResolvers: MiddlewareResolverMap,
+		moduleName: string,
+		handlerType = "handler",
+		devtoolsProcessorRef: DevtoolsProcessorRef,
+	) {
+		this.handlerType = handlerType;
 		this.moduleName = moduleName;
 		this.middlewareResolvers = middlewareResolvers;
+		this.devtoolsProcessorRef = devtoolsProcessorRef;
 	}
 
 	register(key: string, executor: Executor): void {
@@ -111,11 +121,16 @@ export class Mediator<C extends AnyContract> {
 		let hasResultMiddleware = false;
 
 		for (const [middlewareKey, middleware] of middlewares) {
-			const result = await middleware.execute(
-				payload,
-				context,
-				executionContext,
-			);
+			const result =
+				await (this.devtoolsProcessorRef.current?.tracer.recordSpan({
+					kind: "prehandler",
+					moduleName: this.moduleName,
+					providerKey: `${this.handlerType}:prehandler:${middlewareKey}`,
+					methodName: "execute",
+					args: [payload, context, executionContext],
+					callback: () =>
+						middleware.execute(payload, context, executionContext),
+				}) ?? middleware.execute(payload, context, executionContext));
 
 			if (this.isResult(result)) {
 				hasResultMiddleware = true;

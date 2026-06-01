@@ -27,7 +27,7 @@ export class DIContextBase extends ContainerContextBase<DiContextOptions> {
 	protected readonly controllerProcessor: ControllerProcessor;
 	protected readonly handlerProcessor: HandlerProcessor;
 	protected readonly interceptorProcessor: InterceptorProcessor;
-	protected readonly initializerProcessor = new InitializerProcessor();
+	protected readonly initializerProcessor: InitializerProcessor;
 
 	protected constructor(options: DiContextOptions) {
 		super(options, {
@@ -37,9 +37,14 @@ export class DIContextBase extends ContainerContextBase<DiContextOptions> {
 
 		this.handlerProcessor = new HandlerProcessor(
 			this.options.providerOptions || {},
+			this.devtoolsProcessorRef,
 		);
 		this.interceptorProcessor = new InterceptorProcessor(
 			this.options.providerOptions || {},
+			this.devtoolsProcessorRef,
+		);
+		this.initializerProcessor = new InitializerProcessor(
+			this.devtoolsProcessorRef,
 		);
 		this.controllerProcessor = new ControllerProcessor(
 			this.interceptorProcessor,
@@ -49,6 +54,7 @@ export class DIContextBase extends ContainerContextBase<DiContextOptions> {
 		this.providerResolver = new ProviderResolver(
 			this.interceptorProcessor,
 			this.options.providerOptions || {},
+			this.devtoolsProcessorRef,
 			getOrCreateRequestScope,
 		);
 	}

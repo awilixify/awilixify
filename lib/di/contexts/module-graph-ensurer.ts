@@ -108,4 +108,12 @@ export class ModuleGraphEnsurer {
 		const chainNames = moduleChain.map((chainModule) => chainModule.name);
 		throw new ERRORS.CircularModuleDependencyError(module.name, chainNames);
 	}
+
+	ensureSingleDevtoolsModule(devtoolsModules: M[]): M | undefined {
+		if (devtoolsModules.length <= 1) return devtoolsModules[0];
+
+		throw new ERRORS.DuplicateDevtoolsModuleError(
+			devtoolsModules.map((module) => module.name),
+		);
+	}
 }

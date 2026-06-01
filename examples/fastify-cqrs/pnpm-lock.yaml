@@ -75,6 +75,9 @@ importers:
       '@vitest/coverage-v8':
         specifier: ^4.1.7
         version: 4.1.7(vitest@4.1.7)
+      awilixify-devtools:
+        specifier: link:../../../awilixify-devtools
+        version: link:../../../awilixify-devtools
       concurrently:
         specifier: ^9.2.1
         version: 9.2.1
