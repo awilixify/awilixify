@@ -4,6 +4,7 @@ import {
 	Lifetime,
 } from "awilix";
 import { describe, expect, it, vi } from "vitest";
+import { AWILIXIFY_DEVTOOLS_PROCESSOR } from "../../lib/devtools/index.js";
 import type { ModuleScope } from "../../lib/di/contexts/container-context-base.js";
 import { DIContext } from "../../lib/di/contexts/di-context.js";
 import { AsyncDIContext } from "../../lib/di/contexts/di-context-async.js";
@@ -468,6 +469,38 @@ describe("DIContext", () => {
 			const globalB = app.scope.resolve<GlobalBService>("globalB");
 
 			expect(globalB.getDeps().globalA).toBe(globalA);
+		});
+
+		it("should throw when more than one devtools module is configured", () => {
+			const createDevtoolsModule = (name: string): AnyModule => ({
+				name,
+				providers: {
+					[AWILIXIFY_DEVTOOLS_PROCESSOR]: {
+						graphCollector: {
+							registerModule: vi.fn(),
+							collectModuleRoutes: vi.fn(),
+						},
+						tracer: {
+							recordSpan: vi.fn(),
+							traceInitializer: vi.fn(),
+							wrapResolver: vi.fn(),
+						},
+						initialize: vi.fn(),
+					},
+				},
+			});
+
+			expect(() =>
+				registerModule(
+					{ name: "AppModule" },
+					{
+						globalModules: [
+							createDevtoolsModule("DevtoolsA"),
+							createDevtoolsModule("DevtoolsB"),
+						],
+					},
+				),
+			).toThrow(ERRORS.DuplicateDevtoolsModuleError);
 		});
 
 		it("should resolve promised imports inside async global modules", async () => {
