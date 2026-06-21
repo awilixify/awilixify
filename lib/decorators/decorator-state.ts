@@ -10,6 +10,7 @@ import type {
 	StateInitializers,
 	StateUpdate,
 } from "./decorator-state.types.js";
+import "./decorator-metadata-symbol.js";
 
 export function createDecoratorStateUpdater<
 	TInitializers extends { method: () => unknown; root?: () => unknown } = {
@@ -39,11 +40,7 @@ export function resolveDecoratorState<TState extends DecoratorState<any, any>>(
 	target: unknown,
 	token: DecoratorToken<TState>,
 ): TState | null {
-	const metadataSymbol =
-		(typeof Symbol !== "undefined" && Symbol.metadata) ||
-		Object.getOwnPropertySymbols(target).find(
-			(s) => s.toString() === "Symbol(Symbol.metadata)",
-		);
+	const metadataSymbol = typeof Symbol !== "undefined" && Symbol.metadata;
 
 	if (!metadataSymbol) return null;
 
@@ -66,11 +63,7 @@ function hasOwnDecoratorMethodMetadata(target: unknown): boolean {
 		return false;
 	}
 
-	const metadataSymbol =
-		(typeof Symbol !== "undefined" && Symbol.metadata) ||
-		Object.getOwnPropertySymbols(target).find(
-			(s) => s.toString() === "Symbol(Symbol.metadata)",
-		);
+	const metadataSymbol = typeof Symbol !== "undefined" && Symbol.metadata;
 
 	if (!metadataSymbol) return false;
 
