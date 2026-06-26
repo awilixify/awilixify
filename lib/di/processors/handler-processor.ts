@@ -103,23 +103,10 @@ export class HandlerProcessor {
 						? scope
 						: getOrCreateRequestScope(scope);
 
-				if (!this.devtoolsTracer) {
-					return requestScope
-						.resolve<Handler<AnyContract>>(handlerSymbol)
-						.executor(payload, context);
-				}
-
-				return this.devtoolsTracer.recordSpan({
-					kind: "handler",
-					moduleName: m.name,
-					providerKey: `${handlerType}:${handlerKey}`,
-					methodName: "executor",
-					args: [payload, context],
-					callback: () =>
-						requestScope
-							.resolve<Handler<AnyContract>>(handlerSymbol)
-							.executor(payload, context),
-				});
+				// Handler class is already traced via createTracedHandlerResolver
+				return requestScope
+					.resolve<Handler<AnyContract>>(handlerSymbol)
+					.executor(payload, context);
 			});
 		}
 

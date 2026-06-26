@@ -123,7 +123,7 @@ export class ProviderResolver {
 				module,
 				moduleId,
 				options: resolverOptions,
-				providerKey: key,
+				providerKey: provider.name,
 				resolver,
 			});
 		}
@@ -189,7 +189,7 @@ export class ProviderResolver {
 			module,
 			moduleId,
 			options: resolverOptions,
-			providerKey: key,
+			providerKey: provider.useClass.name,
 			resolver,
 		});
 	}

@@ -11,6 +11,7 @@ export const AWILIXIFY_DEVTOOLS_PROCESSOR = "__awilixifyDevtoolsProcessor";
 export type TraceSpanKind =
 	| "http"
 	| "provider"
+	| "mediator"
 	| "handler"
 	| "prehandler"
 	| "interceptor"
@@ -22,6 +23,7 @@ export type RecordSpanInput<T> = {
 	providerKey: string;
 	methodName: string;
 	args: unknown[];
+	parameterNames?: string[];
 	callback: () => T | Promise<T>;
 	moduleId?: string;
 };

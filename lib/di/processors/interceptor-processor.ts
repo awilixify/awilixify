@@ -10,6 +10,7 @@ import type { DiContextOptions } from "../contexts/di-context-base.js";
 import type { InternalModuleLike as M } from "../modules/runtime-module.types.js";
 import type { Interceptor } from "../providers/provider.types.js";
 import { KeyedFeatureRegistrar } from "./keyed-feature-registrar.js";
+import { isPromiseLike } from "../type-guards.js";
 
 type InterceptorMetadata = {
 	state: DecoratorState<any, any>;
@@ -91,6 +92,8 @@ export class InterceptorProcessor {
 		moduleName: string,
 	): T {
 		const wrappers = new Map<PropertyKey, (...args: unknown[]) => unknown>();
+		// Methods that access JS private fields must use original target
+		const targetBoundMethods = new Set<PropertyKey>();
 		const self = this;
 
 		return new Proxy(instance, {
@@ -125,16 +128,44 @@ export class InterceptorProcessor {
 						}
 					}
 
-					if (metadataByToken.size === 0) return value.apply(target, args);
+					// Use proxyReceiver when devtools is active so nested this.method()
+					// calls are traced. Fall back to target for private field access.
+					const receiver =
+						!self.devtoolsTracer || targetBoundMethods.has(propertyKey)
+							? target
+							: proxyReceiver;
 
-					return self.callWithInterceptorChain({
-						target,
-						methodName: propertyKey,
-						moduleName,
-						args,
-						metadataByToken,
-						interceptors,
-						proceed: () => value.apply(target, args),
+					const apply = () => {
+						if (metadataByToken.size === 0) return value.apply(receiver, args);
+
+						return self.callWithInterceptorChain({
+							target: receiver,
+							methodName: propertyKey,
+							moduleName,
+							args,
+							metadataByToken,
+							interceptors,
+							proceed: () => value.apply(receiver, args),
+						});
+					};
+
+					// No need for fallback when not using proxyReceiver
+					if (receiver === target) return apply();
+
+					return applyWithPrivateFieldFallback(apply, () => {
+						targetBoundMethods.add(propertyKey);
+						// Retry with original target
+						if (metadataByToken.size === 0) return value.apply(target, args);
+
+						return self.callWithInterceptorChain({
+							target,
+							methodName: propertyKey,
+							moduleName,
+							args,
+							metadataByToken,
+							interceptors,
+							proceed: () => value.apply(target, args),
+						});
 					});
 				};
 
@@ -207,4 +238,33 @@ export class InterceptorProcessor {
 	private get devtoolsTracer() {
 		return this.devtoolsProcessorRef.current?.tracer;
 	}
+}
+
+function applyWithPrivateFieldFallback<T>(
+	tryFn: () => T,
+	fallbackFn: () => T,
+): T {
+	try {
+		const result = tryFn();
+
+		if (isPromiseLike(result)) {
+			return result.catch((error: unknown) => {
+				if (!isPrivateMemberAccessError(error)) throw error;
+
+				return fallbackFn();
+			}) as T;
+		}
+
+		return result;
+	} catch (error) {
+		if (!isPrivateMemberAccessError(error)) throw error;
+		return fallbackFn();
+	}
+}
+
+function isPrivateMemberAccessError(error: unknown): boolean {
+	return (
+		error instanceof TypeError &&
+		/Cannot (read|access) private (member|method)/.test(error.message)
+	);
 }

@@ -29,7 +29,7 @@ export class Mediator<C extends AnyContract> {
 		middlewareResolvers: MiddlewareResolverMap,
 		moduleName: string,
 		handlerType = "handler",
-		devtoolsProcessorRef: DevtoolsProcessorRef,
+		devtoolsProcessorRef: DevtoolsProcessorRef = {},
 	) {
 		this.handlerType = handlerType;
 		this.moduleName = moduleName;
@@ -69,44 +69,70 @@ export class Mediator<C extends AnyContract> {
 		payload: ExtractPayload<C, K>,
 		options?: ExecuteRuntimeOptions<C, K>,
 	): Promise<unknown> {
-		return runInRequestScopeContext(async () => {
-			const keyStr = String(key);
-			const executor = this.handlers.get(keyStr);
+		const execute = () =>
+			runInRequestScopeContext(async () => {
+				const keyStr = String(key);
+				const executor = this.handlers.get(keyStr);
 
-			if (!executor) {
-				throw new errors.HandlerNotRegisteredError(keyStr, this.moduleName);
-			}
+				if (!executor) {
+					throw new errors.HandlerNotRegisteredError(keyStr, this.moduleName);
+				}
 
-			const { executionContext, includePreHandlerKeys, excludePreHandlerKeys } =
-				options ?? {};
+				const {
+					executionContext,
+					includePreHandlerKeys,
+					excludePreHandlerKeys,
+				} = options ?? {};
 
-			const applicableMiddlewares = this.resolveApplicableMiddlewares({
-				excludePreHandlerKeys,
-				includePreHandlerKeys,
+				const applicableMiddlewares = this.resolveApplicableMiddlewares({
+					excludePreHandlerKeys,
+					includePreHandlerKeys,
+				});
+
+				const middlewareResult = await this.executeMiddlewares(
+					applicableMiddlewares,
+					payload,
+					executionContext ?? {},
+				);
+
+				if (middlewareResult.type === "error") {
+					return middlewareResult.error as unknown;
+				}
+
+				const handlerResult = await executor(payload, middlewareResult.context);
+
+				if (middlewareResult.hasResultMiddleware) {
+					return (
+						this.isResult(handlerResult)
+							? handlerResult
+							: Result.ok(handlerResult)
+					) as unknown;
+				}
+
+				return handlerResult as unknown;
 			});
 
-			const middlewareResult = await this.executeMiddlewares(
-				applicableMiddlewares,
-				payload,
-				executionContext ?? {},
-			);
+		return (
+			this.devtoolsProcessorRef.current?.tracer.recordSpan({
+				kind: "mediator",
+				moduleName: this.moduleName,
+				providerKey: this.getMediatorName(),
+				methodName: "execute",
+				args: [key, payload, options],
+				callback: execute,
+			}) ?? execute()
+		);
+	}
 
-			if (middlewareResult.type === "error") {
-				return middlewareResult.error as unknown;
-			}
-
-			const handlerResult = await executor(payload, middlewareResult.context);
-
-			if (middlewareResult.hasResultMiddleware) {
-				return (
-					this.isResult(handlerResult)
-						? handlerResult
-						: Result.ok(handlerResult)
-				) as unknown;
-			}
-
-			return handlerResult as unknown;
-		});
+	private getMediatorName(): string {
+		switch (this.handlerType) {
+			case "query":
+				return "QueryMediator";
+			case "command":
+				return "CommandMediator";
+			default:
+				return "Mediator";
+		}
 	}
 
 	private async executeMiddlewares(
@@ -125,7 +151,7 @@ export class Mediator<C extends AnyContract> {
 				await (this.devtoolsProcessorRef.current?.tracer.recordSpan({
 					kind: "prehandler",
 					moduleName: this.moduleName,
-					providerKey: `${this.handlerType}:prehandler:${middlewareKey}`,
+					providerKey: middleware.constructor.name,
 					methodName: "execute",
 					args: [payload, context, executionContext],
 					callback: () =>

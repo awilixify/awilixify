@@ -69,7 +69,7 @@ describe("Devtools invocation", () => {
 		expect(devtools.tracer.wrapResolver).toHaveBeenCalledWith(
 			expect.objectContaining({
 				kind: "provider",
-				providerKey: "service",
+				providerKey: "Service",
 				moduleId: "graph-1",
 			}),
 		);
@@ -85,15 +85,8 @@ describe("Devtools invocation", () => {
 		).resolves.toBe(2);
 		expect(devtools.tracer.recordSpan).toHaveBeenCalledWith(
 			expect.objectContaining({
-				kind: "handler",
-				providerKey: "query:get-data",
-				methodName: "executor",
-			}),
-		);
-		expect(devtools.tracer.recordSpan).toHaveBeenCalledWith(
-			expect.objectContaining({
 				kind: "prehandler",
-				providerKey: "query:prehandler:auth",
+				providerKey: "AuthPreHandler",
 				methodName: "execute",
 			}),
 		);
@@ -141,7 +134,7 @@ describe("Devtools invocation", () => {
 		expect(devtools.tracer.wrapResolver).toHaveBeenCalledWith(
 			expect.objectContaining({
 				kind: "provider",
-				providerKey: "classProvider",
+				providerKey: "ClassProvider",
 				moduleId: "module-id",
 			}),
 		);
@@ -155,7 +148,8 @@ describe("Devtools invocation", () => {
 		expect(devtools.tracer.wrapResolver).toHaveBeenCalledWith(
 			expect.objectContaining({
 				kind: "provider",
-				providerKey: "useClassProvider",
+				providerKey: "UseClassProvider",
+				moduleId: "module-id",
 			}),
 		);
 	});

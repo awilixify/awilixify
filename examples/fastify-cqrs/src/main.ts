@@ -8,7 +8,9 @@ import { AppModule } from "@/modules/index.js";
 async function bootstrap() {
 	const devtoolsModule =
 		process.env.NODE_ENV === "development"
-			? (await import("awilixify-devtools")).DevtoolsModule()
+			? (await import("awilixify-devtools")).DevtoolsModule({
+					appUrl: "http://localhost:3000",
+				})
 			: undefined;
 
 	const app = DIContext.create(AppModule, {
