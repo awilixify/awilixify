@@ -50,6 +50,7 @@ export class DIContextBase extends ContainerContextBase<DiContextOptions> {
 			this.interceptorProcessor,
 			this.options.providerOptions || {},
 			this.options.skipRegisterRoutes === true,
+			this.devtoolsProcessorRef,
 		);
 		this.providerResolver = new ProviderResolver(
 			this.interceptorProcessor,

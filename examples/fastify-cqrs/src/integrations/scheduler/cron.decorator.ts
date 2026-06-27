@@ -17,7 +17,7 @@ export function getCronTaskId(task: CronTaskConstructor): string {
 	return task.name;
 }
 
-const updater = createDecoratorStateUpdater("cron", {
+const updater = createDecoratorStateUpdater("Cron Jobs", {
 	method: (): CronTaskConstructor => undefined as never,
 });
 

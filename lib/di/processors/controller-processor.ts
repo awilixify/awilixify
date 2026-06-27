@@ -1,4 +1,5 @@
 import * as Awilix from "awilix";
+import type { DevtoolsProcessorRef } from "../../devtools/devtools.types.js";
 import * as ERRORS from "../errors.js";
 import type { InternalModuleLike as M } from "../modules/runtime-module.types.js";
 import type {
@@ -20,6 +21,7 @@ export class ControllerProcessor {
 		private readonly interceptorProcessor: InterceptorProcessor,
 		private readonly providerOptions: Partial<Awilix.BuildResolverOptions<any>>,
 		private readonly skipRegisterRoutes: boolean,
+		private readonly devtoolsProcessorRef: DevtoolsProcessorRef,
 	) {}
 
 	public processControllers(
@@ -61,14 +63,39 @@ export class ControllerProcessor {
 					}),
 				});
 
-				diScope.register({
-					[controllerSymbol]:
-						this.interceptorProcessor.createInterceptedProviderResolver({
+				// Wrap with tracer first (innermost) to record controller method spans
+				const tracedResolver = this.devtoolsTracer
+					? this.createTracedControllerResolver({
 							module: m,
-							useClass,
 							options,
+							className: useClass.name,
+							registrationKey: useClass.name,
 							resolver: baseResolver,
-						}),
+						})
+					: baseResolver;
+
+				// Wrap with interceptors (middle layer)
+				const interceptedResolver =
+					this.interceptorProcessor.createInterceptedProviderResolver({
+						module: m,
+						useClass,
+						options,
+						resolver: tracedResolver,
+					});
+
+				// Wrap with trace starter (outermost) to ensure trace exists before interceptors run
+				const traceStarterResolver = this.devtoolsTracer
+					? this.createTraceStarterResolver({
+							module: m,
+							options,
+							className: useClass.name,
+							registrationKey: useClass.name,
+							resolver: interceptedResolver,
+						})
+					: interceptedResolver;
+
+				diScope.register({
+					[controllerSymbol]: traceStarterResolver,
 				});
 
 				if (
@@ -111,5 +138,112 @@ export class ControllerProcessor {
 		if (withNewScope) return resolveFromRequestScope(scope, symbol);
 
 		return scope.resolve(symbol);
+	}
+
+	private get devtoolsTracer() {
+		return this.devtoolsProcessorRef.current?.tracer;
+	}
+
+	/**
+	 * Creates a resolver that wraps the controller with tracing at resolve time.
+	 */
+	private createTracedControllerResolver({
+		className,
+		module,
+		options,
+		registrationKey,
+		resolver,
+	}: {
+		className: string;
+		module: M;
+		options: Awilix.BuildResolverOptions<any>;
+		registrationKey: string;
+		resolver: Awilix.Resolver<any>;
+	}): Awilix.Resolver<any> {
+		return Awilix.createBuildResolver({
+			...options,
+			resolve: (container) => {
+				const instance = resolver.resolve(container);
+				const tracer = this.devtoolsProcessorRef.current?.tracer;
+
+				if (!tracer || module.name === "DevtoolsModule") {
+					return instance;
+				}
+
+				// Use tracer's wrapResolver logic but applied to resolved instance
+				return tracer
+					.wrapResolver({
+						kind: "controller",
+						module,
+						options,
+						className,
+						registrationKey,
+						resolver: Awilix.asValue(instance),
+					})
+					.resolve(container);
+			},
+		});
+	}
+
+	/**
+	 * Creates a resolver that starts a trace context before method calls.
+	 * This wraps around interceptors so they can record spans within the trace.
+	 */
+	private createTraceStarterResolver({
+		className,
+		module,
+		options,
+		registrationKey,
+		resolver,
+	}: {
+		className: string;
+		module: M;
+		options: Awilix.BuildResolverOptions<any>;
+		registrationKey: string;
+		resolver: Awilix.Resolver<any>;
+	}): Awilix.Resolver<any> {
+		return Awilix.createBuildResolver({
+			...options,
+			resolve: (container) => {
+				const instance = resolver.resolve(container);
+				const tracer = this.devtoolsProcessorRef.current?.tracer;
+
+				if (!tracer || module.name === "DevtoolsModule") {
+					return instance;
+				}
+
+				// Create a proxy that wraps method calls with trace context
+				const wrappers = new Map<
+					PropertyKey,
+					(...args: unknown[]) => unknown
+				>();
+
+				return new Proxy(instance, {
+					get: (target, propertyKey, proxyReceiver) => {
+						const value = Reflect.get(target, propertyKey, proxyReceiver);
+
+						if (typeof value !== "function") return value;
+						if (propertyKey === "constructor") return value;
+
+						const existing = wrappers.get(propertyKey);
+						if (existing) return existing;
+
+						const methodName = String(propertyKey);
+						const wrapped = (...args: unknown[]) =>
+							tracer.runInControllerTrace({
+								moduleName: module.name,
+								className,
+								registrationKey,
+								methodName,
+								args,
+								callback: () => value.apply(proxyReceiver, args),
+							});
+
+						wrappers.set(propertyKey, wrapped);
+						return wrapped;
+					},
+				});
+			},
+		});
 	}
 }

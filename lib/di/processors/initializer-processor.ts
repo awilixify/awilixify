@@ -74,17 +74,6 @@ export class InitializerProcessor {
 					controller.controllerClass,
 				)) {
 					const invoke = (...args: unknown[]) =>
-						this.devtoolsProcessorRef.current?.tracer.traceInitializer({
-							args,
-							callback: () =>
-								runInRequestScopeContext(() =>
-									controller.resolve()[methodName](...args),
-								),
-							controllerName: controller.controllerClass.name,
-							getStatusCode: () => getStatusCode(args),
-							methodName: String(methodName),
-							moduleName: m.name,
-						}) ??
 						runInRequestScopeContext(() =>
 							controller.resolve()[methodName](...args),
 						);
@@ -167,14 +156,4 @@ export class InitializerProcessor {
 
 		return initializers.filter(([key]) => !excludedKeys.has(key));
 	}
-}
-
-function getStatusCode(args: unknown[]): number | undefined {
-	const reply = args[1];
-
-	if (!reply || typeof reply !== "object") return undefined;
-
-	const statusCode = (reply as { statusCode?: unknown }).statusCode;
-
-	return typeof statusCode === "number" ? statusCode : undefined;
 }

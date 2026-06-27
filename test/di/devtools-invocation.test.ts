@@ -69,14 +69,16 @@ describe("Devtools invocation", () => {
 		expect(devtools.tracer.wrapResolver).toHaveBeenCalledWith(
 			expect.objectContaining({
 				kind: "provider",
-				providerKey: "Service",
+				className: "Service",
+				registrationKey: "service",
 				moduleId: "graph-1",
 			}),
 		);
 		expect(devtools.tracer.wrapResolver).toHaveBeenCalledWith(
 			expect.objectContaining({
 				kind: "handler",
-				providerKey: "Query",
+				className: "Query",
+				registrationKey: "Query",
 			}),
 		);
 
@@ -86,7 +88,8 @@ describe("Devtools invocation", () => {
 		expect(devtools.tracer.recordSpan).toHaveBeenCalledWith(
 			expect.objectContaining({
 				kind: "prehandler",
-				providerKey: "AuthPreHandler",
+				className: "AuthPreHandler",
+				registrationKey: "AuthPreHandler",
 				methodName: "execute",
 			}),
 		);
@@ -134,21 +137,24 @@ describe("Devtools invocation", () => {
 		expect(devtools.tracer.wrapResolver).toHaveBeenCalledWith(
 			expect.objectContaining({
 				kind: "provider",
-				providerKey: "ClassProvider",
+				className: "ClassProvider",
+				registrationKey: "classProvider",
 				moduleId: "module-id",
 			}),
 		);
 		expect(devtools.tracer.wrapResolver).toHaveBeenCalledWith(
 			expect.objectContaining({
 				kind: "provider",
-				providerKey: "factoryProvider",
+				className: "factoryProvider",
+				registrationKey: "factoryProvider",
 				isFactory: true,
 			}),
 		);
 		expect(devtools.tracer.wrapResolver).toHaveBeenCalledWith(
 			expect.objectContaining({
 				kind: "provider",
-				providerKey: "UseClassProvider",
+				className: "UseClassProvider",
+				registrationKey: "useClassProvider",
 				moduleId: "module-id",
 			}),
 		);
@@ -166,7 +172,14 @@ describe("Devtools invocation", () => {
 		const metadataByToken = new Map([
 			[
 				token.stateSymbol,
-				{ state: { root: null, methods: new Map() }, method: {} },
+				{
+					state: {
+						root: null,
+						methods: new Map([["run", { enabled: true }]]),
+						decoratorNames: new Map(),
+					},
+					method: {},
+				},
 			],
 		]);
 		const interceptor = {
@@ -189,12 +202,22 @@ describe("Devtools invocation", () => {
 			expect.objectContaining({
 				kind: "interceptor",
 				moduleName: "InterceptorModule",
-				methodName: "run",
+				methodName: "intercept",
+				args: [
+					expect.objectContaining({
+						moduleName: "InterceptorModule",
+						methodName: "run",
+						metadata: {},
+						decoratorName: "interceptor",
+					}),
+				],
+				getProceedDurationMs: expect.any(Function),
 			}),
 		);
+		expect(devtools.tracer.runInCurrentSpan).toHaveBeenCalledTimes(1);
 	});
 
-	it("invokes initializer devtools route collection and trace hook", async () => {
+	it("invokes initializer devtools route collection", async () => {
 		const devtools = createMockDevtoolsProcessor();
 		const { token, update } = createDecoratorStateUpdater("test", {
 			method: () => ({ enabled: true }),
@@ -255,27 +278,14 @@ describe("Devtools invocation", () => {
 			}),
 		);
 		await task?.();
-		expect(devtools.tracer.traceInitializer).toHaveBeenCalledWith(
-			expect.objectContaining({
-				args: [{ request: true }, { statusCode: 201 }],
-				controllerName: "TestController",
-				methodName: "handle",
-				moduleName: "InitializerModule",
-			}),
-		);
-		expect(
-			devtools.tracer.traceInitializer.mock.calls[0]?.[0].getStatusCode(),
-		).toBe(201);
-		expect(
-			devtools.tracer.traceInitializer.mock.calls[1]?.[0].getStatusCode(),
-		).toBeUndefined();
 	});
 });
 
 function createMockDevtoolsProcessor(): DevtoolsProcessor {
 	const tracer = {
 		recordSpan: vi.fn((input) => input.callback()),
-		traceInitializer: vi.fn((input) => input.callback()),
+		runInCurrentSpan: vi.fn((callback) => callback()),
+		runInControllerTrace: vi.fn((input) => input.callback()),
 		wrapResolver: vi.fn((input) => input.resolver),
 	};
 

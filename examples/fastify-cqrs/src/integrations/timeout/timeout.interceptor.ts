@@ -1,10 +1,10 @@
-import type { Interceptor, InterceptContext } from "awilixify";
+import type { InterceptContext, Interceptor } from "awilixify";
+import { httpException } from "awilixify/http";
 import {
-	TaskCancelledError,
 	timeout as createTimeoutPolicy,
+	TaskCancelledError,
 	TimeoutStrategy,
 } from "cockatiel";
-import { httpException } from "awilixify/http";
 
 import { runWithRequestSignal } from "./request-signal.context.js";
 import { TIMEOUT_METADATA_TOKEN } from "./timeout.decorator.js";
@@ -27,9 +27,7 @@ export class TimeoutInterceptor implements Interceptor<TimeoutToken> {
 
 		try {
 			return await this.getPolicy(timeoutMs).execute(({ signal }) =>
-				runWithRequestSignal(signal, () =>
-					Promise.resolve(context.proceed()),
-				),
+				runWithRequestSignal(signal, () => Promise.resolve(context.proceed())),
 			);
 		} catch (error) {
 			if (error instanceof TaskCancelledError) {

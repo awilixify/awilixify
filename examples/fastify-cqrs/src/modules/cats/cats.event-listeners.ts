@@ -35,20 +35,13 @@ export class CatsHeartbeatEvent extends Event<
 	});
 }
 
-// Structural extension point: module can listen to imported module emittable events.
-const importedEmittableEvents = [] as const;
-
 export class CatsEventListeners {
 	static EventScope = createEventScope({
 		emittable: {
 			CatsViewedEvent,
 			CatsHeartbeatEvent,
 		},
-		listeners: [
-			CatsHeartbeatEvent,
-			CatsViewedEvent,
-			...importedEmittableEvents,
-		],
+		listeners: [CatsHeartbeatEvent, CatsViewedEvent],
 	});
 
 	@onEvent(CatsHeartbeatEvent)

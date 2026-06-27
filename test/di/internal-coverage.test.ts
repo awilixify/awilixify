@@ -81,6 +81,7 @@ describe("Internal coverage", () => {
 			} as any,
 			{},
 			false,
+			{ current: null },
 		);
 		const scope = createContainer();
 		const module = {

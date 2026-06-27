@@ -91,6 +91,7 @@ function createUpdater<TState extends DecoratorState<any, any>>(
 	const initializeState = () => ({
 		root: initializers.root(),
 		methods: new Map<MethodName, DecoratorMethodState<TState>>(),
+		decoratorNames: new Map<MethodName, string>(),
 	});
 
 	function update(
@@ -101,11 +102,13 @@ function createUpdater<TState extends DecoratorState<any, any>>(
 	function update(
 		context: ClassMethodDecoratorContext<any, any>,
 		updater: MethodUpdate<TState>,
+		decoratorName?: string,
 	): void;
 
 	function update(
 		context: ClassDecoratorContext<any> | ClassMethodDecoratorContext<any, any>,
 		updater: StateUpdate<TState>,
+		decoratorName?: string,
 	): void {
 		if (!context.metadata) return;
 
@@ -131,9 +134,15 @@ function createUpdater<TState extends DecoratorState<any, any>>(
 			updater.method(nextMethods.get(context.name) ?? initializers.method()),
 		);
 
+		const nextDecoratorNames = new Map(state.decoratorNames);
+		if (decoratorName) {
+			nextDecoratorNames.set(context.name, decoratorName);
+		}
+
 		context.metadata[token.stateSymbol] = {
 			...state,
 			methods: nextMethods,
+			decoratorNames: nextDecoratorNames,
 		};
 	}
 

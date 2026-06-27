@@ -1,7 +1,7 @@
 import { createDecoratorStateUpdater } from "awilixify";
 import type { AnyEventConstructor } from "./event-emitter.types.js";
 
-const updater = createDecoratorStateUpdater("on-event", {
+const updater = createDecoratorStateUpdater("Event Emitter Listeners", {
 	method: (): AnyEventConstructor => undefined as never,
 });
 

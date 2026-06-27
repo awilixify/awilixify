@@ -2,7 +2,7 @@ import { createDecoratorStateUpdater } from "awilixify";
 
 import type { AnyRabbitMessageConstructor } from "./rabbitmq.types.js";
 
-const updater = createDecoratorStateUpdater("on-rabbit-message", {
+const updater = createDecoratorStateUpdater("RabbitMQ listeners", {
 	method: (): AnyRabbitMessageConstructor => undefined as never,
 });
 

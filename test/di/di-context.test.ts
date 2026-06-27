@@ -482,7 +482,8 @@ describe("DIContext", () => {
 						},
 						tracer: {
 							recordSpan: vi.fn(),
-							traceInitializer: vi.fn(),
+							runInCurrentSpan: vi.fn((callback) => callback()),
+							runInControllerTrace: vi.fn((input) => input.callback()),
 							wrapResolver: vi.fn(),
 						},
 						initialize: vi.fn(),

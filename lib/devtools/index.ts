@@ -5,6 +5,7 @@ export {
 	isCostructorProvider,
 	isCostructorProvider as isConstructorProvider,
 	isEagerProvider,
+	isFactoryProvider,
 	isPromiseLike,
 	isResultLike,
 } from "../di/type-guards.js";

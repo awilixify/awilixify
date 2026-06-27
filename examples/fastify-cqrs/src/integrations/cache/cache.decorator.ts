@@ -35,12 +35,16 @@ export function Cachable<TArgs extends unknown[]>(
 			(this: TThis, ...args: TArgs) => TReturn
 		>,
 	): void {
-		updater.update(context, {
-			method: (previous) => ({
-				...previous,
-				cache: options,
-			}),
-		});
+		updater.update(
+			context,
+			{
+				method: (previous) => ({
+					...previous,
+					cache: options,
+				}),
+			},
+			Cachable.name,
+		);
 	}
 }
 
@@ -61,11 +65,15 @@ export function CacheEvict<TArgs extends unknown[]>(
 			(this: TThis, ...args: TArgs) => TReturn
 		>,
 	): void {
-		updater.update(context, {
-			method: (previous) => ({
-				...previous,
-				evict: options,
-			}),
-		});
+		updater.update(
+			context,
+			{
+				method: (previous) => ({
+					...previous,
+					evict: options,
+				}),
+			},
+			CacheEvict.name,
+		);
 	}
 }

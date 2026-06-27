@@ -3,6 +3,11 @@ export type MethodName = string | symbol;
 export type DecoratorState<TMethod, TRoot = null> = {
 	root: TRoot;
 	methods: Map<MethodName, TMethod>;
+	/**
+	 * Stores the actual decorator function name per method.
+	 * Captured from call stack for devtools display.
+	 */
+	decoratorNames: Map<MethodName, string>;
 };
 
 export type DecoratorMethodState<TState> =

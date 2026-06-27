@@ -1,4 +1,5 @@
 import * as Awilix from "awilix";
+import type { DevtoolsProcessorRef } from "../../devtools/devtools.types.js";
 import type { RegisteredModuleScope } from "../contexts/container-context-base.js";
 import * as ERRORS from "../errors.js";
 import type { InternalModuleLike as M } from "../modules/runtime-module.types.js";
@@ -8,6 +9,7 @@ import {
 	getOrCreateRequestScope,
 	resolveFromRequestScope,
 } from "../request-scope-context.js";
+import { hasUseClass } from "../type-guards.js";
 
 type KeyedFeatureKind =
 	| "queryPreHandlers"
@@ -25,6 +27,7 @@ type RegisterKeyedFeatureParams = {
 export class KeyedFeatureRegistrar {
 	constructor(
 		private readonly providerOptions: Partial<Awilix.BuildResolverOptions<any>>,
+		private readonly devtoolsProcessorRef: DevtoolsProcessorRef = {},
 	) {}
 
 	private readonly featureConfig = {
@@ -90,10 +93,13 @@ export class KeyedFeatureRegistrar {
 					`${featureKind}_export_${importedModule.name}_${key}`,
 				);
 				scope.register({
-					[symbol]: providerResolver.resolveClassProvider({
-						provider: feature,
-						resolutionScope: importedModuleScope.scope,
+					[symbol]: this.createFeatureResolver({
+						feature,
+						featureKind,
+						key,
 						module: importedModule,
+						providerResolver,
+						resolutionScope: importedModuleScope.scope,
 						wrapForExport: true,
 					}),
 				});
@@ -130,10 +136,13 @@ export class KeyedFeatureRegistrar {
 
 			const symbol = Symbol(`${featureKind}_${module.name}_${key}`);
 			scope.register({
-				[symbol]: providerResolver.resolveClassProvider({
-					provider: feature,
-					resolutionScope: scope,
+				[symbol]: this.createFeatureResolver({
+					feature,
+					featureKind,
+					key,
 					module,
+					providerResolver,
+					resolutionScope: scope,
 				}),
 			});
 
@@ -157,6 +166,48 @@ export class KeyedFeatureRegistrar {
 		}
 
 		return resolverMap;
+	}
+
+	private createFeatureResolver({
+		feature,
+		featureKind,
+		key,
+		module,
+		providerResolver,
+		resolutionScope,
+		wrapForExport = false,
+	}: {
+		feature: NonNullable<M[KeyedFeatureKind]>[string];
+		featureKind: KeyedFeatureKind;
+		key: string;
+		module: M;
+		providerResolver: ProviderResolver;
+		resolutionScope: Awilix.AwilixContainer;
+		wrapForExport?: boolean;
+	}): Awilix.Resolver<any> {
+		const resolver = providerResolver.resolveClassProvider({
+			provider: feature,
+			resolutionScope,
+			module,
+			wrapForExport,
+		});
+
+		if (!isPreHandlerFeature(featureKind) || !this.devtoolsTracer) {
+			return resolver;
+		}
+
+		return this.devtoolsTracer.wrapResolver({
+			kind: "prehandler",
+			module,
+			options: this.getProviderOptions(featureKind),
+			className: getFeatureClassName(feature, key),
+			registrationKey: key,
+			resolver,
+		});
+	}
+
+	private get devtoolsTracer() {
+		return this.devtoolsProcessorRef.current?.tracer;
 	}
 
 	private getProviderOptions(
@@ -198,4 +249,20 @@ export class KeyedFeatureRegistrar {
 
 		ownerByInitializerToken.set(token, moduleName);
 	}
+}
+
+function isPreHandlerFeature(featureKind: KeyedFeatureKind): boolean {
+	return (
+		featureKind === "queryPreHandlers" || featureKind === "commandPreHandlers"
+	);
+}
+
+function getFeatureClassName(
+	feature: NonNullable<M[KeyedFeatureKind]>[string],
+	key: string,
+): string {
+	if (typeof feature === "function") return feature.name || key;
+	if (hasUseClass(feature)) return feature.useClass.name || key;
+
+	return key;
 }

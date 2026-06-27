@@ -116,7 +116,8 @@ export class Mediator<C extends AnyContract> {
 			this.devtoolsProcessorRef.current?.tracer.recordSpan({
 				kind: "mediator",
 				moduleName: this.moduleName,
-				providerKey: this.getMediatorName(),
+				className: this.getMediatorName(),
+				registrationKey: this.getMediatorName(),
 				methodName: "execute",
 				args: [key, payload, options],
 				callback: execute,
@@ -151,7 +152,8 @@ export class Mediator<C extends AnyContract> {
 				await (this.devtoolsProcessorRef.current?.tracer.recordSpan({
 					kind: "prehandler",
 					moduleName: this.moduleName,
-					providerKey: middleware.constructor.name,
+					className: middleware.constructor.name,
+					registrationKey: middleware.constructor.name,
 					methodName: "execute",
 					args: [payload, context, executionContext],
 					callback: () =>

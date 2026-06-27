@@ -9,47 +9,54 @@ import type {
 export const AWILIXIFY_DEVTOOLS_PROCESSOR = "__awilixifyDevtoolsProcessor";
 
 export type TraceSpanKind =
-	| "http"
+	| "controller"
 	| "provider"
 	| "mediator"
 	| "handler"
 	| "prehandler"
-	| "interceptor"
-	| "initializer";
+	| "interceptor";
 
 export type RecordSpanInput<T> = {
 	kind: TraceSpanKind;
 	moduleName: string;
-	providerKey: string;
+	className: string;
+	registrationKey: string;
 	methodName: string;
 	args: unknown[];
 	parameterNames?: string[];
 	callback: () => T | Promise<T>;
 	moduleId?: string;
+	/**
+	 * For interceptors: returns the duration spent in proceed() calls.
+	 * Called after callback completes to calculate self-time.
+	 */
+	getProceedDurationMs?: () => number;
 };
 
 export type WrapResolverInput = {
 	kind: TraceSpanKind;
 	module: InternalModuleLike;
 	options: Awilix.BuildResolverOptions<any>;
-	providerKey: string;
+	className: string;
+	registrationKey: string;
 	resolver: Awilix.Resolver<any>;
 	moduleId?: string;
 	isFactory?: boolean;
 };
 
-export type TraceInitializerInput<T = unknown> = {
+export type RunInControllerTraceInput<T> = {
+	moduleName: string;
+	className: string;
+	registrationKey: string;
+	methodName: string;
 	args: unknown[];
 	callback: () => T | Promise<T>;
-	controllerName: string;
-	getStatusCode: () => number | undefined;
-	methodName: string;
-	moduleName: string;
 };
 
 export interface Tracer {
 	recordSpan<T>(input: RecordSpanInput<T>): T | Promise<T>;
-	traceInitializer<T>(input: TraceInitializerInput<T>): T | Promise<T>;
+	runInCurrentSpan<T>(callback: () => T | Promise<T>): T | Promise<T>;
+	runInControllerTrace<T>(input: RunInControllerTraceInput<T>): T | Promise<T>;
 	wrapResolver(input: WrapResolverInput): Awilix.Resolver<any>;
 }
 

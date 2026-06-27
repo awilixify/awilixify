@@ -108,23 +108,26 @@ export class ProviderResolver {
 		const resolverOptions = this.extractResolverOptions(module, provider);
 
 		if (GUARGS.isCostructorProvider(provider)) {
-			const resolver = !this.interceptorProcessor
-				? Awilix.asClass(provider, resolverOptions)
-				: this.interceptorProcessor.createInterceptedProviderResolver({
+			const baseResolver = Awilix.asClass(provider, resolverOptions);
+			const tracedResolver = !this.devtoolsTracer
+				? baseResolver
+				: this.devtoolsTracer.wrapResolver({
+						kind: "provider",
 						module,
-						useClass: provider,
+						moduleId,
 						options: resolverOptions,
+						className: provider.name,
+						registrationKey: key,
+						resolver: baseResolver,
 					});
 
-			if (!this.devtoolsTracer) return resolver;
+			if (!this.interceptorProcessor) return tracedResolver;
 
-			return this.devtoolsTracer.wrapResolver({
-				kind: "provider",
+			return this.interceptorProcessor.createInterceptedProviderResolver({
 				module,
-				moduleId,
+				useClass: provider,
 				options: resolverOptions,
-				providerKey: provider.name,
-				resolver,
+				resolver: tracedResolver,
 			});
 		}
 
@@ -162,7 +165,8 @@ export class ProviderResolver {
 				module,
 				moduleId,
 				options: resolverOptions,
-				providerKey: key,
+				className: key,
+				registrationKey: key,
 				isFactory: true,
 				resolver,
 			});
@@ -172,25 +176,25 @@ export class ProviderResolver {
 		const classResolver = provider.allowCircular
 			? this.createProxyResolver(baseResolver, resolverOptions)
 			: baseResolver;
-
-		const resolver = !this.interceptorProcessor
+		const tracedResolver = !this.devtoolsTracer
 			? classResolver
-			: this.interceptorProcessor.createInterceptedProviderResolver({
+			: this.devtoolsTracer.wrapResolver({
+					kind: "provider",
 					module,
-					useClass: provider.useClass,
+					moduleId,
 					options: resolverOptions,
+					className: provider.useClass.name,
+					registrationKey: key,
 					resolver: classResolver,
 				});
 
-		if (!this.devtoolsTracer) return resolver;
+		if (!this.interceptorProcessor) return tracedResolver;
 
-		return this.devtoolsTracer.wrapResolver({
-			kind: "provider",
+		return this.interceptorProcessor.createInterceptedProviderResolver({
 			module,
-			moduleId,
+			useClass: provider.useClass,
 			options: resolverOptions,
-			providerKey: provider.useClass.name,
-			resolver,
+			resolver: tracedResolver,
 		});
 	}
 

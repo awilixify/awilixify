@@ -39,7 +39,10 @@ export class HandlerProcessor {
 		private readonly providerOptions: Partial<Awilix.BuildResolverOptions<any>>,
 		private readonly devtoolsProcessorRef: DevtoolsProcessorRef,
 	) {
-		this.keyedFeatureRegistrar = new KeyedFeatureRegistrar(providerOptions);
+		this.keyedFeatureRegistrar = new KeyedFeatureRegistrar(
+			providerOptions,
+			devtoolsProcessorRef,
+		);
 	}
 
 	public processHandlers(
@@ -132,7 +135,8 @@ export class HandlerProcessor {
 			kind: "handler",
 			module,
 			options,
-			providerKey: handlerClassName,
+			className: handlerClassName,
+			registrationKey: handlerClassName,
 			resolver,
 		});
 	}

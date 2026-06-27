@@ -1,7 +1,7 @@
 import { createDecoratorStateUpdater } from "awilixify";
 import type { AnyQueueJobConstructor } from "./queue.types.js";
 
-const updater = createDecoratorStateUpdater("on-queue-job", {
+const updater = createDecoratorStateUpdater("BullMQ Listeners", {
 	method: (): AnyQueueJobConstructor => undefined as never,
 });
 

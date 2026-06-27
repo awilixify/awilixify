@@ -9,8 +9,8 @@ import type { RegisteredModuleScope } from "../contexts/container-context-base.j
 import type { DiContextOptions } from "../contexts/di-context-base.js";
 import type { InternalModuleLike as M } from "../modules/runtime-module.types.js";
 import type { Interceptor } from "../providers/provider.types.js";
-import { KeyedFeatureRegistrar } from "./keyed-feature-registrar.js";
 import { isPromiseLike } from "../type-guards.js";
+import { KeyedFeatureRegistrar } from "./keyed-feature-registrar.js";
 
 type InterceptorMetadata = {
 	state: DecoratorState<any, any>;
@@ -101,6 +101,11 @@ export class InterceptorProcessor {
 				const value = Reflect.get(target, propertyKey, proxyReceiver);
 
 				if (typeof value !== "function") return value;
+				// Class references must pass through unwrapped: wrapping
+				// `constructor` masks the class name (constructor.name becomes
+				// "wrapped") and wrapped classes cannot be called with `new`.
+				if (propertyKey === "constructor") return value;
+				if (isClassReference(value)) return value;
 
 				const existing = wrappers.get(propertyKey);
 
@@ -208,7 +213,6 @@ export class InterceptorProcessor {
 				return invoke(index + 1, next);
 			}
 
-			const interceptorName = current.constructor.name;
 			const callInterceptor = () =>
 				current.intercept({
 					target,
@@ -220,15 +224,64 @@ export class InterceptorProcessor {
 					proceed: () => invoke(index + 1, next),
 				});
 
-			if (!this.devtoolsTracer) return callInterceptor();
+			// Keep a narrowed tracer reference for callbacks below.
+			const devtoolsTracer = this.devtoolsTracer;
+			if (!devtoolsTracer) return callInterceptor();
 
-			return this.devtoolsTracer.recordSpan({
+			// Track proceed() duration to calculate interceptor's self-time
+			let proceedDurationMs = 0;
+			const trackedProceed = () => {
+				const proceedStart = Date.now();
+				try {
+					const result = devtoolsTracer.runInCurrentSpan(() =>
+						invoke(index + 1, next),
+					);
+
+					if (isPromiseLike(result)) {
+						return Promise.resolve(result).finally(() => {
+							proceedDurationMs += Date.now() - proceedStart;
+						});
+					}
+
+					proceedDurationMs += Date.now() - proceedStart;
+					return result;
+				} catch (error) {
+					proceedDurationMs += Date.now() - proceedStart;
+					throw error;
+				}
+			};
+
+			const trackedCallInterceptor = () =>
+				current.intercept({
+					target,
+					methodName,
+					args,
+					moduleName,
+					metadata: metadata.method,
+					decoratorState: metadata.state,
+					proceed: trackedProceed,
+				});
+
+			return devtoolsTracer.recordSpan({
 				kind: "interceptor",
 				moduleName,
-				providerKey: interceptorName,
-				methodName: String(methodName),
-				args,
-				callback: callInterceptor,
+				className: current.constructor.name,
+				registrationKey: current.constructor.name,
+				methodName: "intercept",
+				args: [
+					{
+						moduleName,
+						methodName,
+						decoratorName:
+							metadata.state.decoratorNames.get(methodName) ??
+							extractDecoratorDescription(
+								current.token.stateSymbol.description,
+							),
+						metadata: serializeMetadata(metadata.method),
+					},
+				],
+				getProceedDurationMs: () => proceedDurationMs,
+				callback: trackedCallInterceptor,
 			});
 		};
 
@@ -267,4 +320,41 @@ function isPrivateMemberAccessError(error: unknown): boolean {
 		error instanceof TypeError &&
 		/Cannot (read|access) private (member|method)/.test(error.message)
 	);
+}
+
+function serializeMetadata(value: unknown, depth = 0): unknown {
+	if (depth > 5) return "[...]";
+	if (value === null || value === undefined) return value;
+	if (typeof value === "function") return value.toString();
+	if (typeof value !== "object") return value;
+
+	if (Array.isArray(value)) {
+		return value.map((item) => serializeMetadata(item, depth + 1));
+	}
+
+	const result: Record<string, unknown> = {};
+	for (const [key, val] of Object.entries(value as Record<string, unknown>)) {
+		result[key] = serializeMetadata(val, depth + 1);
+	}
+	return result;
+}
+
+function extractDecoratorDescription(
+	description: string | undefined,
+): string | null {
+	if (!description) return null;
+
+	const prefix = "DecoratorState:";
+
+	if (description.startsWith(prefix)) {
+		return description.slice(prefix.length);
+	}
+
+	return description;
+}
+
+function isClassReference(value: {
+	prototype?: { constructor?: unknown };
+}): boolean {
+	return Boolean(value.prototype && value.prototype.constructor === value);
 }
