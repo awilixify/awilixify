@@ -27,5 +27,16 @@ export type {
 	MiddlewareContract,
 } from "./lib/mediator/middleware.types.js";
 export * from "./lib/mediator/middleware.types.js";
-
 export { Result } from "./lib/mediator/result.js";
+export {
+	callsOperation,
+	type HttpOperationRef,
+	type LocalMessagingOperationInput,
+	type LocalMessagingOperationRef,
+	type MessagingOperationInput,
+	type MessagingOperationRef,
+	OPERATION_CALL_DECORATOR_STATE_TOKEN,
+	OPERATION_PUBLISH_DECORATOR_STATE_TOKEN,
+	type OperationRef,
+	publishesOperation,
+} from "./lib/operations/operation.decorator.js";

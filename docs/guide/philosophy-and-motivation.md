@@ -31,7 +31,7 @@ For me, that is where complexity becomes manageable.
 The side effects stay explicit and reviewable, and you can look at a module definition and understand its boundaries without searching through the whole codebase.
 
 Example:
-[Event Emitter integration on GitHub](https://github.com/wildstyles/awilixify/tree/main/examples/fastify-cqrs/src/integrations/event-emitter)
+[Event Emitter integration on GitHub](https://github.com/awilixify/awilixify/tree/main/examples/fastify-cqrs/src/integrations/event-emitter)
 
 ## Transport Agnostic
 

@@ -1,5 +1,6 @@
 export interface RouteRegistration {
 	method: string;
+	operationId: string;
 	path: string;
 	schema: RouteSchema;
 }
@@ -13,7 +14,6 @@ export interface RouteSchema {
 	description?: string;
 	summary?: string;
 	tags?: string[];
-	operationId?: string;
 	deprecated?: boolean;
 }
 
@@ -29,20 +29,33 @@ export function hasValidationSchema(schema: RouteSchema): boolean {
 export class OpenAPIBuilder {
 	private routes: RouteRegistration[] = [];
 
-	registerRoute(method: string, path: string, schema: RouteSchema): void {
-		this.routes.push({ method: method.toLowerCase(), path, schema });
+	registerRoute(
+		method: string,
+		path: string,
+		handlerName: string,
+		schema: RouteSchema,
+	): void {
+		this.routes.push({
+			method: method.toLowerCase(),
+			operationId: handlerName,
+			path,
+			schema,
+		});
 	}
 
 	buildPaths(): Record<string, any> {
 		return this.routes.reduce<Record<string, any>>((paths, route) => {
 			paths[route.path] ??= {};
-			paths[route.path][route.method] = this.buildOperation(route.schema);
+			paths[route.path][route.method] = this.buildOperation(
+				route.operationId,
+				route.schema,
+			);
 
 			return paths;
 		}, {});
 	}
 
-	private buildOperation(schema: RouteSchema): any {
+	private buildOperation(operationId: string, schema: RouteSchema): any {
 		const parameters = this.buildParameters(schema);
 		const requestBody = this.buildRequestBody(schema);
 		const responses = this.buildResponses(schema);
@@ -51,7 +64,7 @@ export class OpenAPIBuilder {
 			...(schema.summary && { summary: schema.summary }),
 			...(schema.description && { description: schema.description }),
 			...(schema.tags && { tags: schema.tags }),
-			...(schema.operationId && { operationId: schema.operationId }),
+			operationId,
 			...(schema.deprecated && { deprecated: schema.deprecated }),
 			...(parameters.length > 0 && { parameters }),
 			...(requestBody && { requestBody }),

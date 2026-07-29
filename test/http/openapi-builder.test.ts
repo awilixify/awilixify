@@ -35,11 +35,10 @@ describe("OpenAPIBuilder", () => {
 		it("builds OpenAPI operations with normalized methods and grouped paths", () => {
 			const builder = new OpenAPIBuilder();
 
-			builder.registerRoute("GET", "/users/{id}", {
+			builder.registerRoute("GET", "/users/{id}", "getUser", {
 				summary: "Get user",
 				description: "Fetches a single user",
 				tags: ["users"],
-				operationId: "getUser",
 				deprecated: true,
 				querystring: {
 					type: "object",
@@ -76,7 +75,7 @@ describe("OpenAPIBuilder", () => {
 				},
 			});
 
-			builder.registerRoute("POST", "/users/{id}", {});
+			builder.registerRoute("POST", "/users/{id}", "updateUser", {});
 
 			expect(builder.buildPaths()).toEqual({
 				"/users/{id}": {
@@ -143,6 +142,7 @@ describe("OpenAPIBuilder", () => {
 						},
 					},
 					post: {
+						operationId: "updateUser",
 						responses: {},
 					},
 				},
@@ -152,7 +152,7 @@ describe("OpenAPIBuilder", () => {
 		it("omits parameters and requestBody when schemas do not define them", () => {
 			const builder = new OpenAPIBuilder();
 
-			builder.registerRoute("GET", "/health", {
+			builder.registerRoute("GET", "/health", "getHealth", {
 				response: {
 					200: { type: "string" },
 				},
@@ -161,6 +161,7 @@ describe("OpenAPIBuilder", () => {
 			expect(builder.buildPaths()).toEqual({
 				"/health": {
 					get: {
+						operationId: "getHealth",
 						responses: {
 							200: {
 								description: "Successful response",

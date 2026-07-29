@@ -431,5 +431,5 @@ DIContext.create(NewModule, { framework: app });
 
 ### Questions? 💬
 
-GitHub: **wildstyles/awilixify**
+GitHub: **awilixify/awilixify**
 npm: **awilixify**

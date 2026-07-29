@@ -17,13 +17,13 @@ That tradeoff is usually worth it because you avoid adding framework-specific pa
 
 ## Integration examples
 
-- [Fastify integration(silimar for any another HTTP framework)](https://github.com/wildstyles/awilixify/tree/main/examples/fastify-cqrs/src/integrations/http)
-- [Config](https://github.com/wildstyles/awilixify/tree/main/examples/fastify-cqrs/src/integrations/config)
-- [Kysely Query Builder with explicit read/write rights per module](https://github.com/wildstyles/awilixify/tree/main/examples/fastify-cqrs/src/integrations/db)
-- [Cache](https://github.com/wildstyles/awilixify/tree/main/examples/fastify-cqrs/src/integrations/cache)
-- [Retry](https://github.com/wildstyles/awilixify/tree/main/examples/fastify-cqrs/src/integrations/retry)
-- [Timeout](https://github.com/wildstyles/awilixify/tree/main/examples/fastify-cqrs/src/integrations/timeout)
-- [Scheduler, Cron](https://github.com/wildstyles/awilixify/tree/main/examples/fastify-cqrs/src/integrations/scheduler)
-- [Event Emitter](https://github.com/wildstyles/awilixify/tree/main/examples/fastify-cqrs/src/integrations/event-emitter)
-- [Queue / BullMQ](https://github.com/wildstyles/awilixify/tree/main/examples/fastify-cqrs/src/integrations/queue)
-- [RabbitMQ](https://github.com/wildstyles/awilixify/tree/main/examples/fastify-cqrs/src/integrations/rabbitmq)
+- [Fastify integration(silimar for any another HTTP framework)](https://github.com/awilixify/awilixify/tree/main/examples/fastify-cqrs/src/integrations/http)
+- [Config](https://github.com/awilixify/awilixify/tree/main/examples/fastify-cqrs/src/integrations/config)
+- [Kysely Query Builder with explicit read/write rights per module](https://github.com/awilixify/awilixify/tree/main/examples/fastify-cqrs/src/integrations/db)
+- [Cache](https://github.com/awilixify/awilixify/tree/main/examples/fastify-cqrs/src/integrations/cache)
+- [Retry](https://github.com/awilixify/awilixify/tree/main/examples/fastify-cqrs/src/integrations/retry)
+- [Timeout](https://github.com/awilixify/awilixify/tree/main/examples/fastify-cqrs/src/integrations/timeout)
+- [Scheduler, Cron](https://github.com/awilixify/awilixify/tree/main/examples/fastify-cqrs/src/integrations/scheduler)
+- [Event Emitter](https://github.com/awilixify/awilixify/tree/main/examples/fastify-cqrs/src/integrations/event-emitter)
+- [Queue / BullMQ](https://github.com/awilixify/awilixify/tree/main/examples/fastify-cqrs/src/integrations/queue)
+- [RabbitMQ](https://github.com/awilixify/awilixify/tree/main/examples/fastify-cqrs/src/integrations/rabbitmq)

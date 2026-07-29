@@ -111,7 +111,7 @@ export default defineConfig({
 			"/docs/": docsSidebar,
 		},
 		socialLinks: [
-			{ icon: "github", link: "https://github.com/wildstyles/awilixify" },
+			{ icon: "github", link: "https://github.com/awilixify/awilixify" },
 		],
 	},
 	markdown: {

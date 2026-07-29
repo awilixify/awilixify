@@ -407,4 +407,4 @@ export function App({ deps }: WithDepsOnly<Deps>) {
 
 Full working example:
 
-- [examples/react-tanstack](https://github.com/wildstyles/awilixify/tree/main/examples/react-tanstack)
+- [examples/react-tanstack](https://github.com/awilixify/awilixify/tree/main/examples/react-tanstack)

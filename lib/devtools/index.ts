@@ -11,3 +11,4 @@ export {
 } from "../di/type-guards.js";
 export * from "./devtools.types.js";
 export { getControllerMethodNames } from "./helpers.js";
+export * from "./trace-context.js";

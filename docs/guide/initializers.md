@@ -21,11 +21,11 @@ take a decorated method and wire it into some external runtime.
 
 Full examples:
 
-- [HTTP](https://github.com/wildstyles/awilixify/tree/main/examples/fastify-cqrs/src/integrations/http)
-- [Event Emitter](https://github.com/wildstyles/awilixify/tree/main/examples/fastify-cqrs/src/integrations/event-emitter)
-- [Queue](https://github.com/wildstyles/awilixify/tree/main/examples/fastify-cqrs/src/integrations/queue)
-- [RabbitMQ](https://github.com/wildstyles/awilixify/tree/main/examples/fastify-cqrs/src/integrations/rabbitmq)
-- [Scheduler](https://github.com/wildstyles/awilixify/tree/main/examples/fastify-cqrs/src/integrations/scheduler)
+- [HTTP](https://github.com/awilixify/awilixify/tree/main/examples/fastify-cqrs/src/integrations/http)
+- [Event Emitter](https://github.com/awilixify/awilixify/tree/main/examples/fastify-cqrs/src/integrations/event-emitter)
+- [Queue](https://github.com/awilixify/awilixify/tree/main/examples/fastify-cqrs/src/integrations/queue)
+- [RabbitMQ](https://github.com/awilixify/awilixify/tree/main/examples/fastify-cqrs/src/integrations/rabbitmq)
+- [Scheduler](https://github.com/awilixify/awilixify/tree/main/examples/fastify-cqrs/src/integrations/scheduler)
 
 ## Decorators
 

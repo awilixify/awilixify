@@ -10,8 +10,8 @@ Awilixify expose two lifecycle calls:
 
 Full examples:
 
-- [HTTP](https://github.com/wildstyles/awilixify/tree/main/examples/fastify-cqrs/src/integrations/http)
-- [Config](https://github.com/wildstyles/awilixify/tree/main/examples/fastify-cqrs/src/integrations/config)
+- [HTTP](https://github.com/awilixify/awilixify/tree/main/examples/fastify-cqrs/src/integrations/http)
+- [Config](https://github.com/awilixify/awilixify/tree/main/examples/fastify-cqrs/src/integrations/config)
 
 ## Quick Example
 

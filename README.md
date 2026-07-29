@@ -4,8 +4,8 @@
 
 Transport-agnostic, type-safe, modular DI and CQRS framework on top of [Awilix](https://github.com/jeffijoe/awilix) that brings module architecture with powerful CQRS capabilities to Node.js applications and React 🚀 frontends.
 
-[![Build Status](https://github.com/wildstyles/awilixify/workflows/ci/badge.svg)](https://github.com/wildstyles/awilixify/actions)
-[![codecov](https://codecov.io/gh/wildstyles/awilixify/branch/main/graph/badge.svg)](https://codecov.io/gh/wildstyles/awilixify)
+[![Build Status](https://github.com/awilixify/awilixify/workflows/ci/badge.svg)](https://github.com/awilixify/awilixify/actions)
+[![codecov](https://codecov.io/gh/awilixify/awilixify/branch/main/graph/badge.svg)](https://codecov.io/gh/awilixify/awilixify)
 
 > [!TIP]
 > 🤔 “Another JS framework?” Here are my attempts to convince you to give Awilixify a try:
@@ -13,7 +13,7 @@ Transport-agnostic, type-safe, modular DI and CQRS framework on top of [Awilix](
 > - [Awilixify: NestJS-Like Modular DI for Legacy Applications](https://medium.com/@r.vanzhula/awilixify-nestjs-like-modular-di-for-legacy-applications-db2a1e29c7de)
 > - [Awilixify: Making Middlewares End-to-End Type-Safe](https://medium.com/@r.vanzhula/awilixify-making-middlewares-end-to-end-type-safe-b3f4dbfb6b42)
 
-📚 Documentation: https://wildstyles.github.io/awilixify/
+📚 Documentation: https://awilixify.github.io/awilixify/
 
 ## Features
 

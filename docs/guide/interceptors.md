@@ -8,9 +8,9 @@ That is what [Initializers](/guide/initializers) are for.
 
 Full examples:
 
-- [Cache](https://github.com/wildstyles/awilixify/tree/main/examples/fastify-cqrs/src/integrations/cache)
-- [Retry](https://github.com/wildstyles/awilixify/tree/main/examples/fastify-cqrs/src/integrations/retry)
-- [Timeout](https://github.com/wildstyles/awilixify/tree/main/examples/fastify-cqrs/src/integrations/timeout)
+- [Cache](https://github.com/awilixify/awilixify/tree/main/examples/fastify-cqrs/src/integrations/cache)
+- [Retry](https://github.com/awilixify/awilixify/tree/main/examples/fastify-cqrs/src/integrations/retry)
+- [Timeout](https://github.com/awilixify/awilixify/tree/main/examples/fastify-cqrs/src/integrations/timeout)
 
 ## Mental Model
 

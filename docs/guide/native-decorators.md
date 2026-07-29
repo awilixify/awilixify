@@ -5,7 +5,7 @@ Native decorators are standardized JavaScript syntax, which means better long-te
 HTTP decorators live under `awilixify/http`.
 
 Full example:
-[HTTP integration on GitHub](https://github.com/wildstyles/awilixify/tree/main/examples/fastify-cqrs/src/integrations/http)
+[HTTP integration on GitHub](https://github.com/awilixify/awilixify/tree/main/examples/fastify-cqrs/src/integrations/http)
 
 ## Fastify Example
 
