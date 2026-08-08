@@ -19,4 +19,4 @@ The runtime environment is different, but module boundaries are still useful.
 
 That means the same DI and module model can be used in a fullstack codebase while still keeping React components as the UI boundary.
 
-For the concrete React API, see [React](/docs/react).
+For the concrete React API, see the [`@awilixify/react` guide](/docs/react).

@@ -150,7 +150,6 @@ export class LifecycleProcessor {
 			// biome-ignore lint/style/noNonNullAssertion: dependencies are validated by ProviderDependencySorter
 			scope.registrations[dependencyKey]!.resolve(scope),
 		);
-		// biome-ignore lint/correctness/useHookAtTopLevel: useFactory is a provider option, not a React hook.
 		const resolvedValue = await provider.useFactory(...factoryDeps);
 		const { eager, initAfter, inject, useFactory, ...providerResolverOptions } =
 			provider;

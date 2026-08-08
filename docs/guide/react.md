@@ -1,6 +1,6 @@
 # React
 
-`awilixify/react` brings the module model to React applications.
+`@awilixify/react` brings the module model to React applications.
 
 React modules register two kinds of things:
 
@@ -10,14 +10,15 @@ React modules register two kinds of things:
 Components receive a `deps` prop from `ReactDIContext`. Application code renders
 those components with their own public props only.
 
-For the motivation behind frontend DI, see [Frontend Overview](/docs/frontend-overview).
+For the motivation behind frontend DI, see the
+[Awilixify frontend overview](/docs/frontend-overview).
 
 ## Install
 
-`react` is an optional peer dependency of `awilixify`.
+`@awilixify/react` uses `awilixify`, `awilix`, and `react` as peer dependencies.
 
 ```bash
-npm install awilix awilixify react react-dom
+npm install awilix awilixify @awilixify/react react react-dom
 ```
 
 ## Dependency Surfaces
@@ -46,7 +47,7 @@ import {
   type InferComponentDeps,
   type InferProviderDeps,
   type ModuleDef,
-} from "awilixify/react";
+} from "@awilixify/react";
 import { ProjectsPage } from "./components/ProjectsPage";
 
 const components = {
@@ -127,7 +128,7 @@ Use `WithDeps<TProps, TDeps>` when a component has public props.
 
 ```typescript
 // projects/components/StatusBadge.tsx
-import type { WithDeps } from "awilixify/react";
+import type { WithDeps } from "@awilixify/react";
 import type { Project } from "../project.types";
 import type { Deps } from "../projects.module";
 
@@ -142,7 +143,7 @@ export function StatusBadge({ status }: WithDeps<StatusBadgeProps, Deps>) {
 
 ```typescript
 // projects/components/ProjectPage.tsx
-import type { WithDeps } from "awilixify/react";
+import type { WithDeps } from "@awilixify/react";
 import type { Deps } from "../projects.module";
 
 export type ProjectPageProps = {
@@ -172,7 +173,7 @@ Use `WithDepsOnly<TDeps>` when a component has no public props.
 
 ```typescript
 // projects/components/ProjectsPage.tsx
-import type { WithDepsOnly } from "awilixify/react";
+import type { WithDepsOnly } from "@awilixify/react";
 import type { Deps } from "../projects.module";
 
 export function ProjectsPage({ deps }: WithDepsOnly<Deps>) {
@@ -215,7 +216,7 @@ import {
   type InferComponentDeps,
   type InferProviderDeps,
   type ModuleDef,
-} from "awilixify/react";
+} from "@awilixify/react";
 
 import { ProjectPage } from "./components/ProjectPage";
 import { ProjectRow } from "./components/ProjectRow";
@@ -261,7 +262,7 @@ They do not become part of provider deps.
 
 ```typescript
 // app/AppShell.tsx
-import type { WithDepsOnly } from "awilixify/react";
+import type { WithDepsOnly } from "@awilixify/react";
 import type { Deps } from "./app.module";
 
 export function AppShell({ deps }: WithDepsOnly<Deps>) {
@@ -280,7 +281,7 @@ import {
   createModule,
   type InferComponentDeps,
   type ModuleDef,
-} from "awilixify/react";
+} from "@awilixify/react";
 
 import { ProjectsModule } from "../projects/projects.module";
 import { AppShell } from "./AppShell";
@@ -309,7 +310,7 @@ Use `ReactDIContext.create(...)` to build the module graph. Components are
 registered in the Awilix scope and can be resolved by key.
 
 ```typescript
-import { ReactDIContext, type WithoutDeps } from "awilixify/react";
+import { ReactDIContext, type WithoutDeps } from "@awilixify/react";
 import { createRoot } from "react-dom/client";
 import type { AppShell } from "./app/AppShell";
 import { AppModule } from "./app/app.module";
@@ -325,7 +326,7 @@ For components with public props, `WithoutDeps<T>` gives the renderable public
 component type.
 
 ```typescript
-import { ReactDIContext, type WithoutDeps } from "awilixify/react";
+import { ReactDIContext, type WithoutDeps } from "@awilixify/react";
 import type { ProjectPage } from "./projects/components/ProjectPage";
 
 const app = ReactDIContext.create(AppModule);
@@ -376,7 +377,7 @@ Then create the router once in the root component.
 ```typescript
 import { RouterProvider } from "@tanstack/react-router";
 import { useRef } from "react";
-import type { WithDepsOnly } from "awilixify/react";
+import type { WithDepsOnly } from "@awilixify/react";
 import type { Deps } from "./app.module";
 import { type AppRouter, createAppRouter } from "./app-router";
 
@@ -407,4 +408,4 @@ export function App({ deps }: WithDepsOnly<Deps>) {
 
 Full working example:
 
-- [examples/react-tanstack](https://github.com/awilixify/awilixify/tree/main/examples/react-tanstack)
+- [examples/react-tanstack](https://github.com/awilixify/awilixify-react/tree/main/examples/react-tanstack)

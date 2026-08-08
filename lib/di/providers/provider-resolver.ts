@@ -232,7 +232,6 @@ export class ProviderResolver {
 			resolutionScope.registrations[k]!.resolve(resolutionScope),
 		);
 
-		// biome-ignore lint/correctness/useHookAtTopLevel: useFactory is a provider option, not a React hook.
 		return Awilix.asValue(await provider.useFactory(...factoryDeps));
 	}
 

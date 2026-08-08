@@ -2,7 +2,7 @@
   <img src="./logo.png" alt="awilixify logo" width="220" />
 </div>
 
-Transport-agnostic, type-safe, modular DI and CQRS framework on top of [Awilix](https://github.com/jeffijoe/awilix) that brings module architecture with powerful CQRS capabilities to Node.js applications and React 🚀 frontends.
+Transport-agnostic, type-safe, modular DI and CQRS framework on top of [Awilix](https://github.com/jeffijoe/awilix).
 
 [![Build Status](https://github.com/awilixify/awilixify/workflows/ci/badge.svg)](https://github.com/awilixify/awilixify/actions)
 [![codecov](https://codecov.io/gh/awilixify/awilixify/branch/main/graph/badge.svg)](https://codecov.io/gh/awilixify/awilixify)
@@ -19,7 +19,7 @@ Transport-agnostic, type-safe, modular DI and CQRS framework on top of [Awilix](
 
 - **Type-Safe Module System** - Complete type safety for each provider in module
 - **Transport Agnostic** - Works with Express, Fastify, Queues, Rabbit or any other tranport
-- **Fullstack Module Model** - Reuse the same DI module mechanism in Node.js and React applications
+- **Fullstack Module Model** - Reuse the same DI module mechanism in Node.js and React applications through `@awilixify/react`
 - **Powerful CQRS** - Type-safe query/command handlers with middleware pipeline, per-module mediators, and contract-based execution
 - **Type-Level Middleware Composition** - Compose and inherit middleware with end-to-end type safety
 - **No Experimental Decorators Required** - Uses native ES decorators (TC39 Stage 3) for routing without `reflect-metadata`
