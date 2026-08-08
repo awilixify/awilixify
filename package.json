@@ -3,9 +3,6 @@
 	"description": "Transport-agnostic modular DI and CQRS framework for Awilix with Nest-like module patterns and strict type safety",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
-	"bin": {
-		"awilixify": "./dist/lib/codegen/cli.js"
-	},
 	"exports": {
 		".": {
 			"types": "./dist/index.d.ts",
@@ -14,10 +11,6 @@
 		"./http": {
 			"types": "./dist/lib/http/index.d.ts",
 			"import": "./dist/lib/http/index.js"
-		},
-		"./codegen": {
-			"types": "./dist/lib/codegen/index.d.ts",
-			"import": "./dist/lib/codegen/index.js"
 		},
 		"./devtools": {
 			"types": "./dist/lib/devtools/index.d.ts",
@@ -47,20 +40,15 @@
 		"test:types:watch": "tstyche --watch"
 	},
 	"peerDependencies": {
-		"@asyncapi/modelina": "^5.10.1",
 		"awilix": ">=9.0.0",
 		"react": ">=18.0.0 || >=19.0.0"
 	},
 	"peerDependenciesMeta": {
-		"@asyncapi/modelina": {
-			"optional": true
-		},
 		"react": {
 			"optional": true
 		}
 	},
 	"devDependencies": {
-		"@asyncapi/modelina": "^5.10.1",
 		"@biomejs/biome": "2.3.15",
 		"@shikijs/vitepress-twoslash": "^4.0.2",
 		"@testing-library/react": "^16.3.0",
