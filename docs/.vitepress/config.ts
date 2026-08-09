@@ -48,6 +48,10 @@ const docsSidebar = [
 		],
 	},
 	{
+		text: "DevTools",
+		items: [{ text: "Overview", link: "/docs/devtools" }],
+	},
+	{
 		text: "CQRS",
 		items: [
 			{ text: "Why CQRS?", link: "/docs/why-cqrs" },

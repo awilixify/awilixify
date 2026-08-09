@@ -26,7 +26,7 @@ import {
   withScopeId
 } from "./chunk-ITVJ6X5I.js";
 
-// node_modules/.pnpm/@floating-ui+utils@0.2.11/node_modules/@floating-ui/utils/dist/floating-ui.utils.mjs
+// node_modules/@floating-ui/utils/dist/floating-ui.utils.mjs
 var sides = ["top", "right", "bottom", "left"];
 var alignments = ["start", "end"];
 var placements = sides.reduce((acc, side) => acc.concat(side, side + "-" + alignments[0], side + "-" + alignments[1]), []);
@@ -151,7 +151,7 @@ function rectToClientRect(rect) {
   };
 }
 
-// node_modules/.pnpm/@floating-ui+core@1.7.5/node_modules/@floating-ui/core/dist/floating-ui.core.mjs
+// node_modules/@floating-ui/core/dist/floating-ui.core.mjs
 function computeCoordsFromPlacement(_ref, placement, rtl) {
   let {
     reference,
@@ -838,7 +838,7 @@ var size = function(options) {
   };
 };
 
-// node_modules/.pnpm/@floating-ui+dom@1.1.1/node_modules/@floating-ui/dom/dist/floating-ui.dom.browser.mjs
+// node_modules/@floating-ui/dom/dist/floating-ui.dom.browser.mjs
 function getWindow(node) {
   var _node$ownerDocument;
   return ((_node$ownerDocument = node.ownerDocument) == null ? void 0 : _node$ownerDocument.defaultView) || window;
@@ -1333,7 +1333,7 @@ var computePosition2 = (reference, floating, options) => {
   });
 };
 
-// node_modules/.pnpm/floating-vue@5.2.2_vue@3.5.34_typescript@5.9.3_/node_modules/floating-vue/dist/floating-vue.mjs
+// node_modules/floating-vue/dist/floating-vue.mjs
 function ye(e, t) {
   for (const o in t)
     Object.prototype.hasOwnProperty.call(t, o) && (typeof t[o] == "object" && e[o] ? ye(e[o], t[o]) : e[o] = t[o]);
@@ -2911,7 +2911,7 @@ var Gt = {
   options: h2
 };
 
-// node_modules/.pnpm/@shikijs+vitepress-twoslash@4.1.0_typescript@5.9.3/node_modules/@shikijs/vitepress-twoslash/dist/client.mjs
+// node_modules/@shikijs/vitepress-twoslash/dist/client.mjs
 var isMobile = typeof navigator !== "undefined" && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 var TwoslashFloatingVue = { install: (app, options = {}) => {
   var _a, _b, _c;

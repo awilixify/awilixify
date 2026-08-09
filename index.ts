@@ -1,5 +1,8 @@
 export * from "./lib/decorators/decorator-state.js";
-export type { DecoratorToken } from "./lib/decorators/decorator-state.types.js";
+export type {
+	DecoratorState,
+	DecoratorToken,
+} from "./lib/decorators/decorator-state.types.js";
 export type { ModuleScope } from "./lib/di/contexts/container-context-base.js";
 export * from "./lib/di/contexts/di-context.js";
 export * from "./lib/di/contexts/di-context-async.js";
