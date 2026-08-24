@@ -21,7 +21,7 @@
 			"import": "./dist/lib/devtools/index.js"
 		}
 	},
-	"version": "3.2.1",
+	"version": "3.2.2",
 	"license": "MIT",
 	"scripts": {
 		"build": "tsc",
