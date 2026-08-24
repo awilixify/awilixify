@@ -305,12 +305,16 @@ by default, persists them across restarts.
 
 ### Distributed Traces
 
-Related service records share a W3C-compatible distributed trace ID. Each
-service record also has its own span ID and the upstream parent span ID, so the
-UI can assemble the service legs by parentage rather than timestamp guesses.
+Related service records share an Awilixify distributed trace ID encoded in a
+W3C-compatible context value. Each service record also has its own span ID and
+the upstream parent span ID, so the UI can assemble the service legs by
+parentage rather than timestamp guesses.
 
-Incoming `traceparent` headers are recognized automatically. Outgoing adapters
-must forward the context; use `getTracePropagationHeaders()` from
+Awilixify propagates this value with its own
+`x-awilixify-trace-context` header. The standard `traceparent` header remains
+owned by OpenTelemetry or another observability system, so both tracing systems
+can be enabled without overwriting each other's context. Outgoing adapters must
+forward the Awilixify context; use `getTracePropagationHeaders()` from
 `awilixify/devtools`, or generated Awilixify clients that already add it:
 
 ```ts

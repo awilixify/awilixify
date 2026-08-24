@@ -1,6 +1,6 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 
-export const TRACEPARENT_HEADER = "traceparent";
+export const AWILIXIFY_TRACE_CONTEXT_HEADER = "x-awilixify-trace-context";
 
 export type TracePropagationContext = {
 	traceId: string;
@@ -53,7 +53,9 @@ export function formatTraceparent(context: TracePropagationContext): string {
 export function getTracePropagationHeaders(): Record<string, string> {
 	const context = getTracePropagationContext();
 
-	return context ? { [TRACEPARENT_HEADER]: formatTraceparent(context) } : {};
+	return context
+		? { [AWILIXIFY_TRACE_CONTEXT_HEADER]: formatTraceparent(context) }
+		: {};
 }
 
 export function runWithTraceparent<T>(
