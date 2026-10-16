@@ -17,6 +17,9 @@ type CacheToken = typeof CACHE_METADATA_TOKEN;
 export class CacheInterceptor implements Interceptor<CacheToken> {
 	public readonly token = CACHE_METADATA_TOKEN;
 
+	// Concurrent reads share a Promise within this interceptor instance only.
+	private readonly pending = new Map<string, Promise<unknown>>();
+
 	constructor(
 		private readonly bentoCache: Deps["bentoCache"],
 		private readonly namespace: Deps["namespace"],
@@ -77,11 +80,25 @@ export class CacheInterceptor implements Interceptor<CacheToken> {
 				randomUUID(), // ARGV[1],
 			)) as string[];
 
-			return namespace.getOrSet({
-				key: JSON.stringify([key, ...versions]),
+			// Prevent stampedes within this instance by sharing one fetch per versioned key.
+			const versionedKey = JSON.stringify([key, ...versions]);
+			const existing = this.pending.get(versionedKey);
+
+			if (existing) return existing;
+
+			const fetch = namespace.getOrSet({
+				key: versionedKey,
 				factory: async () => context.proceed(),
 				ttl: cache.ttl,
 			});
+			this.pending.set(versionedKey, fetch);
+
+			try {
+				return await fetch;
+			} finally {
+				// Failed fetches must not prevent later requests from retrying.
+				this.pending.delete(versionedKey);
+			}
 		}
 
 		return context.proceed();
