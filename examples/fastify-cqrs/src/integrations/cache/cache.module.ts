@@ -1,6 +1,6 @@
 import { createModule, type ModuleDef, createFactoryProvider } from "awilixify";
 import { BentoCache, BentoStore, bentostore } from "bentocache";
-import { redisDriver } from "bentocache/drivers/redis";
+import { RedisDriver, redisDriver } from "bentocache/drivers/redis";
 
 import { CacheInterceptor } from "./cache.interceptor.js";
 
@@ -36,28 +36,36 @@ export const CacheModule = (namespace: string) =>
 type BentoCacheModuleDef = ModuleDef<{
 	providers: {
 		bentoCache: BentoCache<{ redis: BentoStore }>;
+		cacheRedisDriver: RedisDriver;
 	};
-	exportKeys: ["bentoCache"];
+	exportKeys: ["bentoCache", "cacheRedisDriver"];
 }>;
 
 const factory = createFactoryProvider<BentoCacheModuleDef>();
 
 const BentoCacheModule = createModule<BentoCacheModuleDef>({
 	name: "BentoCacheModule",
-	exports: ["bentoCache"],
+	exports: ["bentoCache", "cacheRedisDriver"],
 	providers: {
-		bentoCache: factory({
+		cacheRedisDriver: factory({
 			inject: ["config"],
 			useFactory: (c) =>
+				new RedisDriver({
+					connection: {
+						host: c.get("redisHost"),
+						port: c.get("redisPort"),
+					},
+				}),
+		}),
+		bentoCache: factory({
+			inject: ["cacheRedisDriver"],
+			useFactory: (driver) =>
 				new BentoCache({
 					default: "redis",
 					stores: {
 						redis: bentostore().useL2Layer(
 							redisDriver({
-								connection: {
-									host: c.get("redisHost"),
-									port: c.get("redisPort"),
-								},
+								connection: driver.getConnection(),
 							}),
 						),
 					},
