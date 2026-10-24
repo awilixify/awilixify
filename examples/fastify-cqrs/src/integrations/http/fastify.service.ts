@@ -1,12 +1,12 @@
 import fastifyRateLimit from "@fastify/rate-limit";
 import fastifySwagger from "@fastify/swagger";
 import fastifySwaggerUi from "@fastify/swagger-ui";
-import { Deps } from "./http.module.js";
+import type { Deps } from "./http.module.js";
 
 export class FastifyService {
 	constructor(private readonly deps: Deps) {}
 
-	async init() {
+	async onInit() {
 		await this.deps.app.register(fastifyRateLimit, {
 			global: false,
 		});
@@ -37,7 +37,7 @@ export class FastifyService {
 		this.deps.app.log.info(`Swagger documentation is available at /api-docs`);
 	}
 
-	async postInit() {
+	async afterInit() {
 		try {
 			await this.deps.app.listen({
 				port: this.deps.config.get("port"),

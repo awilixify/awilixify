@@ -174,6 +174,16 @@ export class EagerProviderRequiresSingletonLifetimeError extends Error {
 	}
 }
 
+export class ShutdownHookRequiresSingletonLifetimeError extends Error {
+	constructor(moduleName: string, providerKey: string) {
+		super(
+			`Provider "${providerKey}" in module "${moduleName}" declares an application shutdown hook with a non-singleton lifetime. ` +
+				`Providers with application shutdown hooks must use SINGLETON lifetime.`,
+		);
+		this.name = "ShutdownHookRequiresSingletonLifetimeError";
+	}
+}
+
 export class EagerProviderInitDependencyNotFoundError extends Error {
 	constructor(moduleName: string, providerKey: string, dependencyKey: string) {
 		super(

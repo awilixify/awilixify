@@ -195,6 +195,15 @@ export class AsyncDIContext extends DIContextBase {
 			});
 		}
 
+		// Validate after registration to use effective lifetimes without duplicating option merging.
+		this.moduleGraphEnsurer.ensureEagerProvidersUseSingletonLifetime({
+			module: moduleWithOverrides,
+			scope,
+		});
+		this.moduleGraphEnsurer.ensureShutdownHooksUseSingletonLifetime({
+			module: moduleWithOverrides,
+			scope,
+		});
 		this.lifecycleProcessor.collectEagerProviders(moduleWithOverrides, scope);
 
 		this.afterRegisterProviders(

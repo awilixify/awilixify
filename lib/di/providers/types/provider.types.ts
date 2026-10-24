@@ -1,4 +1,5 @@
 import type { BuildResolverOptions, Constructor } from "awilix";
+import { InitHook, ShutdownHook } from "../../lifecycle-hooks.js";
 
 export type DefProviderMap = Record<string, object | string | boolean | number>;
 
@@ -32,8 +33,20 @@ export type ClassProvider<
 	initAfter?: readonly Extract<keyof DepsMap, string>[];
 } & ResolverOptions;
 
-export interface ProviderInit {
-	init(): void | Promise<void>;
+export interface OnInit {
+	[InitHook.OnInit](): void | Promise<void>;
+}
+
+export interface AfterInit {
+	[InitHook.AfterInit](): void | Promise<void>;
+}
+
+export interface BeforeShutdown {
+	[ShutdownHook.BeforeShutdown](): void | Promise<void>;
+}
+
+export interface OnShutdown {
+	[ShutdownHook.OnShutdown](): void | Promise<void>;
 }
 
 export type Provider<

@@ -33,7 +33,7 @@ export class ConfigService {
 		return key === undefined ? this.config : this.config[key];
 	}
 
-	init() {
+	onInit() {
 		const { parsed } = dotenv.config();
 
 		this.config = this.mapRawEnvToAppConfig(

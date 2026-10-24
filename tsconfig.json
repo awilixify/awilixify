@@ -1,6 +1,7 @@
 {
 	"compilerOptions": {
 		"outDir": "dist",
+		"noEmit": true,
 		"baseUrl": ".",
 		"declaration": true,
 		"removeComments": true,
@@ -20,11 +21,6 @@
 		"module": "NodeNext",
 		"noUncheckedIndexedAccess": true
 	},
-	"exclude": [
-		"node_modules",
-		"dist",
-		"test/**/",
-		"vitest.config.mts",
-		"examples"
-	]
+	"include": ["index.ts", "lib/**/*.ts", "test/**/*.test.ts"],
+	"exclude": ["node_modules", "dist", "examples"]
 }

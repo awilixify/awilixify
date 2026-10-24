@@ -210,6 +210,15 @@ export abstract class ContainerContextBase<
 			});
 		}
 
+		// Validate after registration to use effective lifetimes without duplicating option merging.
+		this.moduleGraphEnsurer.ensureEagerProvidersUseSingletonLifetime({
+			module: moduleWithOverrides,
+			scope,
+		});
+		this.moduleGraphEnsurer.ensureShutdownHooksUseSingletonLifetime({
+			module: moduleWithOverrides,
+			scope,
+		});
 		this.lifecycleProcessor.collectEagerProviders(moduleWithOverrides, scope);
 
 		this.afterRegisterProviders(
@@ -334,7 +343,8 @@ export abstract class ContainerContextBase<
 			scope,
 			importedScopes,
 			init: (options) => this.lifecycleProcessor.init(options),
-			dispose: () => this.lifecycleProcessor.dispose(),
+			close: () => this.lifecycleProcessor.close(),
+			enableShutdownHooks: () => this.lifecycleProcessor.enableShutdownHooks(),
 		};
 	}
 

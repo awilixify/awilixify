@@ -1,5 +1,6 @@
 import * as Awilix from "awilix";
 import * as ERRORS from "../errors.js";
+import { InitHook, ShutdownHook } from "../lifecycle-hooks.js";
 import type { InternalModuleLike as M } from "../modules/runtime-module.types.js";
 import * as GUARGS from "../type-guards.js";
 import type { InitializerTask } from "./initializer-processor.js";
@@ -21,12 +22,13 @@ type EagerProviderNode = EagerProviderRef & {
 
 export interface ModuleInitOptions {
 	excludeInitializers?: true | readonly string[];
-	excludePostInit?: true | readonly string[];
+	excludeAfterInit?: true | readonly string[];
 }
 
 export interface LifecycleMethods {
 	init(options?: ModuleInitOptions): Promise<void>;
-	dispose(): Promise<void>;
+	close(): Promise<void>;
+	enableShutdownHooks(): void;
 }
 
 export class LifecycleProcessor {
@@ -34,7 +36,11 @@ export class LifecycleProcessor {
 	private readonly initializerTasks: InitializerTask[] = [];
 	private readonly createdScopes: Awilix.AwilixContainer[] = [];
 	private initPromise?: Promise<void>;
-	private disposePromise?: Promise<void>;
+	private closePromise?: Promise<void>;
+	private readonly shutdownListeners = new Map<
+		NodeJS.Signals,
+		() => Promise<void>
+	>();
 
 	constructor(
 		private readonly providerOptions: Partial<Awilix.BuildResolverOptions<any>>,
@@ -66,24 +72,59 @@ export class LifecycleProcessor {
 		return this.initPromise;
 	}
 
-	dispose(): Promise<void> {
-		this.disposePromise ??= this.executeDispose();
+	close(): Promise<void> {
+		this.closePromise ??= this.executeClose().finally(() => {
+			for (const [signal, listener] of this.shutdownListeners) {
+				process.off(signal, listener);
+			}
+			this.shutdownListeners.clear();
+		});
 
-		return this.disposePromise;
+		return this.closePromise;
+	}
+
+	enableShutdownHooks(): void {
+		if (this.closePromise || this.shutdownListeners.size > 0) return;
+
+		let shutdownSignalReceived = false;
+
+		for (const signal of ["SIGINT", "SIGTERM"] as const) {
+			const listener = async () => {
+				// Ignore repeated signals while shutdown is in progress
+				if (shutdownSignalReceived) return;
+				shutdownSignalReceived = true;
+
+				try {
+					await this.close();
+					// close() removes our signal listeners. Re-send the signal to trigger
+					// default termination, even with open sockets, if **no other listeners** remain.
+					// Any remaining custom listener receives this second signal instead,
+					// so termination is not guaranteed. Do not mix with custom signal handlers.
+					process.kill(process.pid, signal);
+				} catch (error) {
+					console.error("Application shutdown failed", error);
+					process.exit(1);
+				}
+			};
+
+			this.shutdownListeners.set(signal, listener);
+			process.on(signal, listener);
+		}
 	}
 
 	private async executeInit(options?: ModuleInitOptions): Promise<void> {
 		const initializedProviders: InitializedProviderRef[] = [];
 
 		for (const { module, scope, key } of this.sortEagerProviderRefs()) {
-			this.ensureEagerProviderUsesSingletonLifetime(module, scope, key);
 			const instance = await this.resolveEagerProvider({
 				module,
 				scope,
 				key,
 			});
 			initializedProviders.push({ module, scope, key, instance });
-			await this.callProviderInitAsync(instance);
+			if (!GUARGS.hasProviderOnInit(instance)) continue;
+
+			await instance[InitHook.OnInit]();
 		}
 
 		for (const initialize of this.initializerTasks) {
@@ -91,44 +132,68 @@ export class LifecycleProcessor {
 		}
 
 		for (const { key, instance } of initializedProviders) {
-			if (this.shouldSkipProviderPostInit(key, options)) continue;
+			if (this.shouldSkipProviderAfterInit(key, options)) continue;
 
-			await this.callProviderPostInitAsync(instance);
+			if (!GUARGS.hasProviderAfterInit(instance)) continue;
+
+			await instance[InitHook.AfterInit]();
 		}
 	}
 
-	private async executeDispose(): Promise<void> {
+	private async executeClose(): Promise<void> {
+		// Startup must settle before taking the shutdown provider snapshot.
+		await this.initPromise?.catch(() => {});
+
+		const errors: unknown[] = [];
+		const providers = [
+			...new Set(
+				this.createdScopes.flatMap((scope) =>
+					[...scope.cache.values()]
+						.filter((el) => el.resolver.lifetime === Awilix.Lifetime.SINGLETON)
+						.map(({ value }) => value),
+				),
+			),
+		];
+
+		for (const hook of Object.values(ShutdownHook)) {
+			const results = await Promise.allSettled(
+				providers
+					.filter((instance) => GUARGS.hasProviderShutdownHook(instance, hook))
+					.map(async (instance) => instance[hook]()),
+			);
+
+			for (const result of results) {
+				if (result.status === "rejected") errors.push(result.reason);
+			}
+		}
+
 		const uniqueScopes = Array.from(new Set(this.createdScopes)).reverse();
 
 		for (const scope of uniqueScopes) {
-			await scope.dispose();
+			await scope.dispose().catch((error) => {
+				errors.push(error);
+			});
+		}
+
+		if (errors.length > 0) {
+			throw new AggregateError(errors, "Application shutdown failed");
 		}
 	}
 
-	private shouldSkipProviderPostInit(
+	private shouldSkipProviderAfterInit(
 		key: string,
 		options?: ModuleInitOptions,
 	): boolean {
-		if (options?.excludePostInit === true) return true;
-		if (!Array.isArray(options?.excludePostInit)) return false;
+		if (options?.excludeAfterInit === true) return true;
+		if (!Array.isArray(options?.excludeAfterInit)) return false;
 
-		return new Set(options.excludePostInit).has(key);
+		return new Set(options.excludeAfterInit).has(key);
 	}
 
 	private getEagerProviderKeys(m: M): string[] {
 		return Object.entries(m.providers || {})
 			.filter(([, provider]) => GUARGS.isEagerProvider(provider))
 			.map(([key]) => key);
-	}
-
-	private ensureEagerProviderUsesSingletonLifetime(
-		m: M,
-		scope: Awilix.AwilixContainer,
-		key: string,
-	): void {
-		if (scope.registrations[key]?.lifetime !== Awilix.Lifetime.SINGLETON) {
-			throw new ERRORS.EagerProviderRequiresSingletonLifetimeError(m.name, key);
-		}
 	}
 
 	private async resolveEagerProvider({
@@ -164,18 +229,6 @@ export class LifecycleProcessor {
 		});
 
 		return scope.resolve(key);
-	}
-
-	private async callProviderInitAsync(instance: unknown): Promise<void> {
-		if (!GUARGS.hasProviderInit(instance)) return;
-
-		await instance.init();
-	}
-
-	private async callProviderPostInitAsync(instance: unknown): Promise<void> {
-		if (!GUARGS.hasProviderPostInit(instance)) return;
-
-		await instance.postInit();
 	}
 
 	private sortEagerProviderRefs(): EagerProviderRef[] {

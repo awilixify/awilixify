@@ -1,6 +1,6 @@
 import { fileURLToPath } from "node:url";
-import { defineConfig } from "vitest/config";
 import swc from "unplugin-swc";
+import { defineConfig } from "vitest/config";
 
 export default defineConfig({
 	oxc: false,
@@ -12,6 +12,7 @@ export default defineConfig({
 	plugins: [
 		swc.vite({
 			jsc: {
+				transform: { decoratorVersion: "2022-03" },
 				parser: {
 					syntax: "typescript",
 					// Node cannot parse raw Stage 3 decorators yet,

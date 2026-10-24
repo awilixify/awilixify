@@ -7,6 +7,7 @@ import { AsyncDIContext } from "../../lib/di/contexts/di-context-async.js";
 import type { DiContextOptions } from "../../lib/di/contexts/di-context-base.js";
 import * as ERRORS from "../../lib/di/errors.js";
 import type { AnyModule } from "../../lib/di/modules/module.types.js";
+import { overrideModule } from "../../lib/di/modules/module-overrides.js";
 import {
 	Initializer,
 	type MetadataInitializerContext,
@@ -150,7 +151,7 @@ describe("Lifecycle", () => {
 		});
 
 		await app.init();
-		await app.dispose();
+		await app.close();
 
 		expect(dispose).toHaveBeenCalledTimes(1);
 	});
@@ -211,7 +212,7 @@ describe("Lifecycle", () => {
 			const init = vi.fn();
 
 			class EagerService {
-				init = init;
+				onInit = init;
 			}
 
 			const app = registerModule({
@@ -255,27 +256,65 @@ describe("Lifecycle", () => {
 			expect(app.scope.resolve("eagerService")).toBe(eagerService);
 		});
 
-		it("should throw during init when eager provider uses non-singleton lifetime", async () => {
-			const app = registerModule({
-				providers: {
-					eagerService: {
-						eager: true,
-						lifetime: Lifetime.TRANSIENT,
-						useClass: TestableBase,
-					},
-				},
-			});
+		it.each([
+			Lifetime.TRANSIENT,
+			Lifetime.SCOPED,
+		])("should reject eager %s class and factory providers during creation without resolving them", async (lifetime) => {
+			const resolve = vi.fn();
+			class Service {
+				constructor() {
+					resolve();
+				}
+			}
 
-			await expect(app.init()).rejects.toThrow(
+			for (const provider of [
+				{ eager: true, lifetime, useClass: Service },
+				{ eager: true, lifetime, useFactory: resolve },
+			]) {
+				const module = { providers: { service: provider } };
+				expect(() => registerModule(module)).toThrow(
+					ERRORS.EagerProviderRequiresSingletonLifetimeError,
+				);
+				await expect(registerModuleAsync(module)).rejects.toThrow(
+					ERRORS.EagerProviderRequiresSingletonLifetimeError,
+				);
+			}
+			expect(resolve).not.toHaveBeenCalled();
+		});
+
+		it("should validate effective eager lifetimes after module overrides", async () => {
+			const module = {
+				name: "App",
+				providers: {
+					service: { eager: true, useClass: TestableBase },
+				},
+			};
+			const options = {
+				moduleOverrides: [
+					overrideModule(module, {
+						providers: {
+							service: {
+								eager: true,
+								useClass: TestableBase,
+								lifetime: Lifetime.SCOPED,
+							},
+						},
+					}),
+				],
+			};
+			expect(() => DIContext.create(module, options)).toThrow(
+				ERRORS.EagerProviderRequiresSingletonLifetimeError,
+			);
+			await expect(AsyncDIContext.create(module, options)).rejects.toThrow(
 				ERRORS.EagerProviderRequiresSingletonLifetimeError,
 			);
 		});
 
-		it("should await async init with DIContext", async () => {
+		it("should await async onInit with DIContext", async () => {
 			const calls: string[] = [];
 
 			class EagerService {
-				async init() {
+				async onInit() {
 					await Promise.resolve();
 					calls.push("initialized");
 				}
@@ -296,16 +335,16 @@ describe("Lifecycle", () => {
 			expect(app.scope.resolve("eagerService")).toBeInstanceOf(EagerService);
 		});
 
-		it("should call postInit after init for eager providers", async () => {
+		it("should call afterInit after onInit for eager providers", async () => {
 			const calls: string[] = [];
 
 			class EagerService {
-				init() {
+				onInit() {
 					calls.push("init");
 				}
 
-				postInit() {
-					calls.push("postInit");
+				afterInit() {
+					calls.push("afterInit");
 				}
 			}
 
@@ -320,19 +359,78 @@ describe("Lifecycle", () => {
 
 			await app.init();
 
-			expect(calls).toEqual(["init", "postInit"]);
+			expect(calls).toEqual(["init", "afterInit"]);
 		});
 
-		it("should skip postInit when init excludes postInit", async () => {
+		it("should run all onInit hooks before initializers and afterInit hooks afterward", async () => {
+			const calls: string[] = [];
+			const tracked = createLifecycleInitializer("tracked", calls);
+
+			class EagerService {
+				onInit() {
+					calls.push("onInit");
+				}
+
+				async afterInit() {
+					await Promise.resolve();
+					calls.push("afterInit");
+				}
+			}
+
+			class Controller {
+				@tracked.decorate()
+				handler() {}
+			}
+
+			const app = registerModule({
+				providers: {
+					first: { eager: true, useClass: EagerService },
+					second: { eager: true, useClass: EagerService },
+				},
+				controllers: [Controller],
+				initializers: { tracked: tracked.Initializer },
+			});
+
+			await app.init();
+			await app.init();
+
+			expect(calls).toEqual([
+				"onInit",
+				"onInit",
+				"tracked:handler:tracked",
+				"afterInit",
+				"afterInit",
+			]);
+		});
+
+		it("should not run startup hooks for resolved non-eager providers", async () => {
+			const onInit = vi.fn();
+			const afterInit = vi.fn();
+
+			class LazyService {
+				onInit = onInit;
+				afterInit = afterInit;
+			}
+
+			const app = registerModule({ providers: { lazy: LazyService } });
+			app.scope.resolve("lazy");
+			await app.init();
+			app.scope.resolve("lazy");
+
+			expect(onInit).not.toHaveBeenCalled();
+			expect(afterInit).not.toHaveBeenCalled();
+		});
+
+		it("should skip afterInit when init excludes afterInit", async () => {
 			const calls: string[] = [];
 
 			class EagerService {
-				init() {
+				onInit() {
 					calls.push("init");
 				}
 
-				postInit() {
-					calls.push("postInit");
+				afterInit() {
+					calls.push("afterInit");
 				}
 			}
 
@@ -345,22 +443,22 @@ describe("Lifecycle", () => {
 				},
 			});
 
-			await app.init({ excludePostInit: true });
+			await app.init({ excludeAfterInit: true });
 
 			expect(calls).toEqual(["init"]);
 		});
 
-		it("should skip postInit by eager provider key", async () => {
+		it("should skip afterInit by eager provider key", async () => {
 			const calls: string[] = [];
 
 			class FirstEagerService {
-				postInit() {
+				afterInit() {
 					calls.push("first");
 				}
 			}
 
 			class SecondEagerService {
-				postInit() {
+				afterInit() {
 					calls.push("second");
 				}
 			}
@@ -378,16 +476,16 @@ describe("Lifecycle", () => {
 				},
 			});
 
-			await app.init({ excludePostInit: ["firstEagerService"] });
+			await app.init({ excludeAfterInit: ["firstEagerService"] });
 
 			expect(calls).toEqual(["second"]);
 		});
 
-		it("should only run init once", async () => {
+		it("should only run onInit once", async () => {
 			const init = vi.fn();
 
 			class EagerService {
-				init = init;
+				onInit = init;
 			}
 
 			const app = registerModule({
@@ -405,11 +503,11 @@ describe("Lifecycle", () => {
 			expect(init).toHaveBeenCalledTimes(1);
 		});
 
-		it("should await async init with AsyncDIContext", async () => {
+		it("should await async onInit with AsyncDIContext", async () => {
 			const init = vi.fn(async () => {});
 
 			class EagerService {
-				init = init;
+				onInit = init;
 			}
 
 			const app = await registerModuleAsync({
@@ -465,19 +563,19 @@ describe("Lifecycle", () => {
 			const calls: string[] = [];
 
 			class EnvService {
-				init() {
+				onInit() {
 					calls.push("env");
 				}
 			}
 
 			class ConfigService {
-				init() {
+				onInit() {
 					calls.push("config");
 				}
 			}
 
 			class DbService {
-				init() {
+				onInit() {
 					calls.push("db");
 				}
 			}
@@ -510,19 +608,19 @@ describe("Lifecycle", () => {
 			const calls: string[] = [];
 
 			class GlobalConfig {
-				init() {
+				onInit() {
 					calls.push("globalConfig");
 				}
 			}
 
 			class ImportedCache {
-				init() {
+				onInit() {
 					calls.push("importedCache");
 				}
 			}
 
 			class AppService {
-				init() {
+				onInit() {
 					calls.push("app");
 				}
 			}

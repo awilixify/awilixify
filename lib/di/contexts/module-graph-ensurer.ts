@@ -1,5 +1,9 @@
+import { type AwilixContainer, Lifetime } from "awilix";
+
 import * as ERRORS from "../errors.js";
+import { ShutdownHook } from "../lifecycle-hooks.js";
 import type { InternalModuleLike as M } from "../modules/runtime-module.types.js";
+import * as GUARDS from "../type-guards.js";
 
 type EnsureImportedModulesUniquenessParams = {
 	module: M;
@@ -29,6 +33,54 @@ type EnsureCircularDependencyHasForwardRefParams = {
 };
 
 export class ModuleGraphEnsurer {
+	ensureEagerProvidersUseSingletonLifetime({
+		module,
+		scope,
+	}: {
+		module: M;
+		scope: AwilixContainer;
+	}): void {
+		for (const [key, provider] of Object.entries(module.providers || {})) {
+			if (!GUARDS.isEagerProvider(provider)) continue;
+			if (scope.registrations[key]?.lifetime === Lifetime.SINGLETON) continue;
+
+			throw new ERRORS.EagerProviderRequiresSingletonLifetimeError(
+				module.name,
+				key,
+			);
+		}
+	}
+
+	ensureShutdownHooksUseSingletonLifetime({
+		module,
+		scope,
+	}: {
+		module: M;
+		scope: AwilixContainer;
+	}): void {
+		for (const [key, provider] of Object.entries(module.providers || {})) {
+			if (scope.registrations[key]?.lifetime === Lifetime.SINGLETON) continue;
+
+			const useClass = GUARDS.hasUseClass(provider)
+				? provider.useClass
+				: GUARDS.isCostructorProvider(provider)
+					? provider
+					: undefined;
+
+			if (
+				useClass &&
+				Object.values(ShutdownHook).some((hook) =>
+					GUARDS.hasProviderShutdownHook(useClass.prototype, hook),
+				)
+			) {
+				throw new ERRORS.ShutdownHookRequiresSingletonLifetimeError(
+					module.name,
+					key,
+				);
+			}
+		}
+	}
+
 	ensureImportedModulesUniqueness({
 		module,
 		resolvedImports,

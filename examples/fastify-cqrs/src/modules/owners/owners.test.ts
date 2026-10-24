@@ -25,7 +25,7 @@ describe("CatsModule", () => {
 	let queryMediator: Deps["queryMediator"];
 
 	afterEach(async () => {
-		await app?.dispose();
+		await app?.close();
 		app = undefined;
 	});
 

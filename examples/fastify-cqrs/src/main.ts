@@ -25,12 +25,7 @@ async function bootstrap() {
 	await app.init();
 
 	// commented out due it slows down hot reload
-	// process.once("SIGINT", async () => {
-	// 	await app.dispose();
-	// });
-	// process.once("SIGTERM", async () => {
-	// 	await app.dispose();
-	// });
+	// app.enableShutdownHooks();
 }
 
 bootstrap();

@@ -1,4 +1,5 @@
 import type { BuildResolverOptions, Constructor } from "awilix";
+import { InitHook, type ShutdownHook } from "./lifecycle-hooks.js";
 import type { ForwardRef } from "./modules/module-ref.types.js";
 import type {
 	FactoryProvider,
@@ -111,25 +112,37 @@ export function isEagerProvider(
 	);
 }
 
-export function hasProviderInit(
+export function hasProviderOnInit(
 	value: unknown,
-): value is { init: () => void | Promise<void> } {
+): value is { [InitHook.OnInit]: () => void | Promise<void> } {
 	return (
 		typeof value === "object" &&
 		value !== null &&
-		"init" in value &&
-		typeof value.init === "function"
+		InitHook.OnInit in value &&
+		typeof value[InitHook.OnInit] === "function"
 	);
 }
 
-export function hasProviderPostInit(
+export function hasProviderAfterInit(
 	value: unknown,
-): value is { postInit: () => void | Promise<void> } {
+): value is { [InitHook.AfterInit]: () => void | Promise<void> } {
 	return (
 		typeof value === "object" &&
 		value !== null &&
-		"postInit" in value &&
-		typeof value.postInit === "function"
+		InitHook.AfterInit in value &&
+		typeof value[InitHook.AfterInit] === "function"
+	);
+}
+
+export function hasProviderShutdownHook<K extends ShutdownHook>(
+	value: unknown,
+	hook: K,
+): value is Record<K, () => void | Promise<void>> {
+	return (
+		typeof value === "object" &&
+		value !== null &&
+		hook in value &&
+		typeof (value as Record<K, unknown>)[hook] === "function"
 	);
 }
 

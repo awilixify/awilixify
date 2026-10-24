@@ -140,9 +140,9 @@ await app.init({
 });
 ```
 
-### `postInit`
+### `afterInit`
 
-Use `excludePostInit` when eager provider `init()` should run, decorators should register routes/listeners, but the final startup side effect should not run.
+Use `excludeAfterInit` when eager provider `onInit()` should run, decorators should register routes/listeners, but the final startup side effect should not run.
 
 This is useful for HTTP tests where the Fastify or Express app should be initialized but should not listen on a port.
 
@@ -152,15 +152,15 @@ const app = DIContext.create(AppModule, {
 });
 
 await app.init({
-  excludePostInit: ["fastifyService"],
+  excludeAfterInit: ["fastifyService"],
 });
 ```
 
-You can skip all `postInit()` hooks:
+You can skip all `afterInit()` hooks:
 
 ```typescript
 await app.init({
-  excludePostInit: true,
+  excludeAfterInit: true,
 });
 ```
 

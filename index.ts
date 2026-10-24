@@ -12,12 +12,15 @@ export * from "./lib/di/modules/module-factories.js";
 export * from "./lib/di/modules/module-overrides.js";
 export * from "./lib/di/modules/module-ref.types.js";
 export type {
+	AfterInit,
+	BeforeShutdown,
 	ConstructorController,
 	Controller,
 	InitializerContext,
 	InterceptContext,
 	Interceptor,
-	ProviderInit,
+	OnInit,
+	OnShutdown,
 } from "./lib/di/providers/provider.types.js";
 export { Initializer } from "./lib/di/providers/provider.types.js";
 export { isResultLike } from "./lib/di/type-guards.js";

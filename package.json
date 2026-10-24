@@ -24,10 +24,10 @@
 	"version": "3.2.2",
 	"license": "MIT",
 	"scripts": {
-		"build": "tsc",
-		"build:watch": "tsc --watch",
+		"build": "tsc -p tsconfig.build.json",
+		"build:watch": "tsc -p tsconfig.build.json --watch",
 		"build:release": "del-cli dist && npm run lint && npm run build",
-		"check-types": "tsc --pretty --noEmit",
+		"check-types": "tsc --pretty",
 		"docs:dev": "vitepress dev docs",
 		"docs:build": "vitepress build docs",
 		"docs:preview": "vitepress preview docs",

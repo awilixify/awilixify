@@ -9,7 +9,7 @@ The initializer can:
 - attach validation middleware
 - collect route schemas into `OpenAPIBuilder`
 
-Then a separate eager provider can expose `/api-docs` in `postInit()`.
+Then a separate eager provider can expose `/api-docs` in `afterInit()`.
 
 Full example:
 [HTTP integration on GitHub](https://github.com/awilixify/awilixify/tree/main/examples/fastify-cqrs/src/integrations/http)
@@ -77,7 +77,7 @@ class OpenApiDocsService {
     this.openapiBuilder.registerRoute(method, path, schema);
   }
 
-  postInit() {
+  afterInit() {
     const spec = {
       openapi: "3.0.0",
       info: {
@@ -152,7 +152,7 @@ The initializer handles route-time concerns:
 The eager provider handles startup-time publishing:
 
 - aggregate the `OpenAPIBuilder`
-- expose `/api-docs` in `postInit()`
+- expose `/api-docs` in `afterInit()`
 
 This keeps responsibilities clean and matches the awilixify lifecycle model.
 
