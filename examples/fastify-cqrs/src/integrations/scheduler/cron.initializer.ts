@@ -2,7 +2,7 @@ import { Initializer, type InitializerContext } from "awilixify";
 import { AsyncTask, SimpleIntervalJob } from "toad-scheduler";
 
 import { CRON_METADATA_TOKEN, getCronTaskId } from "./cron.decorator.js";
-import { Deps } from "./scheduler.module.js";
+import type { Deps } from "./scheduler.module.js";
 
 type CronToken = typeof CRON_METADATA_TOKEN;
 
@@ -12,6 +12,7 @@ export class CronInitializer extends Initializer<CronToken> {
 	constructor(
 		private readonly toadScheduler: Deps["toadScheduler"],
 		private readonly allowedCronTasks: Deps["allowedCronTasks"],
+		private readonly scheduler: Deps["scheduler"],
 	) {
 		super();
 	}
@@ -33,7 +34,7 @@ export class CronInitializer extends Initializer<CronToken> {
 
 		const task = new AsyncTask(
 			id,
-			() => Promise.resolve(context.invoke()),
+			() => this.scheduler.runJob(() => context.invoke()),
 			(error: unknown) => {
 				console.error(`[Scheduler] job failed: ${id}`, error);
 			},
