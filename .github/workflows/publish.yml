@@ -65,3 +65,13 @@ jobs:
         run: npm run build:release
       - name: Publish to npm
         run: npm publish --provenance --access public
+      - name: Create draft release notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          gh release create "v$VERSION" \
+            --verify-tag \
+            --title "v$VERSION" \
+            --generate-notes \
+            --draft
