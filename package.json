@@ -45,7 +45,7 @@
 		"awilix": ">=9.0.0"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "2.3.15",
+		"@biomejs/biome": "2.6.3",
 		"@shikijs/vitepress-twoslash": "^4.0.2",
 		"@types/node": "^22.15.21",
 		"@vitest/coverage-v8": "^4.0.18",
