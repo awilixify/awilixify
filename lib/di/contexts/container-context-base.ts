@@ -128,25 +128,11 @@ export abstract class ContainerContextBase<
 
 		const imports = this.resolveImports(m);
 		const moduleWithOverrides = this.overridesProcessor.applyModuleOverrides(m);
-		const moduleId = this.registerModuleInGraph({
-			module: moduleWithOverrides,
+		const moduleId = this.prepareModuleRegistration(
+			moduleWithOverrides,
 			scope,
-			importedModules: imports,
-		});
-
-		this.moduleGraphEnsurer.ensureImportedModulesUniqueness({
-			module: moduleWithOverrides,
-			resolvedImports: imports,
-			globalModules: this.globalModulesWithScope.map((el) => el.module),
-		});
-		this.moduleGraphEnsurer.ensureNoProviderNameConflicts({
-			module: moduleWithOverrides,
-			resolvedImports: imports,
-			globalModules: this.globalModulesWithScope.map((el) => el.module),
-			getExportedProviderKeys: (module) => this.getExportedProviderKeys(module),
-		});
-		this.ensureAdditionalNameConflicts(moduleWithOverrides, imports);
-		this.markModuleIfImportsUseForwardRef(moduleWithOverrides);
+			imports,
+		);
 
 		const isCircular = moduleChain.includes(m);
 
@@ -210,6 +196,48 @@ export abstract class ContainerContextBase<
 			});
 		}
 
+		return this.finalizeModuleRegistration(
+			m,
+			moduleWithOverrides,
+			scope,
+			importedModulesWithScope,
+		);
+	}
+
+	protected prepareModuleRegistration(
+		moduleWithOverrides: M,
+		scope: Awilix.AwilixContainer,
+		imports: M[],
+	): string | undefined {
+		const moduleId = this.registerModuleInGraph({
+			module: moduleWithOverrides,
+			scope,
+			importedModules: imports,
+		});
+
+		this.moduleGraphEnsurer.ensureImportedModulesUniqueness({
+			module: moduleWithOverrides,
+			resolvedImports: imports,
+			globalModules: this.globalModulesWithScope.map((el) => el.module),
+		});
+		this.moduleGraphEnsurer.ensureNoProviderNameConflicts({
+			module: moduleWithOverrides,
+			resolvedImports: imports,
+			globalModules: this.globalModulesWithScope.map((el) => el.module),
+			getExportedProviderKeys: (module) => this.getExportedProviderKeys(module),
+		});
+		this.ensureAdditionalNameConflicts(moduleWithOverrides, imports);
+		this.markModuleIfImportsUseForwardRef(moduleWithOverrides);
+
+		return moduleId;
+	}
+
+	protected finalizeModuleRegistration(
+		m: M,
+		moduleWithOverrides: M,
+		scope: Awilix.AwilixContainer,
+		importedModulesWithScope: RegisteredModuleScope[],
+	): ModuleScope {
 		// Validate after registration to use effective lifetimes without duplicating option merging.
 		this.moduleGraphEnsurer.ensureEagerProvidersUseSingletonLifetime({
 			module: moduleWithOverrides,

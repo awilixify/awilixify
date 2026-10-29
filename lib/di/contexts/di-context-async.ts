@@ -85,24 +85,11 @@ export class AsyncDIContext extends DIContextBase {
 
 		const imports = await this.resolveImportsAsync(m);
 		const moduleWithOverrides = this.overridesProcessor.applyModuleOverrides(m);
-		const moduleId = this.registerModuleInGraph({
-			module: moduleWithOverrides,
+		const moduleId = this.prepareModuleRegistration(
+			moduleWithOverrides,
 			scope,
-			importedModules: imports,
-		});
-
-		this.moduleGraphEnsurer.ensureImportedModulesUniqueness({
-			module: moduleWithOverrides,
-			resolvedImports: imports,
-			globalModules: this.globalModulesWithScope.map((el) => el.module),
-		});
-		this.moduleGraphEnsurer.ensureNoProviderNameConflicts({
-			module: moduleWithOverrides,
-			resolvedImports: imports,
-			globalModules: this.globalModulesWithScope.map((el) => el.module),
-			getExportedProviderKeys: (module) => this.getExportedProviderKeys(module),
-		});
-		this.markModuleIfImportsUseForwardRef(moduleWithOverrides);
+			imports,
+		);
 
 		const isCircular = moduleChain.includes(m);
 
@@ -168,14 +155,14 @@ export class AsyncDIContext extends DIContextBase {
 				}),
 			)),
 		];
-		this.registerExportedProviders(scope, importedModulesWithScope);
+		this.registerImportedFeatures(scope, importedModulesWithScope);
 
 		const moduleForSorting: M = {
 			...moduleWithOverrides,
 			imports: importedModulesWithScope.map((el) => el.module),
 		};
 
-		this.interceptorProcessor.processInterceptors(
+		this.beforeRegisterProviders(
 			moduleWithOverrides,
 			scope,
 			importedModulesWithScope,
@@ -195,29 +182,12 @@ export class AsyncDIContext extends DIContextBase {
 			});
 		}
 
-		// Validate after registration to use effective lifetimes without duplicating option merging.
-		this.moduleGraphEnsurer.ensureEagerProvidersUseSingletonLifetime({
-			module: moduleWithOverrides,
-			scope,
-		});
-		this.moduleGraphEnsurer.ensureShutdownHooksUseSingletonLifetime({
-			module: moduleWithOverrides,
-			scope,
-		});
-		this.lifecycleProcessor.collectEagerProviders(moduleWithOverrides, scope);
-
-		this.afterRegisterProviders(
+		const moduleTree = this.finalizeModuleRegistration(
+			m,
 			moduleWithOverrides,
 			scope,
 			importedModulesWithScope,
 		);
-
-		const moduleTree = this.createModuleScope(
-			m.name,
-			scope,
-			importedModulesWithScope,
-		);
-		this.moduleTreeMap.set(m, moduleTree);
 		this.moduleTreePromiseMap.delete(m);
 
 		return moduleTree;
