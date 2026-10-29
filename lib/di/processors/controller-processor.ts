@@ -44,75 +44,9 @@ export class ControllerProcessor {
 			const existingModule = this.registeredControllers.get(useClass);
 
 			if (!existingModule) {
-				this.registeredControllers.set(useClass, m);
-
-				const controllerSymbol = Symbol(`controller_${useClass.name}`);
-				const options = {
-					...this.providerOptions,
-					...m.providerOptions,
-					...awilixOptions,
-				};
-				const isWithNewScope = options.lifetime !== Awilix.Lifetime.SINGLETON;
-				const baseResolver = Awilix.asClass(useClass, {
-					...options,
-					...(isWithNewScope && {
-						injector: () => ({
-							resolveSelf: () =>
-								this.resolveBySymbol(controllerSymbol, diScope, isWithNewScope),
-						}),
-					}),
-				});
-
-				// Wrap with tracer first (innermost) to record controller method spans
-				const tracedResolver = this.devtoolsTracer
-					? this.createTracedControllerResolver({
-							module: m,
-							options,
-							className: useClass.name,
-							registrationKey: useClass.name,
-							resolver: baseResolver,
-						})
-					: baseResolver;
-
-				// Wrap with interceptors (middle layer)
-				const interceptedResolver =
-					this.interceptorProcessor.createInterceptedProviderResolver({
-						module: m,
-						useClass,
-						options,
-						resolver: tracedResolver,
-					});
-
-				// Wrap with trace starter (outermost) to ensure trace exists before interceptors run
-				const traceStarterResolver = this.devtoolsTracer
-					? this.createTraceStarterResolver({
-							module: m,
-							options,
-							className: useClass.name,
-							registrationKey: useClass.name,
-							resolver: interceptedResolver,
-						})
-					: interceptedResolver;
-
-				diScope.register({
-					[controllerSymbol]: traceStarterResolver,
-				});
-
-				if (
-					!this.skipRegisterRoutes &&
-					typeof useClass.prototype.registerRoutes === "function"
-				) {
-					// Route registration happens during bootstrap before eager provider
-					// init hooks run. Use the raw controller instance here so imported
-					// interceptors are not resolved just to execute registerRoutes().
-					baseResolver.resolve(diScope).registerRoutes();
-				}
-
-				runtimeEntries.push({
-					controllerClass: useClass,
-					resolve: () =>
-						this.resolveBySymbol(controllerSymbol, diScope, isWithNewScope),
-				});
+				runtimeEntries.push(
+					this.registerController(m, diScope, useClass, awilixOptions),
+				);
 
 				continue;
 			}
@@ -128,6 +62,83 @@ export class ControllerProcessor {
 		}
 
 		return runtimeEntries;
+	}
+
+	private registerController(
+		m: M,
+		diScope: Awilix.AwilixContainer,
+		useClass: ConstructorController,
+		awilixOptions: Partial<Awilix.BuildResolverOptions<any>>,
+	): ControllerRuntimeEntry {
+		this.registeredControllers.set(useClass, m);
+
+		const controllerSymbol = Symbol(`controller_${useClass.name}`);
+		const options = {
+			...this.providerOptions,
+			...m.providerOptions,
+			...awilixOptions,
+		};
+		const isWithNewScope = options.lifetime !== Awilix.Lifetime.SINGLETON;
+		const baseResolver = Awilix.asClass(useClass, {
+			...options,
+			...(isWithNewScope && {
+				injector: () => ({
+					resolveSelf: () =>
+						this.resolveBySymbol(controllerSymbol, diScope, isWithNewScope),
+				}),
+			}),
+		});
+
+		// Wrap with tracer first (innermost) to record controller method spans
+		const tracedResolver = this.devtoolsTracer
+			? this.createTracedControllerResolver({
+					module: m,
+					options,
+					className: useClass.name,
+					registrationKey: useClass.name,
+					resolver: baseResolver,
+				})
+			: baseResolver;
+
+		// Wrap with interceptors (middle layer)
+		const interceptedResolver =
+			this.interceptorProcessor.createInterceptedProviderResolver({
+				module: m,
+				useClass,
+				options,
+				resolver: tracedResolver,
+			});
+
+		// Wrap with trace starter (outermost) to ensure trace exists before interceptors run
+		const traceStarterResolver = this.devtoolsTracer
+			? this.createTraceStarterResolver({
+					module: m,
+					options,
+					className: useClass.name,
+					registrationKey: useClass.name,
+					resolver: interceptedResolver,
+				})
+			: interceptedResolver;
+
+		diScope.register({
+			[controllerSymbol]: traceStarterResolver,
+		});
+
+		if (
+			!this.skipRegisterRoutes &&
+			typeof useClass.prototype.registerRoutes === "function"
+		) {
+			// Route registration happens during bootstrap before eager provider
+			// init hooks run. Use the raw controller instance here so imported
+			// interceptors are not resolved just to execute registerRoutes().
+			baseResolver.resolve(diScope).registerRoutes();
+		}
+
+		return {
+			controllerClass: useClass,
+			resolve: () =>
+				this.resolveBySymbol(controllerSymbol, diScope, isWithNewScope),
+		};
 	}
 
 	private resolveBySymbol(
