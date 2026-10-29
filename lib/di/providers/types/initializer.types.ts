@@ -6,7 +6,7 @@ import type {
 
 export type DefInitializerMap = Record<string, ConstructorInitializer>;
 
-export interface ConstructorInitializer {
+interface ConstructorInitializer {
 	new (...args: any[]): Initializer<any, boolean>;
 }
 

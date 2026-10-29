@@ -3,7 +3,7 @@ import { InitHook, ShutdownHook } from "../../lifecycle-hooks.js";
 
 export type DefProviderMap = Record<string, object | string | boolean | number>;
 
-export type ConstructorProvider<T extends object = object> = Constructor<T>;
+type ConstructorProvider<T extends object = object> = Constructor<T>;
 export type PrimitiveProvider = string | number | boolean | symbol | bigint;
 export type FunctionProvider = (...args: any[]) => any;
 
@@ -22,7 +22,7 @@ export type FactoryProvider<
 		: (...args: any[]) => T | Promise<T>;
 } & ResolverOptions;
 
-export type ClassProvider<
+type ClassProvider<
 	T extends object,
 	DepsMap extends Record<string, unknown> = Record<string, unknown>,
 	ResolverOptions extends object = BuildResolverOptions<T>,

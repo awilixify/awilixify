@@ -6,11 +6,11 @@ import type {
 
 export type DefInterceptorMap = Record<string, object>;
 
-export interface ConstructorInterceptor {
+interface ConstructorInterceptor {
 	new (...args: any[]): Interceptor;
 }
 
-export type ClassInterceptor<I extends Constructor<any> = Constructor<any>> = {
+type ClassInterceptor<I extends Constructor<any> = Constructor<any>> = {
 	useClass: I;
 } & BuildResolverOptions<any>;
 

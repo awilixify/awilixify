@@ -13,7 +13,7 @@ export type DecoratorState<TMethod, TRoot = null> = {
 export type DecoratorMethodState<TState> =
 	TState extends DecoratorState<infer TMethod, any> ? TMethod : never;
 
-export type DecoratorRootState<TState> =
+type DecoratorRootState<TState> =
 	TState extends DecoratorState<any, infer TRoot> ? TRoot : never;
 
 export type StateInitializers<TState extends DecoratorState<any, any>> = {

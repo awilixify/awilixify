@@ -2,7 +2,7 @@ import type { BuildResolverOptions, Constructor } from "awilix";
 
 export type ConstructorController = Constructor<Controller>;
 
-export type ClassController = {
+type ClassController = {
 	useClass: ConstructorController | Constructor<any>;
 } & BuildResolverOptions<any>;
 
