@@ -24,6 +24,25 @@ type RegisterKeyedFeatureParams = {
 	importedModulesWithScope: RegisteredModuleScope[];
 };
 
+type FeatureRegistrationContext<T> = Pick<
+	RegisterKeyedFeatureParams,
+	"featureKind" | "module" | "scope"
+> & {
+	config: KeyedFeatureRegistrar["featureConfig"][KeyedFeatureKind];
+	providerResolver: ProviderResolver;
+	ownerByKey: Map<string, string>;
+	resolverMap: Map<string, () => T>;
+	ownerByInitializerToken: Map<symbol, string>;
+};
+
+type RegisterFeatureParams = {
+	key: string;
+	feature: NonNullable<M[KeyedFeatureKind]>[string];
+	ownerModule: M;
+	resolutionScope: Awilix.AwilixContainer;
+	wrapForExport?: boolean;
+};
+
 export class KeyedFeatureRegistrar {
 	constructor(
 		private readonly providerOptions: Partial<Awilix.BuildResolverOptions<any>>,
@@ -55,22 +74,27 @@ export class KeyedFeatureRegistrar {
 		scope,
 		importedModulesWithScope,
 	}: RegisterKeyedFeatureParams): Map<string, () => T> {
-		const ownerByKey = new Map<string, string>();
-		const resolverMap = new Map<string, () => T>();
-		const ownerByInitializerToken = new Map<symbol, string>();
-		const config = this.featureConfig[featureKind];
-		const providerResolver = new ProviderResolver(
-			undefined,
-			this.getProviderOptions(featureKind),
-			{},
-			getOrCreateRequestScope,
-		);
+		const context: FeatureRegistrationContext<T> = {
+			config: this.featureConfig[featureKind],
+			featureKind,
+			module,
+			scope,
+			providerResolver: new ProviderResolver(
+				undefined,
+				this.getProviderOptions(featureKind),
+				{},
+				getOrCreateRequestScope,
+			),
+			ownerByKey: new Map<string, string>(),
+			resolverMap: new Map<string, () => T>(),
+			ownerByInitializerToken: new Map<symbol, string>(),
+		};
 
 		for (const {
 			module: importedModule,
 			moduleScope: importedModuleScope,
 		} of importedModulesWithScope) {
-			for (const key of importedModule[config.exportKey] ?? []) {
+			for (const key of importedModule[context.config.exportKey] ?? []) {
 				const feature = importedModule[featureKind]?.[key];
 
 				if (!feature) {
@@ -80,92 +104,75 @@ export class KeyedFeatureRegistrar {
 					);
 				}
 
-				if (ownerByKey.has(key)) {
-					throw new ERRORS.FeatureNameConflictError(
-						module.name,
-						config.featureName,
-						key,
-						ownerByKey.get(key) ?? importedModule.name,
-					);
-				}
-
-				const symbol = Symbol(
-					`${featureKind}_export_${importedModule.name}_${key}`,
-				);
-				scope.register({
-					[symbol]: this.createFeatureResolver({
-						feature,
-						featureKind,
-						key,
-						module: importedModule,
-						providerResolver,
-						resolutionScope: importedModuleScope.scope,
-						wrapForExport: true,
-					}),
-				});
-
-				if (featureKind === "initializers") {
-					this.ensureInitializerTokenUniqueness({
-						scope,
-						symbol,
-						ownerByInitializerToken,
-						moduleName: module.name,
-						featureName: feature.name || key,
-					});
-				}
-
-				resolverMap.set(
+				this.registerFeature(context, {
 					key,
-					featureKind === "initializers"
-						? () => scope.resolve<T>(symbol)
-						: () => resolveFromRequestScope<T>(scope, symbol),
-				);
-				ownerByKey.set(key, importedModule.name);
+					feature,
+					ownerModule: importedModule,
+					resolutionScope: importedModuleScope.scope,
+					wrapForExport: true,
+				});
 			}
 		}
 
 		for (const [key, feature] of Object.entries(module[featureKind] ?? {})) {
-			if (ownerByKey.has(key)) {
-				throw new ERRORS.FeatureNameConflictError(
-					module.name,
-					config.featureName,
-					key,
-					ownerByKey.get(key) ?? module.name,
-				);
-			}
-
-			const symbol = Symbol(`${featureKind}_${module.name}_${key}`);
-			scope.register({
-				[symbol]: this.createFeatureResolver({
-					feature,
-					featureKind,
-					key,
-					module,
-					providerResolver,
-					resolutionScope: scope,
-				}),
-			});
-
-			if (featureKind === "initializers") {
-				this.ensureInitializerTokenUniqueness({
-					scope,
-					symbol,
-					ownerByInitializerToken,
-					moduleName: module.name,
-					featureName: feature.name || key,
-				});
-			}
-
-			resolverMap.set(
+			this.registerFeature(context, {
 				key,
-				featureKind === "initializers"
-					? () => scope.resolve<T>(symbol)
-					: () => resolveFromRequestScope<T>(scope, symbol),
-			);
-			ownerByKey.set(key, module.name);
+				feature,
+				ownerModule: module,
+				resolutionScope: scope,
+			});
 		}
 
-		return resolverMap;
+		return context.resolverMap;
+	}
+
+	private registerFeature<T>(
+		context: FeatureRegistrationContext<T>,
+		params: RegisterFeatureParams,
+	): void {
+		if (context.ownerByKey.has(params.key)) {
+			throw new ERRORS.FeatureNameConflictError(
+				context.module.name,
+				context.config.featureName,
+				params.key,
+				context.ownerByKey.get(params.key) ?? params.ownerModule.name,
+			);
+		}
+
+		const symbol = Symbol(
+			params.wrapForExport
+				? `${context.featureKind}_export_${params.ownerModule.name}_${params.key}`
+				: `${context.featureKind}_${params.ownerModule.name}_${params.key}`,
+		);
+		context.scope.register({
+			[symbol]: this.createFeatureResolver({
+				feature: params.feature,
+				featureKind: context.featureKind,
+				key: params.key,
+				module: params.ownerModule,
+				providerResolver: context.providerResolver,
+				resolutionScope: params.resolutionScope,
+				wrapForExport: params.wrapForExport,
+			}),
+		});
+
+		if (context.featureKind === "initializers") {
+			this.ensureInitializerTokenUniqueness({
+				scope: context.scope,
+				symbol,
+				ownerByInitializerToken: context.ownerByInitializerToken,
+				moduleName: context.module.name,
+				featureName: params.feature.name || params.key,
+			});
+		}
+
+		context.resolverMap.set(
+			params.key,
+			context.featureKind === "initializers"
+				? () => context.scope.resolve<T>(symbol)
+				: () => resolveFromRequestScope<T>(context.scope, symbol),
+		);
+		context.ownerByKey.set(params.key, params.ownerModule.name);
 	}
 
 	private createFeatureResolver({

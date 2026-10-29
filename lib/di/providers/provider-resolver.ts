@@ -4,7 +4,7 @@ import * as ERRORS from "../errors.js";
 import type { InternalModuleLike as M } from "../modules/runtime-module.types.js";
 import type { InterceptorProcessor } from "../processors/interceptor-processor.js";
 import * as GUARGS from "../type-guards.js";
-import type { AnyProvider } from "./provider.types.js";
+import type { AnyProvider, FactoryProvider } from "./provider.types.js";
 
 export type RequestScopeResolver = (
 	scope: Awilix.AwilixContainer,
@@ -132,44 +132,10 @@ export class ProviderResolver {
 		}
 
 		if (GUARGS.isFactoryProvider(provider)) {
-			if (GUARGS.isAsyncFactoryProvider(provider)) {
-				if (GUARGS.isEagerProvider(provider)) {
-					return Awilix.asFunction(() => {
-						throw new ERRORS.AsyncEagerFactoryRequiresInitError(
-							module.name,
-							key ?? "unknown",
-						);
-					}, resolverOptions);
-				}
-
-				throw new ERRORS.AsyncFactoryRequiresAsyncCreateError(
-					module.name,
-					key ?? "unknown",
-				);
-			}
-
-			const factoryDeps = (provider.inject || []).map((k) =>
-				// biome-ignore lint/style/noNonNullAssertion: dependencies are validated by ProviderDependencySorter
-				resolutionScope.registrations[k]!.resolve(resolutionScope),
-			);
-
-			const resolver = Awilix.asFunction(
-				() => provider.useFactory(...factoryDeps),
+			return this.resolveFactoryProvider(
+				{ key, moduleId, provider, resolutionScope, module },
 				resolverOptions,
 			);
-
-			if (!this.devtoolsTracer) return resolver;
-
-			return this.devtoolsTracer.wrapResolver({
-				kind: "provider",
-				module,
-				moduleId,
-				options: resolverOptions,
-				className: key,
-				registrationKey: key,
-				isFactory: true,
-				resolver,
-			});
 		}
 
 		const baseResolver = Awilix.asClass(provider.useClass, resolverOptions);
@@ -233,6 +199,54 @@ export class ProviderResolver {
 		);
 
 		return Awilix.asValue(await provider.useFactory(...factoryDeps));
+	}
+
+	private resolveFactoryProvider(
+		params: ResolveProviderParams & {
+			provider: FactoryProvider<any, any, readonly string[], false>;
+		},
+		resolverOptions: Awilix.BuildResolverOptions<any>,
+	): Awilix.Resolver<any> {
+		const { provider, module, key, resolutionScope, moduleId } = params;
+
+		if (GUARGS.isAsyncFactoryProvider(provider)) {
+			if (GUARGS.isEagerProvider(provider)) {
+				return Awilix.asFunction(() => {
+					throw new ERRORS.AsyncEagerFactoryRequiresInitError(
+						module.name,
+						key ?? "unknown",
+					);
+				}, resolverOptions);
+			}
+
+			throw new ERRORS.AsyncFactoryRequiresAsyncCreateError(
+				module.name,
+				key ?? "unknown",
+			);
+		}
+
+		const factoryDeps = (provider.inject || []).map((k) =>
+			// biome-ignore lint/style/noNonNullAssertion: dependencies are validated by ProviderDependencySorter
+			resolutionScope.registrations[k]!.resolve(resolutionScope),
+		);
+
+		const resolver = Awilix.asFunction(
+			() => provider.useFactory(...factoryDeps),
+			resolverOptions,
+		);
+
+		if (!this.devtoolsTracer) return resolver;
+
+		return this.devtoolsTracer.wrapResolver({
+			kind: "provider",
+			module,
+			moduleId,
+			options: resolverOptions,
+			className: key,
+			registrationKey: key,
+			isFactory: true,
+			resolver,
+		});
 	}
 
 	private extractResolverOptions(

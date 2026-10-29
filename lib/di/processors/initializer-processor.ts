@@ -73,43 +73,55 @@ export class InitializerProcessor {
 				for (const methodName of getControllerMethodNames(
 					controller.controllerClass,
 				)) {
-					const invoke = (...args: unknown[]) =>
-						runInRequestScopeContext(() =>
-							controller.resolve()[methodName](...args),
-						);
-
-					this.ensureNoMultiInvokableInitializersPerMethod(
+					await this.initializeControllerMethod(
 						m.name,
-						methodName,
 						controller,
+						methodName,
 						activeInitializers,
 					);
-
-					for (const [, resolveInitializer] of activeInitializers) {
-						const initializer = resolveInitializer();
-						const decoratorState = resolveDecoratorState(
-							controller.controllerClass,
-							initializer.token,
-						);
-
-						if (decoratorState === null) continue;
-
-						const metadata = decoratorState.methods.get(methodName);
-
-						if (metadata === undefined) continue;
-
-						await initializer.initialize({
-							moduleName: m.name,
-							target: controller.controllerClass,
-							methodName,
-							metadata,
-							decoratorState,
-							...(initializer.usesInvoke ? { invoke } : {}),
-						});
-					}
 				}
 			}
 		};
+	}
+
+	private async initializeControllerMethod(
+		moduleName: string,
+		controller: ControllerRuntimeEntry,
+		methodName: string | symbol,
+		initializers: Array<[string, () => Initializer<any, boolean>]>,
+	): Promise<void> {
+		const invoke = (...args: unknown[]) =>
+			runInRequestScopeContext(() => controller.resolve()[methodName](...args));
+
+		this.ensureNoMultiInvokableInitializersPerMethod(
+			moduleName,
+			methodName,
+			controller,
+			initializers,
+		);
+
+		for (const [, resolveInitializer] of initializers) {
+			const initializer = resolveInitializer();
+			const decoratorState = resolveDecoratorState(
+				controller.controllerClass,
+				initializer.token,
+			);
+
+			if (decoratorState === null) continue;
+
+			const metadata = decoratorState.methods.get(methodName);
+
+			if (metadata === undefined) continue;
+
+			await initializer.initialize({
+				moduleName,
+				target: controller.controllerClass,
+				methodName,
+				metadata,
+				decoratorState,
+				...(initializer.usesInvoke ? { invoke } : {}),
+			});
+		}
 	}
 
 	private ensureNoMultiInvokableInitializersPerMethod(

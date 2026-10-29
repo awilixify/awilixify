@@ -113,25 +113,11 @@ export class InterceptorProcessor {
 
 				const wrapped = (...args: unknown[]) => {
 					const interceptors = resolveInterceptors.map((resolve) => resolve());
-					const metadataByToken = new Map<symbol, InterceptorMetadata>();
-
-					for (const interceptor of interceptors) {
-						const state = resolveDecoratorState(
-							metadataTarget,
-							interceptor.token,
-						);
-
-						if (state === null) continue;
-
-						const method = state.methods.get(propertyKey);
-
-						if (method !== undefined) {
-							metadataByToken.set(interceptor.token.stateSymbol, {
-								state,
-								method,
-							});
-						}
-					}
+					const metadataByToken = self.collectInterceptorMetadata(
+						metadataTarget,
+						propertyKey,
+						interceptors,
+					);
 
 					// Use proxyReceiver when devtools is active so nested this.method()
 					// calls are traced. Fall back to target for private field access.
@@ -179,6 +165,31 @@ export class InterceptorProcessor {
 				return wrapped;
 			},
 		});
+	}
+
+	private collectInterceptorMetadata(
+		metadataTarget: object,
+		propertyKey: string | symbol,
+		interceptors: Interceptor[],
+	): Map<symbol, InterceptorMetadata> {
+		const metadataByToken = new Map<symbol, InterceptorMetadata>();
+
+		for (const interceptor of interceptors) {
+			const state = resolveDecoratorState(metadataTarget, interceptor.token);
+
+			if (state === null) continue;
+
+			const method = state.methods.get(propertyKey);
+
+			if (method !== undefined) {
+				metadataByToken.set(interceptor.token.stateSymbol, {
+					state,
+					method,
+				});
+			}
+		}
+
+		return metadataByToken;
 	}
 
 	private callWithInterceptorChain({
