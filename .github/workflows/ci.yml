@@ -33,13 +33,3 @@ jobs:
         run: npm run test
       - name: Build
         run: npm run build
-  automerge:
-    needs: build
-    runs-on: ubuntu-latest
-    permissions:
-      pull-requests: write
-      contents: write
-    steps:
-      - uses: fastify/github-action-merge-dependabot@v3
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
