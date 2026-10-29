@@ -52,9 +52,14 @@
 		"jscpd": "^5.4.2",
 		"tstyche": "^5.0.2",
 		"typescript": "^5.9.3",
-		"vite": "^6.4.2",
+		"vite": "^6.4.5",
 		"vitepress": "^1.6.4",
 		"vitest": "^4.0.18"
+	},
+	"overrides": {
+		"vitepress": {
+			"vite": "$vite"
+		}
 	},
 	"type": "module",
 	"repository": {
