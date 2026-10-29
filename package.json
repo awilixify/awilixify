@@ -52,7 +52,7 @@
 		"del-cli": "^7.0.0",
 		"jscpd": "^5.4.2",
 		"knip": "^6.43.0",
-		"tstyche": "^5.0.2",
+		"tstyche": "^7.2.5",
 		"typescript": "^5.9.3",
 		"vite": "^6.4.5",
 		"vitepress": "^1.6.4",
