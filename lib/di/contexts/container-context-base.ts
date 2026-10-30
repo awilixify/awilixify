@@ -13,6 +13,7 @@ import {
 	type OverrideOptions,
 	OverridesProcessor,
 } from "../processors/overrides-processor.js";
+import { InquirerResolverFactory } from "../providers/inquirer-resolver-factory.js";
 import { ProviderDependencySorter } from "../providers/provider-dependency-sorter.js";
 import type { ProviderResolver } from "../providers/provider-resolver.js";
 import * as GUARGS from "../type-guards.js";
@@ -58,6 +59,7 @@ export abstract class ContainerContextBase<
 	protected readonly moduleTreeMap = new WeakMap<M, ModuleScope>();
 	protected readonly options: TOptions;
 
+	protected readonly inquirerResolverFactory = new InquirerResolverFactory();
 	protected readonly sorter = new ProviderDependencySorter();
 	protected readonly moduleGraphEnsurer = new ModuleGraphEnsurer();
 	protected readonly lifecycleProcessor: LifecycleProcessor;
@@ -209,6 +211,15 @@ export abstract class ContainerContextBase<
 		scope: Awilix.AwilixContainer,
 		imports: M[],
 	): string | undefined {
+		if (
+			Object.values(moduleWithOverrides.providers ?? {}).some(
+				(provider) =>
+					GUARGS.hasUseClass(provider) && provider.injectInquirer === true,
+			)
+		) {
+			this.inquirerResolverFactory.enableTracking();
+		}
+
 		const moduleId = this.registerModuleInGraph({
 			module: moduleWithOverrides,
 			scope,

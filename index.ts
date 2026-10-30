@@ -17,6 +17,7 @@ export type {
 	ConstructorController,
 	Controller,
 	InitializerContext,
+	InquirerContext,
 	InterceptContext,
 	Interceptor,
 	OnInit,

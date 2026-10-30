@@ -1,3 +1,12 @@
+export class InquirerRequiresTransientLifetimeError extends Error {
+	constructor(className: string) {
+		super(
+			`Provider "${className}" with injectInquirer requires TRANSIENT lifetime.`,
+		);
+		this.name = "InquirerRequiresTransientLifetimeError";
+	}
+}
+
 export class DuplicateControllersInModuleError extends Error {
 	constructor(moduleName: string) {
 		super(

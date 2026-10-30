@@ -8,6 +8,7 @@ import type { DevtoolsProcessorRef } from "../../devtools/devtools.types.js";
 import type { RegisteredModuleScope } from "../contexts/container-context-base.js";
 import type { DiContextOptions } from "../contexts/di-context-base.js";
 import type { InternalModuleLike as M } from "../modules/runtime-module.types.js";
+import type { InquirerResolverFactory } from "../providers/inquirer-resolver-factory.js";
 import type { Interceptor } from "../providers/provider.types.js";
 import { isPromiseLike } from "../type-guards.js";
 import { KeyedFeatureRegistrar } from "./keyed-feature-registrar.js";
@@ -27,10 +28,12 @@ export class InterceptorProcessor {
 
 	constructor(
 		providerOptions: DiContextOptions["providerOptions"],
+		private readonly inquirerResolverFactory: InquirerResolverFactory,
 		private readonly devtoolsProcessorRef: DevtoolsProcessorRef,
 	) {
 		this.keyedFeatureRegistrar = new KeyedFeatureRegistrar(
 			providerOptions ?? {},
+			inquirerResolverFactory,
 		);
 	}
 
@@ -60,7 +63,8 @@ export class InterceptorProcessor {
 		options: Awilix.BuildResolverOptions<any>;
 		resolver?: Awilix.Resolver<any>;
 	}): Awilix.Resolver<any> {
-		const baseResolver = resolver || Awilix.asClass(useClass, options);
+		const baseResolver =
+			resolver || this.inquirerResolverFactory.create(useClass, options);
 		const interceptors = [
 			...(this.resolversByModule.get(module)?.values() ?? []),
 		];

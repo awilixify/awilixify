@@ -11,6 +11,7 @@ export function hasUseClass<T extends object = object>(
 	value: unknown,
 ): value is {
 	useClass: Constructor<T>;
+	injectInquirer?: boolean;
 	allowCircular?: boolean;
 	eager?: boolean;
 	initAfter?: readonly string[];

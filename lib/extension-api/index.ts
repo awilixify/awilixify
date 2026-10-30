@@ -11,6 +11,7 @@ export type {
 	NormalizeGlobalDependencies,
 } from "../di/modules/module-def.types.js";
 export type { InternalModuleLike as RuntimeModuleLike } from "../di/modules/runtime-module.types.js";
+export { InquirerResolverFactory } from "../di/providers/inquirer-resolver-factory.js";
 export type {
 	DefProviderMap,
 	Provider,

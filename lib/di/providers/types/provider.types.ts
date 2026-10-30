@@ -1,6 +1,9 @@
 import type { BuildResolverOptions, Constructor } from "awilix";
 import { InitHook, ShutdownHook } from "../../lifecycle-hooks.js";
 
+/** The immediate consumer's prototype, or undefined for direct resolution. */
+export type InquirerContext = object | undefined;
+
 export type DefProviderMap = Record<string, object | string | boolean | number>;
 
 type ConstructorProvider<T extends object = object> = Constructor<T>;
@@ -28,6 +31,8 @@ type ClassProvider<
 	ResolverOptions extends object = BuildResolverOptions<T>,
 > = {
 	useClass: Constructor<T>;
+	/** Inject the consumer's prototype as `inquirer`. Requires TRANSIENT lifetime. */
+	injectInquirer?: boolean;
 	allowCircular?: boolean;
 	eager?: boolean;
 	initAfter?: readonly Extract<keyof DepsMap, string>[];

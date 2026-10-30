@@ -4,6 +4,7 @@ import * as ERRORS from "../errors.js";
 import type { InternalModuleLike as M } from "../modules/runtime-module.types.js";
 import type { InterceptorProcessor } from "../processors/interceptor-processor.js";
 import * as GUARGS from "../type-guards.js";
+import type { InquirerResolverFactory } from "./inquirer-resolver-factory.js";
 import type { AnyProvider, FactoryProvider } from "./provider.types.js";
 
 export type RequestScopeResolver = (
@@ -30,8 +31,9 @@ export class ProviderResolver {
 	constructor(
 		private readonly interceptorProcessor: InterceptorProcessor | undefined,
 		private readonly providerOptions: Partial<Awilix.BuildResolverOptions<any>>,
-		private readonly devtoolsProcessorRef: DevtoolsProcessorRef,
-		private readonly requestScopeResolver?: RequestScopeResolver,
+		private readonly requestScopeResolver: RequestScopeResolver | undefined,
+		private readonly inquirerResolverFactory: InquirerResolverFactory,
+		private readonly devtoolsProcessorRef: DevtoolsProcessorRef = {},
 	) {}
 
 	static mergeResolverOptions(
@@ -61,7 +63,10 @@ export class ProviderResolver {
 			...module.providerOptions,
 			...featureOptions,
 		};
-		const resolver = Awilix.asClass(useClass, resolverOptions);
+		const resolver = this.inquirerResolverFactory.create(
+			useClass,
+			resolverOptions,
+		);
 
 		if (!wrapForExport) return resolver;
 
@@ -108,7 +113,10 @@ export class ProviderResolver {
 		const resolverOptions = this.extractResolverOptions(module, provider);
 
 		if (GUARGS.isCostructorProvider(provider)) {
-			const baseResolver = Awilix.asClass(provider, resolverOptions);
+			const baseResolver = this.inquirerResolverFactory.create(
+				provider,
+				resolverOptions,
+			);
 			const tracedResolver = !this.devtoolsTracer
 				? baseResolver
 				: this.devtoolsTracer.wrapResolver({
@@ -138,7 +146,10 @@ export class ProviderResolver {
 			);
 		}
 
-		const baseResolver = Awilix.asClass(provider.useClass, resolverOptions);
+		const baseResolver = this.inquirerResolverFactory.create(
+			provider.useClass,
+			resolverOptions,
+		);
 		const classResolver = provider.allowCircular
 			? this.createProxyResolver(baseResolver, resolverOptions)
 			: baseResolver;
@@ -254,14 +265,27 @@ export class ProviderResolver {
 		provider: AnyProvider,
 	): Awilix.BuildResolverOptions<any> {
 		if (GUARGS.hasUseClass(provider)) {
-			const { useClass, allowCircular, eager, initAfter, ...options } =
-				provider;
+			const {
+				useClass,
+				allowCircular,
+				eager,
+				initAfter,
+				injectInquirer,
+				...options
+			} = provider;
 
-			return ProviderResolver.mergeResolverOptions(
+			const mergedOptions = ProviderResolver.mergeResolverOptions(
 				module,
 				this.providerOptions,
 				options,
 			);
+			return {
+				...mergedOptions,
+				...(injectInquirer && {
+					injectInquirer,
+					isLeakSafe: mergedOptions.isLeakSafe ?? true,
+				}),
+			};
 		}
 
 		if (GUARGS.isFactoryProvider(provider)) {

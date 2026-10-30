@@ -5,6 +5,7 @@ import { getControllerMethodNames } from "../../devtools/helpers.js";
 import type { RegisteredModuleScope } from "../contexts/container-context-base.js";
 import * as ERRORS from "../errors.js";
 import type { InternalModuleLike as M } from "../modules/runtime-module.types.js";
+import type { InquirerResolverFactory } from "../providers/inquirer-resolver-factory.js";
 import type {
 	ConstructorController,
 	Initializer,
@@ -21,14 +22,22 @@ export type ControllerRuntimeEntry = {
 export type InitializerTask = (options?: ModuleInitOptions) => Promise<void>;
 
 export class InitializerProcessor {
-	private readonly keyedFeatureRegistrar = new KeyedFeatureRegistrar({});
+	private readonly keyedFeatureRegistrar: KeyedFeatureRegistrar;
 
 	private readonly resolversByModule = new WeakMap<
 		M,
 		Map<string, () => Initializer>
 	>();
 
-	constructor(private readonly devtoolsProcessorRef: DevtoolsProcessorRef) {}
+	constructor(
+		inquirerResolverFactory: InquirerResolverFactory,
+		private readonly devtoolsProcessorRef: DevtoolsProcessorRef,
+	) {
+		this.keyedFeatureRegistrar = new KeyedFeatureRegistrar(
+			{},
+			inquirerResolverFactory,
+		);
+	}
 
 	public collectInitializers(
 		m: M,

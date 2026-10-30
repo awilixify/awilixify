@@ -2,6 +2,7 @@ import * as Awilix from "awilix";
 import type { DevtoolsProcessorRef } from "../../devtools/devtools.types.js";
 import * as ERRORS from "../errors.js";
 import type { InternalModuleLike as M } from "../modules/runtime-module.types.js";
+import type { InquirerResolverFactory } from "../providers/inquirer-resolver-factory.js";
 import type {
 	ConstructorController,
 	Controller,
@@ -21,6 +22,7 @@ export class ControllerProcessor {
 		private readonly interceptorProcessor: InterceptorProcessor,
 		private readonly providerOptions: Partial<Awilix.BuildResolverOptions<any>>,
 		private readonly skipRegisterRoutes: boolean,
+		private readonly inquirerResolverFactory: InquirerResolverFactory,
 		private readonly devtoolsProcessorRef: DevtoolsProcessorRef,
 	) {}
 
@@ -79,7 +81,7 @@ export class ControllerProcessor {
 			...awilixOptions,
 		};
 		const isWithNewScope = options.lifetime !== Awilix.Lifetime.SINGLETON;
-		const baseResolver = Awilix.asClass(useClass, {
+		const baseResolver = this.inquirerResolverFactory.create(useClass, {
 			...options,
 			...(isWithNewScope && {
 				injector: () => ({

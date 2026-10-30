@@ -37,26 +37,31 @@ export class DIContextBase extends ContainerContextBase<DiContextOptions> {
 
 		this.handlerProcessor = new HandlerProcessor(
 			this.options.providerOptions || {},
+			this.inquirerResolverFactory,
 			this.devtoolsProcessorRef,
 		);
 		this.interceptorProcessor = new InterceptorProcessor(
 			this.options.providerOptions || {},
+			this.inquirerResolverFactory,
 			this.devtoolsProcessorRef,
 		);
 		this.initializerProcessor = new InitializerProcessor(
+			this.inquirerResolverFactory,
 			this.devtoolsProcessorRef,
 		);
 		this.controllerProcessor = new ControllerProcessor(
 			this.interceptorProcessor,
 			this.options.providerOptions || {},
 			this.options.skipRegisterRoutes === true,
+			this.inquirerResolverFactory,
 			this.devtoolsProcessorRef,
 		);
 		this.providerResolver = new ProviderResolver(
 			this.interceptorProcessor,
 			this.options.providerOptions || {},
-			this.devtoolsProcessorRef,
 			getOrCreateRequestScope,
+			this.inquirerResolverFactory,
+			this.devtoolsProcessorRef,
 		);
 	}
 

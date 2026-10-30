@@ -3,6 +3,7 @@ import type { DevtoolsProcessorRef } from "../../devtools/devtools.types.js";
 import type { RegisteredModuleScope } from "../contexts/container-context-base.js";
 import * as ERRORS from "../errors.js";
 import type { InternalModuleLike as M } from "../modules/runtime-module.types.js";
+import type { InquirerResolverFactory } from "../providers/inquirer-resolver-factory.js";
 import type { Initializer } from "../providers/provider.types.js";
 import { ProviderResolver } from "../providers/provider-resolver.js";
 import {
@@ -46,6 +47,7 @@ type RegisterFeatureParams = {
 export class KeyedFeatureRegistrar {
 	constructor(
 		private readonly providerOptions: Partial<Awilix.BuildResolverOptions<any>>,
+		private readonly inquirerResolverFactory: InquirerResolverFactory,
 		private readonly devtoolsProcessorRef: DevtoolsProcessorRef = {},
 	) {}
 
@@ -82,8 +84,8 @@ export class KeyedFeatureRegistrar {
 			providerResolver: new ProviderResolver(
 				undefined,
 				this.getProviderOptions(featureKind),
-				{},
 				getOrCreateRequestScope,
+				this.inquirerResolverFactory,
 			),
 			ownerByKey: new Map<string, string>(),
 			resolverMap: new Map<string, () => T>(),

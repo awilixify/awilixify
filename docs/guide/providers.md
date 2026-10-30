@@ -142,6 +142,52 @@ export const OrderModule = createModule<OrderModuleDef>({
 });
 ```
 
+### Consumer-aware providers
+
+Set `injectInquirer: true` on a transient class provider to inject its immediate consumer as the constructor parameter named `inquirer`:
+
+```typescript
+import { Lifetime } from "awilix";
+import type { InquirerContext } from "awilixify";
+
+class ContextLogger {
+  constructor(private readonly inquirer: InquirerContext) {}
+
+  log(message: string) {
+    const context = this.inquirer?.constructor.name ?? "Application";
+    console.log(`[${context}] ${message}`);
+  }
+}
+
+class CatsService {
+  constructor(private readonly logger: ContextLogger) {}
+}
+
+// Use this providers map in your module:
+const providers = {
+  logger: {
+    useClass: ContextLogger,
+    lifetime: Lifetime.TRANSIENT,
+    injectInquirer: true,
+  },
+  catsService: CatsService,
+};
+```
+
+`InquirerContext` is `object | undefined`. The object is the consumer's prototype, not its initialized instance. Use it for identification, such as `inquirer?.constructor.name`, not to read instance fields. Directly resolving `logger` injects `undefined`.
+
+`inquirer` is resolver-local metadata. Do not add it to your module's calculated `Deps` type or register it as a provider. Without `injectInquirer: true`, a constructor parameter named `inquirer` follows normal dependency resolution.
+
+The logger is created only when resolved. A singleton consumer retains the logger it received; each new transient consumer receives a new logger. Imported and global module exports preserve the requesting class. Controllers, handlers, and other Awilixify-managed classes can also be consumers.
+
+During normal registration, Awilixify checks each module's providers after applying overrides. Any provider with `injectInquirer: true` enables consumer tracking for the entire DI context. Provider visibility still follows normal module import/export rules.
+
+Each class resolver checks the shared flag at resolution time, so previously registered resolvers also pick up activation. While disabled, resolvers delegate directly to Awilix without frame tracking or additional cradle proxies. There is no preliminary graph scan or per-module tracking state.
+
+Instances already constructed before activation are not retroactively instrumented. In `PROXY` mode, this matters if such an instance reads a contextual dependency later through its original cradle. Register the inquirer-aware module before modules that construct those instances during bootstrap.
+
+`injectInquirer` requires `Lifetime.TRANSIENT`. These providers default to `isLeakSafe: true` so singleton consumers can retain them under Awilix strict mode. Other dependencies still undergo normal lifetime checks. A shared logging transport can remain singleton. An explicit `isLeakSafe` option takes precedence.
+
 ### Configuring Provider Options
 
 Provider options (like `lifetime`, `injector`, etc.) can be configured at three levels, with more specific levels overriding general ones:

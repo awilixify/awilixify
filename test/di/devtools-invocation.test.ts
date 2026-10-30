@@ -8,6 +8,7 @@ import {
 import { DIContext } from "../../lib/di/contexts/di-context.js";
 import { InitializerProcessor } from "../../lib/di/processors/initializer-processor.js";
 import { InterceptorProcessor } from "../../lib/di/processors/interceptor-processor.js";
+import { InquirerResolverFactory } from "../../lib/di/providers/inquirer-resolver-factory.js";
 import { Initializer } from "../../lib/di/providers/provider.types.js";
 import { ProviderResolver } from "../../lib/di/providers/provider-resolver.js";
 
@@ -105,7 +106,13 @@ describe("Devtools invocation", () => {
 		class ClassProvider {}
 		class UseClassProvider {}
 		const module = { name: "ProviderModule" } as any;
-		const resolver = new ProviderResolver(undefined, {}, { current: devtools });
+		const resolver = new ProviderResolver(
+			undefined,
+			{},
+			undefined,
+			new InquirerResolverFactory(),
+			{ current: devtools },
+		);
 
 		resolver.resolveProvider({
 			key: "classProvider",
@@ -164,6 +171,7 @@ describe("Devtools invocation", () => {
 		const devtools = createMockDevtoolsProcessor();
 		const processor = new InterceptorProcessor(
 			{},
+			new InquirerResolverFactory(),
 			{
 				current: devtools,
 			},
@@ -259,7 +267,9 @@ describe("Devtools invocation", () => {
 				test: TestInitializer,
 			},
 		} as any;
-		const processor = new InitializerProcessor({ current: devtools });
+		const processor = new InitializerProcessor(new InquirerResolverFactory(), {
+			current: devtools,
+		});
 		const task = processor.collectInitializers(
 			module,
 			scope,

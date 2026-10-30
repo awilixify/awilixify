@@ -4,6 +4,7 @@ import { getControllerMethodNames } from "../../lib/devtools/helpers.js";
 import { AsyncDIContext } from "../../lib/di/contexts/di-context-async.js";
 import { ControllerProcessor } from "../../lib/di/processors/controller-processor.js";
 import { InterceptorProcessor } from "../../lib/di/processors/interceptor-processor.js";
+import { InquirerResolverFactory } from "../../lib/di/providers/inquirer-resolver-factory.js";
 import { ProviderDependencySorter } from "../../lib/di/providers/provider-dependency-sorter.js";
 import { ProviderResolver } from "../../lib/di/providers/provider-resolver.js";
 import { isResultLike } from "../../lib/di/type-guards.js";
@@ -81,7 +82,8 @@ describe("Internal coverage", () => {
 			} as any,
 			{},
 			false,
-			{ current: null },
+			new InquirerResolverFactory(),
+			{},
 		);
 		const scope = createContainer();
 		const module = {
@@ -107,7 +109,11 @@ describe("Internal coverage", () => {
 	});
 
 	it("returns plain properties, reuses wrapped methods, and tolerates sparse interceptor chains", () => {
-		const processor = new InterceptorProcessor({}, {}) as any;
+		const processor = new InterceptorProcessor(
+			{},
+			new InquirerResolverFactory(),
+			{},
+		) as any;
 		const instance = {
 			value: 7,
 			getValue() {
@@ -148,8 +154,8 @@ describe("Internal coverage", () => {
 		const resolverWithRequestScope = new ProviderResolver(
 			undefined,
 			{},
-			{},
 			requestScopeResolver,
+			new InquirerResolverFactory(),
 		);
 
 		resolverWithRequestScope
@@ -182,7 +188,12 @@ describe("Internal coverage", () => {
 
 		expect(requestScopeResolver).not.toHaveBeenCalled();
 
-		const resolverWithoutRequestScope = new ProviderResolver(undefined, {}, {});
+		const resolverWithoutRequestScope = new ProviderResolver(
+			undefined,
+			{},
+			undefined,
+			new InquirerResolverFactory(),
+		);
 
 		expect(() =>
 			resolverWithoutRequestScope

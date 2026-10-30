@@ -7,6 +7,7 @@ import type { Middleware } from "../../mediator/middleware.types.js";
 import type { RegisteredModuleScope } from "../contexts/container-context-base.js";
 import * as ERRORS from "../errors.js";
 import type { InternalModuleLike as M } from "../modules/runtime-module.types.js";
+import type { InquirerResolverFactory } from "../providers/inquirer-resolver-factory.js";
 import { ProviderResolver } from "../providers/provider-resolver.js";
 import { getOrCreateRequestScope } from "../request-scope-context.js";
 import { hasUseClass } from "../type-guards.js";
@@ -37,10 +38,12 @@ export class HandlerProcessor {
 
 	constructor(
 		private readonly providerOptions: Partial<Awilix.BuildResolverOptions<any>>,
+		private readonly inquirerResolverFactory: InquirerResolverFactory,
 		private readonly devtoolsProcessorRef: DevtoolsProcessorRef,
 	) {
 		this.keyedFeatureRegistrar = new KeyedFeatureRegistrar(
 			providerOptions,
+			inquirerResolverFactory,
 			devtoolsProcessorRef,
 		);
 	}
@@ -89,7 +92,10 @@ export class HandlerProcessor {
 				handlerOptions,
 			);
 			const handlerSymbol = Symbol(`${handlerKey}_${HandlerClass.name}`);
-			const handlerResolver = Awilix.asClass(HandlerClass, options);
+			const handlerResolver = this.inquirerResolverFactory.create(
+				HandlerClass,
+				options,
+			);
 
 			scope.register({
 				[handlerSymbol]: this.createTracedHandlerResolver({
