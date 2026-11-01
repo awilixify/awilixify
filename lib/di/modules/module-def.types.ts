@@ -214,7 +214,7 @@ type ExtractModuleDefFromModule<T> =
 			? { exports: E }
 			: never;
 
-type ExtractExportsFromImports<T extends readonly ModuleImport[]> =
+export type ExtractExportsFromImports<T extends readonly ModuleImport[]> =
 	T extends readonly [
 		infer First,
 		...infer Rest extends readonly ModuleImport[],

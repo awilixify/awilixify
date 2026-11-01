@@ -76,3 +76,46 @@ export const AppModule = createModule<AppModuleDef>({
   ],
 });
 ```
+
+## Inject configuration with DIContext
+
+`configureModule` runs a synchronous module factory during `DIContext.create()`,
+injecting providers exported by its configuration imports:
+
+```typescript
+const MessagingDocsModule = configureModule({
+  imports: [ConfigModule],
+  inject: ["configService"],
+  useFactory: (config) => RabbitMqAsyncApiDocsModule({
+    title: "Orders Messaging API",
+    version: config.get("imageVersion"),
+    server: {
+      host: `${config.get("rabbitMqHost")}:${config.get("rabbitMqPort")}`,
+    },
+  }),
+});
+
+const context = DIContext.create({ name: "App", imports: [MessagingDocsModule] });
+await context.init();
+```
+
+Import `configureModule` from `awilixify`. Injection arguments are inferred from
+exported provider keys. Typed modules returned by the factory retain their
+export types for consumers. Factories must return a module synchronously.
+
+Configuration dependencies are resolved before the factory runs. Their
+constructors have run, but lifecycle hooks have not. Put synchronous environment
+loading and validation in the configuration provider's constructor. A provider
+may still use `onInit` for separate startup work; the factory cannot rely on its
+results. Keep `eager: true` if the provider should also be resolved during
+`init()` when nothing requests it earlier.
+
+Scopes are available immediately after `create()`. Returned modules use normal
+registration, validation, overrides, and lifecycle handling, including eager
+providers. Each descriptor runs once per context, even when shared by importers.
+Configuration cycles are rejected.
+
+Configured modules must be imports or global modules, not the root module.
+Keep the root as a plain module that aggregates configured imports.
+
+This helper is supported by `DIContext` only; `AsyncDIContext` is unchanged.

@@ -6,6 +6,10 @@ export type {
 export type { ModuleScope } from "./lib/di/contexts/container-context-base.js";
 export * from "./lib/di/contexts/di-context.js";
 export * from "./lib/di/contexts/di-context-async.js";
+export {
+	type ConfiguredModule,
+	configureModule,
+} from "./lib/di/modules/configure-module.js";
 export * from "./lib/di/modules/module.types.js";
 export * from "./lib/di/modules/module-def.types.js";
 export * from "./lib/di/modules/module-factories.js";

@@ -212,6 +212,47 @@ export class CircularProviderInitDependencyError extends Error {
 	}
 }
 
+export class ConfiguredModuleAsRootError extends Error {
+	constructor(moduleName: string) {
+		super(
+			`Configured module "${moduleName}" must be an import or global, not the root module.`,
+		);
+		this.name = "ConfiguredModuleAsRootError";
+	}
+}
+
+export class CircularModuleConfigurationDependencyError extends Error {
+	constructor(moduleName: string) {
+		super(
+			`Circular module configuration dependency detected for "${moduleName}".`,
+		);
+		this.name = "CircularModuleConfigurationDependencyError";
+	}
+}
+
+export class ModuleConfigurationDependencyNotFoundError extends Error {
+	constructor(moduleName: string, dependencyKey: string) {
+		super(
+			`Configuration dependency "${dependencyKey}" in module "${moduleName}" is not exported by its imports.`,
+		);
+		this.name = "ModuleConfigurationDependencyNotFoundError";
+	}
+}
+
+export class AsyncModuleConfigurationFactoryError extends Error {
+	constructor(moduleName: string) {
+		super(`Module "${moduleName}" configuration factory must be synchronous.`);
+		this.name = "AsyncModuleConfigurationFactoryError";
+	}
+}
+
+export class InvalidModuleConfigurationFactoryResultError extends Error {
+	constructor(moduleName: string) {
+		super(`Module "${moduleName}" configuration factory must return a module.`);
+		this.name = "InvalidModuleConfigurationFactoryResultError";
+	}
+}
+
 export class AsyncModuleRequiresAsyncCreateError extends Error {
 	constructor(moduleName: string) {
 		super(
