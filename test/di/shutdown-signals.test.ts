@@ -65,53 +65,53 @@ describe("Shutdown signal handling", () => {
 		expect(getSignalListeners()).toEqual(original);
 	});
 
-	it.each([
-		"SIGINT",
-		"SIGTERM",
-	] as const)("awaits cleanup before re-sending %s and ignores repeated signals", async (signal) => {
-		const original = getSignalListeners();
-		const kill = vi.spyOn(process, "kill").mockImplementation(() => {
+	it.each(["SIGINT", "SIGTERM"] as const)(
+		"awaits cleanup before re-sending %s and ignores repeated signals",
+		async (signal) => {
+			const original = getSignalListeners();
+			const kill = vi.spyOn(process, "kill").mockImplementation(() => {
+				expect(getSignalListeners()).toEqual(original);
+
+				return true;
+			});
+
+			// Keep cleanup pending so we can inspect shutdown while it is running.
+			const release = deferred();
+			const cleanup = vi.fn(() => release.promise);
+
+			class Service {
+				beforeShutdown = cleanup;
+			}
+			const app = DIContext.create({
+				name: "App",
+				providers: { service: { eager: true, useClass: Service } },
+			});
+			apps.push(app);
+			await app.init();
+			app.enableShutdownHooks();
+
+			const handler = getShutdownHandler(signal, original);
+			const otherSignal = signal === "SIGINT" ? "SIGTERM" : "SIGINT";
+			const otherHandler = getShutdownHandler(otherSignal, original);
+
+			// Wait for cleanup to start, but not finish: it is waiting on release.promise.
+			const shutdown = handler(signal);
+			await vi.waitFor(() => {
+				expect(cleanup).toHaveBeenCalledOnce();
+			});
+
+			// Another signal must not restart cleanup or terminate the process early.
+			await otherHandler(otherSignal);
+			expect(cleanup).toHaveBeenCalledTimes(1);
+			expect(kill).not.toHaveBeenCalled();
+
+			// Unblock cleanup, then wait for shutdown to finish and re-send the signal.
+			release.resolve();
+			await shutdown;
+			expect(kill).toHaveBeenCalledExactlyOnceWith(process.pid, signal);
 			expect(getSignalListeners()).toEqual(original);
-
-			return true;
-		});
-
-		// Keep cleanup pending so we can inspect shutdown while it is running.
-		const release = deferred();
-		const cleanup = vi.fn(() => release.promise);
-
-		class Service {
-			beforeShutdown = cleanup;
-		}
-		const app = DIContext.create({
-			name: "App",
-			providers: { service: { eager: true, useClass: Service } },
-		});
-		apps.push(app);
-		await app.init();
-		app.enableShutdownHooks();
-
-		const handler = getShutdownHandler(signal, original);
-		const otherSignal = signal === "SIGINT" ? "SIGTERM" : "SIGINT";
-		const otherHandler = getShutdownHandler(otherSignal, original);
-
-		// Wait for cleanup to start, but not finish: it is waiting on release.promise.
-		const shutdown = handler(signal);
-		await vi.waitFor(() => {
-			expect(cleanup).toHaveBeenCalledOnce();
-		});
-
-		// Another signal must not restart cleanup or terminate the process early.
-		await otherHandler(otherSignal);
-		expect(cleanup).toHaveBeenCalledTimes(1);
-		expect(kill).not.toHaveBeenCalled();
-
-		// Unblock cleanup, then wait for shutdown to finish and re-send the signal.
-		release.resolve();
-		await shutdown;
-		expect(kill).toHaveBeenCalledExactlyOnceWith(process.pid, signal);
-		expect(getSignalListeners()).toEqual(original);
-	});
+		},
+	);
 
 	it("logs failed signal shutdown, removes listeners, and exits with code 1", async () => {
 		const original = getSignalListeners();

@@ -256,31 +256,31 @@ describe("Lifecycle", () => {
 			expect(app.scope.resolve("eagerService")).toBe(eagerService);
 		});
 
-		it.each([
-			Lifetime.TRANSIENT,
-			Lifetime.SCOPED,
-		])("should reject eager %s class and factory providers during creation without resolving them", async (lifetime) => {
-			const resolve = vi.fn();
-			class Service {
-				constructor() {
-					resolve();
+		it.each([Lifetime.TRANSIENT, Lifetime.SCOPED])(
+			"should reject eager %s class and factory providers during creation without resolving them",
+			async (lifetime) => {
+				const resolve = vi.fn();
+				class Service {
+					constructor() {
+						resolve();
+					}
 				}
-			}
 
-			for (const provider of [
-				{ eager: true, lifetime, useClass: Service },
-				{ eager: true, lifetime, useFactory: resolve },
-			]) {
-				const module = { providers: { service: provider } };
-				expect(() => registerModule(module)).toThrow(
-					ERRORS.EagerProviderRequiresSingletonLifetimeError,
-				);
-				await expect(registerModuleAsync(module)).rejects.toThrow(
-					ERRORS.EagerProviderRequiresSingletonLifetimeError,
-				);
-			}
-			expect(resolve).not.toHaveBeenCalled();
-		});
+				for (const provider of [
+					{ eager: true, lifetime, useClass: Service },
+					{ eager: true, lifetime, useFactory: resolve },
+				]) {
+					const module = { providers: { service: provider } };
+					expect(() => registerModule(module)).toThrow(
+						ERRORS.EagerProviderRequiresSingletonLifetimeError,
+					);
+					await expect(registerModuleAsync(module)).rejects.toThrow(
+						ERRORS.EagerProviderRequiresSingletonLifetimeError,
+					);
+				}
+				expect(resolve).not.toHaveBeenCalled();
+			},
+		);
 
 		it("should validate effective eager lifetimes after module overrides", async () => {
 			const module = {

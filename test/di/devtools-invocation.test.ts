@@ -11,6 +11,7 @@ import { InterceptorProcessor } from "../../lib/di/processors/interceptor-proces
 import { InquirerResolverFactory } from "../../lib/di/providers/inquirer-resolver-factory.js";
 import { Initializer } from "../../lib/di/providers/provider.types.js";
 import { ProviderResolver } from "../../lib/di/providers/provider-resolver.js";
+import type { MiddlewareContract } from "../../lib/mediator/middleware.types.js";
 
 describe("Devtools invocation", () => {
 	it("attaches devtools and invokes graph/provider/handler hooks when present", async () => {
@@ -31,7 +32,11 @@ describe("Devtools invocation", () => {
 		}
 
 		class AuthPreHandler {
-			execute() {
+			declare readonly contract: MiddlewareContract<
+				string,
+				Awaited<ReturnType<AuthPreHandler["execute"]>>
+			>;
+			async execute() {
 				return { auth: true };
 			}
 		}
@@ -233,6 +238,7 @@ describe("Devtools invocation", () => {
 		const metadataSymbol = getMetadataSymbol();
 
 		class TestController {
+			registerRoutes() {}
 			[metadataSymbol] = undefined;
 
 			handle() {

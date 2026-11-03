@@ -21,6 +21,7 @@ import type {
 	ForwardRef,
 	ModuleRef,
 } from "../../lib/di/modules/module-ref.types.js";
+import type { MiddlewareContract } from "../../lib/mediator/middleware.types.js";
 
 // Test-only type: Override resolve to return 'any' for convenience
 type TestContainer = Omit<AwilixContainer, "resolve"> & {
@@ -53,6 +54,11 @@ describe("DIContext", () => {
 		getName() {
 			return this.constructor.name;
 		}
+	}
+
+	class TestMiddleware extends TestableBase {
+		declare readonly contract: MiddlewareContract<string, void>;
+		async execute() {}
 	}
 
 	function registerModule(
@@ -155,8 +161,8 @@ describe("DIContext", () => {
 		});
 
 		it("should throw an error when local query pre-handler conflicts with imported exported query pre-handler", () => {
-			class ImportedQueryMiddleware extends TestableBase {}
-			class LocalQueryMiddleware extends TestableBase {}
+			class ImportedQueryMiddleware extends TestMiddleware {}
+			class LocalQueryMiddleware extends TestMiddleware {}
 
 			expect(() => {
 				registerModule({
@@ -178,8 +184,8 @@ describe("DIContext", () => {
 		});
 
 		it("should throw an error when imported modules export conflicting query pre-handler names", () => {
-			class ImportedQueryMiddlewareA extends TestableBase {}
-			class ImportedQueryMiddlewareB extends TestableBase {}
+			class ImportedQueryMiddlewareA extends TestMiddleware {}
+			class ImportedQueryMiddlewareB extends TestMiddleware {}
 
 			expect(() => {
 				registerModule({
@@ -799,7 +805,7 @@ describe("DIContext", () => {
 			expect(scope.resolve("directClassService").getName()).toBe(
 				"DirectClassService",
 			);
-			expect(scope.registrations.directClassService.lifetime).toBe(
+			expect(scope.registrations.directClassService?.lifetime).toBe(
 				Lifetime.SINGLETON,
 			);
 		});
@@ -824,7 +830,7 @@ describe("DIContext", () => {
 			expect(scope.resolve("classProviderService").getName()).toBe(
 				"ServiceWithClassProvider",
 			);
-			expect(scope.registrations.classProviderService.lifetime).toBe(
+			expect(scope.registrations.classProviderService?.lifetime).toBe(
 				Lifetime.TRANSIENT,
 			);
 			expect(
@@ -845,7 +851,9 @@ describe("DIContext", () => {
 					isProduction: true,
 					debugMode: false,
 					plainFunction,
+					// @ts-expect-error Test runtime handling of an unsupported null provider.
 					nullValue: null,
+					// @ts-expect-error Test runtime handling of an unsupported undefined provider.
 					undefinedValue: undefined,
 				},
 			});
@@ -969,7 +977,7 @@ describe("DIContext", () => {
 			expect(p2.getDeps().p1.getName()).toBe("P1");
 			// transient only for wrapper function for exported. Actual lifetime of
 			// provider stays correct
-			expect(scope.registrations.p2.lifetime).toBe(Lifetime.TRANSIENT);
+			expect(scope.registrations.p2?.lifetime).toBe(Lifetime.TRANSIENT);
 			expect(p2.instanceId).toBe(p2Again.instanceId);
 		});
 
@@ -1001,10 +1009,10 @@ describe("DIContext", () => {
 
 			const exportedScope = importedScopes.get("ExportedModule");
 			// checks that settings for exported provider are independant of local one
-			expect(scope.registrations.sharedService.lifetime).toBe(
+			expect(scope.registrations.sharedService?.lifetime).toBe(
 				Lifetime.TRANSIENT,
 			);
-			expect(exportedScope?.scope.registrations.sharedService.lifetime).toBe(
+			expect(exportedScope?.scope.registrations.sharedService?.lifetime).toBe(
 				Lifetime.SINGLETON,
 			);
 

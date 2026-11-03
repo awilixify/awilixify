@@ -112,25 +112,25 @@ describe("inquirer injection", () => {
 		expect(second.logger.inquirer).toBe(FirstService.prototype);
 	});
 
-	it.each([
-		"imported",
-		"global",
-	])("preserves the consumer with a %s logger", async (kind) => {
-		const module = {
-			name: "App",
-			providers: { firstService: FirstService },
-		};
-		const app =
-			kind === "imported"
-				? DIContext.create({ ...module, imports: [loggingModule] })
-				: await AsyncDIContext.create(module, {
-						globalModules: [loggingModule],
-					});
+	it.each(["imported", "global"])(
+		"preserves the consumer with a %s logger",
+		async (kind) => {
+			const module = {
+				name: "App",
+				providers: { firstService: FirstService },
+			};
+			const app =
+				kind === "imported"
+					? DIContext.create({ ...module, imports: [loggingModule] })
+					: await AsyncDIContext.create(module, {
+							globalModules: [loggingModule],
+						});
 
-		expect(
-			app.scope.resolve<FirstService>("firstService").logger.inquirer,
-		).toBe(FirstService.prototype);
-	});
+			expect(
+				app.scope.resolve<FirstService>("firstService").logger.inquirer,
+			).toBe(FirstService.prototype);
+		},
+	);
 
 	it("requires a transient lifetime", () => {
 		expect(() =>

@@ -11,7 +11,7 @@ import {
 } from "../../lib/di/modules/module-factories.js";
 
 class GlobalService {
-	private declare readonly __brand: never;
+	declare private readonly __brand: never;
 }
 
 declare module "../../lib/di/modules/module-def.types.js" {
@@ -22,19 +22,19 @@ declare module "../../lib/di/modules/module-def.types.js" {
 
 describe("Module", () => {
 	class P1 {
-		private declare readonly __brand: never;
+		declare private readonly __brand: never;
 	}
 	class P2 {
-		private declare readonly __brand: never;
+		declare private readonly __brand: never;
 	}
 	class P3 {
-		private declare readonly __brand: never;
+		declare private readonly __brand: never;
 	}
 	class P4 {
-		private declare readonly __brand: never;
+		declare private readonly __brand: never;
 	}
 	class P5 {
-		private declare readonly __brand: never;
+		declare private readonly __brand: never;
 	}
 
 	it("ensures ClassProvider can be passed as provider", () => {
@@ -410,13 +410,13 @@ describe("Module", () => {
 
 describe("createModule", () => {
 	class Service1 {
-		private declare readonly __brand: never;
+		declare private readonly __brand: never;
 	}
 	class Service2 {
-		private declare readonly __brand: never;
+		declare private readonly __brand: never;
 	}
 	class Service3 {
-		private declare readonly __brand: never;
+		declare private readonly __brand: never;
 	}
 
 	it("requires explicit TDef parameter - cannot be inferred", () => {

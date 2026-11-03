@@ -16,8 +16,8 @@ type MockExpressReply = {
 };
 
 type ExpressApp = {
-	get: ReturnType<typeof vi.fn>;
-	post: ReturnType<typeof vi.fn>;
+	get: ReturnType<typeof vi.fn<(...args: any[]) => void>>;
+	post: ReturnType<typeof vi.fn<(...args: any[]) => void>>;
 };
 
 class TestHttpInitializer extends Initializer<HttpToken> {
@@ -39,18 +39,28 @@ class TestHttpInitializer extends Initializer<HttpToken> {
 					context.invoke(request, reply);
 
 				const handlers = [...methodState.beforeMiddleware];
-				handlers.push(async (req, res, next) => {
-					try {
-						const result = await handler(req, res);
-						if (result !== undefined && !res.headersSent) {
-							res.send(result);
+				handlers.push(
+					async (
+						req: unknown,
+						res: MockExpressReply,
+						next: (error: unknown) => void,
+					) => {
+						try {
+							const result = await handler(req, res);
+							if (result !== undefined && !res.headersSent) {
+								res.send(result);
+							}
+						} catch (error) {
+							next(error);
 						}
-					} catch (error) {
-						next(error);
-					}
-				});
+					},
+				);
 
-				this.app[verb.toLowerCase()](path, ...handlers);
+				const method = verb.toLowerCase();
+				if (method !== "get" && method !== "post") {
+					throw new Error(`Unsupported test HTTP method: ${verb}`);
+				}
+				this.app[method](path, ...handlers);
 			}
 		}
 	}

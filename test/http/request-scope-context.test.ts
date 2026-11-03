@@ -1,5 +1,5 @@
 import { Lifetime } from "awilix";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { assert, beforeEach, describe, expect, it, vi } from "vitest";
 import { DIContext } from "../../lib/di/contexts/di-context.js";
 import type { AnyModule } from "../../lib/di/modules/module.types.js";
 import { GET } from "../../lib/http/decorators.js";
@@ -75,9 +75,10 @@ describe("Request scope context (AsyncLocalStorage)", () => {
 		await app.init();
 
 		const getRouteRegistration = mockExpress.get.mock.calls.find(
-			([path]: [string]) => path === "/scope-test",
+			([path]) => path === "/scope-test",
 		);
 
+		assert.isDefined(getRouteRegistration);
 		const handler = getRouteRegistration.at(-1);
 
 		const firstReply = {
@@ -92,8 +93,12 @@ describe("Request scope context (AsyncLocalStorage)", () => {
 		};
 		await handler({}, secondReply, vi.fn());
 
-		const firstPayload = firstReply.send.mock.calls[0][0];
-		const secondPayload = secondReply.send.mock.calls[0][0];
+		const [firstCall] = firstReply.send.mock.calls;
+		assert.isDefined(firstCall);
+		const firstPayload = firstCall[0];
+		const [secondCall] = secondReply.send.mock.calls;
+		assert.isDefined(secondCall);
+		const secondPayload = secondCall[0];
 
 		expect(firstPayload.controllerId).toBe(firstPayload.handlerId);
 		expect(secondPayload.controllerId).toBe(secondPayload.handlerId);
@@ -174,9 +179,10 @@ describe("Request scope context (AsyncLocalStorage)", () => {
 		await app.init();
 
 		const getRouteRegistration = mockExpress.get.mock.calls.find(
-			([path]: [string]) => path === "/multi-export-scope-test",
+			([path]) => path === "/multi-export-scope-test",
 		);
 
+		assert.isDefined(getRouteRegistration);
 		const handler = getRouteRegistration.at(-1);
 
 		const firstReply = {
@@ -191,8 +197,12 @@ describe("Request scope context (AsyncLocalStorage)", () => {
 		};
 		await handler({}, secondReply, vi.fn());
 
-		const firstPayload = firstReply.send.mock.calls[0][0];
-		const secondPayload = secondReply.send.mock.calls[0][0];
+		const [firstCall] = firstReply.send.mock.calls;
+		assert.isDefined(firstCall);
+		const firstPayload = firstCall[0];
+		const [secondCall] = secondReply.send.mock.calls;
+		assert.isDefined(secondCall);
+		const secondPayload = secondCall[0];
 
 		expect(firstPayload.exportAMarkerId).toBe(firstPayload.exportBMarkerId);
 		expect(secondPayload.exportAMarkerId).toBe(secondPayload.exportBMarkerId);

@@ -10,19 +10,19 @@ import type { MiddlewareContract } from "../../lib/mediator/middleware.types.js"
 import type { Result } from "../../lib/mediator/result.js";
 
 class LocalAuthError {
-	private declare readonly __brand: "LocalAuthError";
+	declare private readonly __brand: "LocalAuthError";
 }
 class ImportedTenantError {
-	private declare readonly __brand: "ImportedTenantError";
+	declare private readonly __brand: "ImportedTenantError";
 }
 class CommandAuthError {
-	private declare readonly __brand: "CommandAuthError";
+	declare private readonly __brand: "CommandAuthError";
 }
 class CommandPolicyError {
-	private declare readonly __brand: "CommandPolicyError";
+	declare private readonly __brand: "CommandPolicyError";
 }
 class HandlerCommandError {
-	private declare readonly __brand: "HandlerCommandError";
+	declare private readonly __brand: "HandlerCommandError";
 }
 
 describe("Mediator Contracts", () => {

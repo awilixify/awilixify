@@ -4,6 +4,7 @@ import { DIContext } from "../../lib/di/contexts/di-context.js";
 import type { DiContextOptions } from "../../lib/di/contexts/di-context-base.js";
 import type { AnyModule } from "../../lib/di/modules/module.types.js";
 import * as MEDIATOR_ERRORS from "../../lib/mediator/errors.js";
+import type { MiddlewareContract } from "../../lib/mediator/middleware.types.js";
 import { Result } from "../../lib/mediator/result.js";
 
 function registerModule(
@@ -26,6 +27,10 @@ describe("Mediator middleware scenarios", () => {
 		const calls: string[] = [];
 
 		class AuthMiddleware {
+			declare readonly contract: MiddlewareContract<
+				string,
+				Awaited<ReturnType<AuthMiddleware["execute"]>>
+			>;
 			async execute() {
 				calls.push("auth");
 				return { userId: "u-1" };
@@ -33,6 +38,10 @@ describe("Mediator middleware scenarios", () => {
 		}
 
 		class TenantMiddleware {
+			declare readonly contract: MiddlewareContract<
+				string,
+				Awaited<ReturnType<TenantMiddleware["execute"]>>
+			>;
 			readonly requires = ["auth"];
 
 			async execute() {
@@ -67,12 +76,20 @@ describe("Mediator middleware scenarios", () => {
 
 	it("should apply includePreHandlerKeys and fail when middleware requirements are not satisfied", async () => {
 		class AuthMiddleware {
+			declare readonly contract: MiddlewareContract<
+				string,
+				Awaited<ReturnType<AuthMiddleware["execute"]>>
+			>;
 			async execute() {
 				return { userId: "u-1" };
 			}
 		}
 
 		class TenantMiddleware {
+			declare readonly contract: MiddlewareContract<
+				string,
+				Awaited<ReturnType<TenantMiddleware["execute"]>>
+			>;
 			readonly requires = ["auth"];
 
 			async execute() {
@@ -111,6 +128,10 @@ describe("Mediator middleware scenarios", () => {
 		const calls: string[] = [];
 
 		class AuthMiddleware {
+			declare readonly contract: MiddlewareContract<
+				string,
+				Awaited<ReturnType<AuthMiddleware["execute"]>>
+			>;
 			async execute() {
 				calls.push("auth");
 				return { userId: "u-1" };
@@ -118,6 +139,10 @@ describe("Mediator middleware scenarios", () => {
 		}
 
 		class TenantMiddleware {
+			declare readonly contract: MiddlewareContract<
+				string,
+				Awaited<ReturnType<TenantMiddleware["execute"]>>
+			>;
 			async execute() {
 				calls.push("tenant");
 				return { tenantId: "t-1" };
@@ -154,6 +179,10 @@ describe("Mediator middleware scenarios", () => {
 
 	it("should short-circuit handler execution when middleware returns Result.error", async () => {
 		class AuthMiddleware {
+			declare readonly contract: MiddlewareContract<
+				string,
+				Awaited<ReturnType<AuthMiddleware["execute"]>>
+			>;
 			async execute() {
 				return Result.error("unauthorized");
 			}
@@ -182,6 +211,10 @@ describe("Mediator middleware scenarios", () => {
 
 	it("should wrap handler response into Result.ok when middleware returns Result.ok", async () => {
 		class AuthMiddleware {
+			declare readonly contract: MiddlewareContract<
+				string,
+				Awaited<ReturnType<AuthMiddleware["execute"]>>
+			>;
 			async execute() {
 				return Result.ok({ userId: "u-1" });
 			}
@@ -210,6 +243,10 @@ describe("Mediator middleware scenarios", () => {
 
 	it("should throw when middleware returns a non-object non-result value", async () => {
 		class InvalidMiddleware {
+			declare readonly contract: MiddlewareContract<
+				string,
+				Awaited<ReturnType<InvalidMiddleware["execute"]>>
+			>;
 			async execute() {
 				return "bad-value";
 			}
@@ -239,10 +276,18 @@ describe("Mediator middleware scenarios", () => {
 
 	it("should keep current context when middleware returns undefined", async () => {
 		class EmptyMiddleware {
+			declare readonly contract: MiddlewareContract<
+				string,
+				Awaited<ReturnType<EmptyMiddleware["execute"]>>
+			>;
 			async execute() {}
 		}
 
 		class AuthMiddleware {
+			declare readonly contract: MiddlewareContract<
+				string,
+				Awaited<ReturnType<AuthMiddleware["execute"]>>
+			>;
 			async execute() {
 				return { userId: "u-1" };
 			}
@@ -272,12 +317,20 @@ describe("Mediator middleware scenarios", () => {
 
 	it("should throw when middleware context keys conflict", async () => {
 		class AuthMiddleware {
+			declare readonly contract: MiddlewareContract<
+				string,
+				Awaited<ReturnType<AuthMiddleware["execute"]>>
+			>;
 			async execute() {
 				return { userId: "u-1" };
 			}
 		}
 
 		class DuplicateAuthMiddleware {
+			declare readonly contract: MiddlewareContract<
+				string,
+				Awaited<ReturnType<DuplicateAuthMiddleware["execute"]>>
+			>;
 			async execute() {
 				return { userId: "u-2" };
 			}
@@ -308,6 +361,10 @@ describe("Mediator middleware scenarios", () => {
 
 	it("should reuse imported exported singleton middleware instance across executions", async () => {
 		class ImportedAuthMiddleware {
+			declare readonly contract: MiddlewareContract<
+				string,
+				Awaited<ReturnType<ImportedAuthMiddleware["execute"]>>
+			>;
 			static instances = 0;
 			readonly instanceId = Math.random();
 

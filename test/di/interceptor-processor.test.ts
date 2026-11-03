@@ -220,7 +220,7 @@ describe("Controller interceptors", () => {
 			await app.init();
 
 			const route = mockExpress.get.mock.calls.find(
-				([path]: [string]) => path === "/interceptor-lifetime",
+				([path]) => path === "/interceptor-lifetime",
 			);
 			const handler = route?.at(-1);
 			const reply = { headersSent: false, send: vi.fn() };

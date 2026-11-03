@@ -7,7 +7,7 @@ import { overrideModule } from "../../lib/di/modules/module-overrides.js";
 import type { MiddlewareContract } from "../../lib/mediator/middleware.types.js";
 
 class GlobalService {
-	private declare readonly __brand: never;
+	declare private readonly __brand: never;
 }
 
 declare module "../../lib/di/modules/module-def.types.js" {
@@ -18,21 +18,21 @@ declare module "../../lib/di/modules/module-def.types.js" {
 
 describe("DIContext root moduleOverrides", () => {
 	class LocalService {
-		private declare readonly __brand: never;
+		declare private readonly __brand: never;
 
 		getLocal() {
 			return "local";
 		}
 	}
 	class ImportedService {
-		private declare readonly __brand: never;
+		declare private readonly __brand: never;
 
 		getImported() {
 			return "imported";
 		}
 	}
 	class WrongService {
-		private declare readonly __brand: never;
+		declare private readonly __brand: never;
 
 		getWrong() {
 			return "wrong";

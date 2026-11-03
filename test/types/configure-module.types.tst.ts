@@ -8,7 +8,7 @@ class ConfigService {
 }
 
 class PrivateService {
-	private declare readonly secret: never;
+	declare private readonly secret: never;
 }
 
 type ConfigDef = ModuleDef<{

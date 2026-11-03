@@ -7,6 +7,7 @@ import type { DiContextOptions } from "../../lib/di/contexts/di-context-base.js"
 import * as ERRORS from "../../lib/di/errors.js";
 import type { AnyModule } from "../../lib/di/modules/module.types.js";
 import { overrideModule } from "../../lib/di/modules/module-overrides.js";
+import type { MiddlewareContract } from "../../lib/mediator/middleware.types.js";
 
 type TestContainer = Omit<AwilixContainer, "resolve"> & {
 	resolve<T = any>(name: string | symbol): T;
@@ -156,12 +157,20 @@ describe("Module overrides", () => {
 
 	it("should override pre-handlers in an imported module", async () => {
 		class DenyAuthMiddleware {
+			declare readonly contract: MiddlewareContract<
+				string,
+				Awaited<ReturnType<DenyAuthMiddleware["execute"]>>
+			>;
 			async execute() {
 				return { userId: "real-user" };
 			}
 		}
 
 		class AllowAuthMiddleware {
+			declare readonly contract: MiddlewareContract<
+				string,
+				Awaited<ReturnType<AllowAuthMiddleware["execute"]>>
+			>;
 			async execute() {
 				return { userId: "test-user" };
 			}

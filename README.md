@@ -4,7 +4,7 @@
 
 Transport-agnostic, type-safe, modular DI and CQRS framework on top of [Awilix](https://github.com/jeffijoe/awilix).
 
-[![Build Status](https://github.com/awilixify/awilixify/workflows/ci/badge.svg)](https://github.com/awilixify/awilixify/actions)
+[![Build Status](https://github.com/awilixify/awilixify/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/awilixify/awilixify/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/awilixify/awilixify/branch/main/graph/badge.svg)](https://codecov.io/gh/awilixify/awilixify)
 
 > [!TIP]
