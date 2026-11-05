@@ -47,7 +47,7 @@
 	"devDependencies": {
 		"@biomejs/biome": "2.6.4",
 		"@shikijs/vitepress-twoslash": "^4.0.2",
-		"@types/node": "^22.15.21",
+		"@types/node": "^26.6.6",
 		"@vitest/coverage-v8": "^5.0.5",
 		"del-cli": "^8.0.1",
 		"jscpd": "^5.4.2",
