@@ -1,3 +1,4 @@
+import { Lifetime } from "awilix";
 import { describe, expect, it, vi } from "vitest";
 import {
 	type AnyModule,
@@ -257,6 +258,116 @@ describe("synchronous configureModule with DIContext", () => {
 		expect(factory).toHaveBeenCalledOnce();
 		await context.close();
 	});
+
+	it.each([false, true])(
+		"retains configuration-only imports through shutdown, global=%s",
+		async (global) => {
+			const calls: string[] = [];
+			const createResource = vi.fn(() => ({}));
+
+			const onInit = vi.fn((_resource: object) => {
+				calls.push("onInit");
+			});
+			const afterInit = vi.fn((_resource: object) => {
+				calls.push("afterInit");
+			});
+			const beforeShutdown = vi.fn((_resource: object) => {
+				calls.push("beforeShutdown");
+			});
+			const onShutdown = vi.fn((_resource: object) => {
+				calls.push("onShutdown");
+			});
+			const dispose = vi.fn((_resource: object) => {
+				calls.push("dispose");
+			});
+
+			class InfrastructureLifecycle {
+				constructor(private readonly resource: object) {}
+				onInit() {
+					onInit(this.resource);
+				}
+				afterInit() {
+					afterInit(this.resource);
+				}
+				beforeShutdown() {
+					beforeShutdown(this.resource);
+				}
+				onShutdown() {
+					onShutdown(this.resource);
+				}
+			}
+
+			type InfrastructureDef = ModuleDef<{
+				providers: {
+					resource: object;
+					infrastructureLifecycle: InfrastructureLifecycle;
+				};
+				exportKeys: ["resource"];
+			}>;
+
+			const infrastructure = createModule<InfrastructureDef>({
+				name: "Infrastructure",
+				providers: {
+					resource: {
+						useFactory: createResource,
+						lifetime: Lifetime.SINGLETON,
+						dispose,
+					},
+					infrastructureLifecycle: {
+						useClass: InfrastructureLifecycle,
+						lifetime: Lifetime.SINGLETON,
+						eager: true,
+					},
+				},
+				exports: ["resource"],
+			});
+
+			const factory = vi.fn((_resource: object) => {
+				calls.push("configure");
+				return { name: "Configured" };
+			});
+			const configured = configureModule({
+				imports: [infrastructure],
+				inject: ["resource"],
+				useFactory: factory,
+			});
+			const context = DIContext.create(
+				{ name: "App", imports: global ? [] : [configured] },
+				{ globalModules: global ? [configured] : [] },
+			);
+
+			try {
+				expect(factory).toHaveBeenCalledOnce();
+				expect(calls).toEqual(["configure"]);
+
+				await context.init();
+				expect(calls).toEqual(["configure", "onInit", "afterInit"]);
+				await context.close();
+				expect(calls).toEqual([
+					"configure",
+					"onInit",
+					"afterInit",
+					"beforeShutdown",
+					"onShutdown",
+					"dispose",
+				]);
+
+				const resource = factory.mock.calls[0]?.[0];
+
+				for (const hook of [
+					onInit,
+					afterInit,
+					beforeShutdown,
+					onShutdown,
+					dispose,
+				]) {
+					expect(hook).toHaveBeenCalledExactlyOnceWith(resource);
+				}
+			} finally {
+				await context.close();
+			}
+		},
+	);
 
 	it("supports nested configuration", async () => {
 		type ValueDef = ModuleDef<{
