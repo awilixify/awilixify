@@ -1,5 +1,5 @@
 import type { BuildResolverOptions, Constructor } from "awilix";
-import type { Middleware } from "lib/mediator/middleware.types.js";
+import type { Middleware } from "../../../mediator/middleware.types.js";
 
 /**
  * PreHandler map - accepts any type, will be converted to constructor type internally

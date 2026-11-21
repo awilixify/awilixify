@@ -6,7 +6,10 @@ import type {
 	QueryContract,
 } from "../../lib/mediator/contract.types.js";
 import { Mediator } from "../../lib/mediator/mediator.js";
-import type { MiddlewareContract } from "../../lib/mediator/middleware.types.js";
+import type {
+	Middleware,
+	MiddlewareContract,
+} from "../../lib/mediator/middleware.types.js";
 import type { Result } from "../../lib/mediator/result.js";
 
 class LocalAuthError {
@@ -31,10 +34,12 @@ describe("Mediator Contracts", () => {
 			"auth",
 			Result<{ authUserId: string }, LocalAuthError>
 		>;
+		declare execute: Middleware<this["contract"]>["execute"];
 	}
 
 	class TraceMiddleware {
 		declare readonly contract: MiddlewareContract<"trace", { traceId: string }>;
+		declare execute: Middleware<this["contract"]>["execute"];
 	}
 
 	class ImportedTenantMiddleware {
@@ -42,6 +47,7 @@ describe("Mediator Contracts", () => {
 			"tenant",
 			Result<{ tenantId: string }, ImportedTenantError>
 		>;
+		declare execute: Middleware<this["contract"]>["execute"];
 	}
 
 	class CommandAuthMiddleware {
@@ -49,6 +55,7 @@ describe("Mediator Contracts", () => {
 			"command-auth",
 			Result<{ actorId: string }, CommandAuthError>
 		>;
+		declare execute: Middleware<this["contract"]>["execute"];
 	}
 
 	class CommandPolicyMiddleware {
@@ -56,6 +63,7 @@ describe("Mediator Contracts", () => {
 			"command-policy",
 			Result<{ policy: "strict" }, CommandPolicyError>
 		>;
+		declare execute: Middleware<this["contract"]>["execute"];
 	}
 
 	type ImportedQueryModule = M<
