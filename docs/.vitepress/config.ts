@@ -1,5 +1,11 @@
+import { createRequire } from "node:module";
+import { dirname } from "node:path";
 import { transformerTwoslash } from "@shikijs/vitepress-twoslash";
 import { defineConfig } from "vitepress";
+
+const twoslashRequire = createRequire(
+	import.meta.resolve("@shikijs/vitepress-twoslash"),
+);
 
 const repoName = process.env.GITHUB_REPOSITORY?.split("/")[1];
 const base =
@@ -123,6 +129,8 @@ export default defineConfig({
 			transformerTwoslash({
 				tsconfigPath: "./docs/.vitepress/tsconfig.twoslash.json",
 				twoslashOptions: {
+					// Use the libraries for Twoslash's JS compiler, not the root TS 7 CLI.
+					tsLibDirectory: dirname(twoslashRequire.resolve("typescript")),
 					extraFiles: {
 						"/node_modules/awilixify/index.d.ts": `
 declare module "awilixify" {
