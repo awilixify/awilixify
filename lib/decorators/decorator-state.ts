@@ -84,6 +84,16 @@ function hasOwnDecoratorMethodMetadata(target: unknown): boolean {
 	);
 }
 
+function validateDecoratorTarget(
+	context: ClassDecoratorContext<any> | ClassMethodDecoratorContext<any, any>,
+): void {
+	if (context.kind === "method" && (context.static || context.private)) {
+		throw new Error(
+			`Cannot decorate ${context.static ? "static" : "#private"} method "${String(context.name)}": only non-static, non-#private instance methods are supported`,
+		);
+	}
+}
+
 function createUpdater<TState extends DecoratorState<any, any>>(
 	token: DecoratorToken<TState>,
 	initializers: StateInitializers<TState>,
@@ -110,6 +120,8 @@ function createUpdater<TState extends DecoratorState<any, any>>(
 		updater: StateUpdate<TState>,
 		decoratorName?: string,
 	): void {
+		validateDecoratorTarget(context);
+
 		if (!context.metadata) return;
 
 		const state =

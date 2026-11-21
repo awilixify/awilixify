@@ -96,8 +96,7 @@ export class InterceptorProcessor {
 		moduleName: string,
 	): T {
 		const wrappers = new Map<PropertyKey, (...args: unknown[]) => unknown>();
-		// Methods that access JS private fields must use original target
-		const targetBoundMethods = new Set<PropertyKey>();
+		let selfCallsPrepared = false;
 		const self = this;
 
 		return new Proxy(instance, {
@@ -117,50 +116,33 @@ export class InterceptorProcessor {
 
 				const wrapped = (...args: unknown[]) => {
 					const interceptors = resolveInterceptors.map((resolve) => resolve());
+
+					if (!selfCallsPrepared) {
+						self.prepareSelfCalls(
+							target,
+							metadataTarget,
+							interceptors,
+							proxyReceiver,
+						);
+						selfCallsPrepared = true;
+					}
+
 					const metadataByToken = self.collectInterceptorMetadata(
 						metadataTarget,
 						propertyKey,
 						interceptors,
 					);
 
-					// Use proxyReceiver when devtools is active so nested this.method()
-					// calls are traced. Fall back to target for private field access.
-					const receiver =
-						!self.devtoolsTracer || targetBoundMethods.has(propertyKey)
-							? target
-							: proxyReceiver;
+					if (metadataByToken.size === 0) return value.apply(target, args);
 
-					const apply = () => {
-						if (metadataByToken.size === 0) return value.apply(receiver, args);
-
-						return self.callWithInterceptorChain({
-							target: receiver,
-							methodName: propertyKey,
-							moduleName,
-							args,
-							metadataByToken,
-							interceptors,
-							proceed: () => value.apply(receiver, args),
-						});
-					};
-
-					// No need for fallback when not using proxyReceiver
-					if (receiver === target) return apply();
-
-					return applyWithPrivateFieldFallback(apply, () => {
-						targetBoundMethods.add(propertyKey);
-						// Retry with original target
-						if (metadataByToken.size === 0) return value.apply(target, args);
-
-						return self.callWithInterceptorChain({
-							target,
-							methodName: propertyKey,
-							moduleName,
-							args,
-							metadataByToken,
-							interceptors,
-							proceed: () => value.apply(target, args),
-						});
+					return self.callWithInterceptorChain({
+						target,
+						methodName: propertyKey,
+						moduleName,
+						args,
+						metadataByToken,
+						interceptors,
+						proceed: () => value.apply(target, args),
 					});
 				};
 
@@ -169,6 +151,41 @@ export class InterceptorProcessor {
 				return wrapped;
 			},
 		});
+	}
+
+	private prepareSelfCalls(
+		instance: object,
+		metadataTarget: object,
+		interceptors: Interceptor[],
+		proxy: object,
+	): void {
+		const methodNames = new Set<string | symbol>();
+
+		for (const interceptor of interceptors) {
+			const state = resolveDecoratorState(metadataTarget, interceptor.token);
+
+			for (const methodName of state?.methods.keys() ?? []) {
+				methodNames.add(methodName);
+			}
+		}
+
+		for (const methodName of methodNames) {
+			if (methodName === "constructor") continue;
+
+			const method = Reflect.get(proxy, methodName);
+
+			if (typeof method !== "function" || isClassReference(method)) continue;
+
+			// Calls through this bypass the DI proxy, so decorated methods need
+			// instance-level wrappers for their interceptors to run internally.
+			Object.defineProperty(instance, methodName, {
+				configurable: true,
+				enumerable: false,
+				writable: true,
+				...Object.getOwnPropertyDescriptor(instance, methodName),
+				value: method,
+			});
+		}
 	}
 
 	private collectInterceptorMetadata(
@@ -306,35 +323,6 @@ export class InterceptorProcessor {
 	private get devtoolsTracer() {
 		return this.devtoolsProcessorRef.current?.tracer;
 	}
-}
-
-function applyWithPrivateFieldFallback<T>(
-	tryFn: () => T,
-	fallbackFn: () => T,
-): T {
-	try {
-		const result = tryFn();
-
-		if (isPromiseLike(result)) {
-			return result.catch((error: unknown) => {
-				if (!isPrivateMemberAccessError(error)) throw error;
-
-				return fallbackFn();
-			}) as T;
-		}
-
-		return result;
-	} catch (error) {
-		if (!isPrivateMemberAccessError(error)) throw error;
-		return fallbackFn();
-	}
-}
-
-function isPrivateMemberAccessError(error: unknown): boolean {
-	return (
-		error instanceof TypeError &&
-		/Cannot (read|access) private (member|method)/.test(error.message)
-	);
 }
 
 function serializeMetadata(value: unknown, depth = 0): unknown {

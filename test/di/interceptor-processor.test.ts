@@ -3,6 +3,10 @@ import { Lifetime } from "awilix";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createDecoratorStateUpdater } from "../../lib/decorators/decorator-state.js";
+import {
+	AWILIXIFY_DEVTOOLS_PROCESSOR,
+	type DevtoolsProcessor,
+} from "../../lib/devtools/index.js";
 import { DIContext } from "../../lib/di/contexts/di-context.js";
 import * as ERRORS from "../../lib/di/errors.js";
 import type { AnyModule } from "../../lib/di/modules/module.types.js";
@@ -235,6 +239,132 @@ describe("Controller interceptors", () => {
 		expect(await collectInterceptorInstanceIds("SCOPED")).toEqual([1, 1, 1]);
 		expect(await collectInterceptorInstanceIds("TRANSIENT")).toEqual([1, 2, 3]);
 	});
+
+	describe.each([false, true])(
+		"internal method calls (devtools enabled=%s)",
+		(devtoolsEnabled) => {
+			const devtools: DevtoolsProcessor = {
+				initialize() {},
+				graphCollector: {
+					registerModule: () => "graph-1",
+					collectModuleRoutes() {},
+				},
+				tracer: {
+					recordSpan: (input) => input.callback(),
+					runInCurrentSpan: (callback) => callback(),
+					runInControllerTrace: (input) => input.callback(),
+					wrapResolver: (input) => input.resolver,
+				},
+			};
+
+			const registerInternalModule = (module: AnyModule) =>
+				DIContext.create(module, {
+					globalModules: devtoolsEnabled
+						? [
+								{
+									name: "DevtoolsModule",
+									providers: { [AWILIXIFY_DEVTOOLS_PROCESSOR]: devtools },
+								},
+							]
+						: [],
+				});
+
+			it("intercepts this.privateMethod()", async () => {
+				class Service {
+					run(value: string) {
+						return this.privateMethod(value);
+					}
+
+					@track.decorate("inner")
+					private privateMethod(value: string) {
+						return `result:${value}`;
+					}
+				}
+
+				const app = registerInternalModule({
+					name: "SelfCallModule",
+					imports: [TrackingModule],
+					providers: { service: Service },
+				});
+
+				try {
+					const service = app.scope.resolve<Service>("service");
+					expect(service.run("input")).toBe("result:input");
+					// Devtools must not determine whether application interceptors execute.
+					expect(calls).toEqual(["privateMethod:track"]);
+				} finally {
+					await app.close();
+				}
+			});
+
+			it("preserves #private access when intercepting internal calls", async () => {
+				let executions = 0;
+				class Service {
+					#value = 21;
+
+					#read() {
+						return this.#value;
+					}
+
+					run() {
+						executions += 1;
+						return this.#read() + this.privateMethod();
+					}
+
+					@track.decorate("inner")
+					private privateMethod() {
+						return this.#value;
+					}
+				}
+
+				const app = registerInternalModule({
+					name: "PrivateMembersModule",
+					imports: [TrackingModule],
+					providers: { service: Service },
+				});
+
+				try {
+					const service = app.scope.resolve<Service>("service");
+					expect(service.run()).toBe(42);
+					expect(service.run()).toBe(42);
+					expect(executions).toBe(2);
+					expect(calls).toEqual(["privateMethod:track", "privateMethod:track"]);
+				} finally {
+					await app.close();
+				}
+			});
+
+			it("intercepts asynchronous internal calls with inherited decorator metadata", async () => {
+				class BaseService {
+					@track.decorate("inner")
+					protected async inner(value: number) {
+						return value + 1;
+					}
+				}
+				class Service extends BaseService {
+					async run(value: number) {
+						await Promise.resolve();
+						return this.inner(value);
+					}
+				}
+
+				const app = registerInternalModule({
+					name: "InheritedSelfCallsModule",
+					imports: [TrackingModule],
+					providers: { service: Service },
+				});
+
+				try {
+					const service = app.scope.resolve<Service>("service");
+					await expect(service.run(41)).resolves.toBe(42);
+					await expect(service.run(42)).resolves.toBe(43);
+					expect(calls).toEqual(["inner:track", "inner:track"]);
+				} finally {
+					await app.close();
+				}
+			});
+		},
+	);
 
 	it("should run two interceptors on the same provider method", () => {
 		class MultiTrackedProvider {
