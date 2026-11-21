@@ -21,7 +21,7 @@
 			"import": "./dist/lib/devtools/index.js"
 		}
 	},
-	"version": "3.5.0",
+	"version": "3.5.1",
 	"license": "MIT",
 	"scripts": {
 		"build": "tsc -p tsconfig.build.json",
